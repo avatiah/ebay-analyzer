@@ -1,6 +1,4 @@
-import csv
-import datetime
-import requests
+import csv, datetime, requests
 from bs4 import BeautifulSoup
 
 def load_keywords():
@@ -47,3 +45,29 @@ def save_to_csv(rows):
             writer.writerow(row)
 
 def main():
+    keywords = load_keywords()
+    all_rows = []
+    for kw in keywords:
+        results = scrape(kw)
+        if results:
+            all_rows.extend(results)
+        else:
+            all_rows.append({
+                "timestamp": datetime.datetime.now().isoformat(),
+                "source": "ebay",
+                "keyword": kw,
+                "title": "",
+                "url": "",
+                "price": "",
+                "currency": "",
+                "watchers": "",
+                "avg_price": "",
+                "trend": "",
+                "sold": "",
+                "error": "no results"
+            })
+    if all_rows:
+        save_to_csv(all_rows)
+
+if __name__ == "__main__":
+    main()
