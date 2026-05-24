@@ -7,13 +7,14 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
@@ -21,15 +22,21 @@ jobs:
           pip install requests beautifulsoup4
 
       - name: Run scraper
+        env:
+          KEYWORD: ${{ github.event.client_payload.keyword }}
         run: |
           mkdir -p data
-          echo "${{ github.event.client_payload.keyword }}" > keywords.txt
+          echo "$KEYWORD" > keywords.txt
           python main.py
+          test -f data/raw_data.csv || (echo "Ошибка: CSV не создан" && exit 1)
 
       - name: Commit CSV results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
           git add data/raw_data.csv keywords.txt
-          git commit -m "Scraper results"
+          git diff --staged --quiet || git commit -m "Scraper results: ${{ github.event.client_payload.keyword }}"
           git push
