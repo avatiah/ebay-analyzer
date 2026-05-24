@@ -17,6 +17,7 @@
   <h1>eBay Market Analyzer</h1>
   <p>Автоматический сбор и анализ данных с eBay</p>
 
+  <!-- Авторизация -->
   <div class="section">
     <h2>🔑 Авторизация</h2>
     <p>Введите ваш GitHub токен:</p>
@@ -25,33 +26,47 @@
     <div id="tokenStatus"></div>
   </div>
 
+  <!-- Ключевые слова -->
+  <div class="section">
+    <h2>📝 Ключевые слова</h2>
+    <input type="text" id="keywordInput" placeholder="Введите ключевое слово">
+    <button onclick="saveKeyword()">💾 Сохранить</button>
+    <div id="keywordStatus"></div>
+  </div>
+
+  <!-- Управление -->
   <div class="section">
     <h2>⚙️ Управление</h2>
     <button onclick="runScraper()">🔄 Запустить сбор данных</button>
-    <button onclick="updateKeywords()">💾 Обновить ключевые слова</button>
+    <button onclick="updateKeywords()">📥 Обновить keywords.txt</button>
   </div>
 
+  <!-- Журнал событий -->
   <div class="section">
     <h2>📊 Журнал событий</h2>
     <pre id="log"></pre>
   </div>
 
+  <!-- CSV статус -->
   <div class="section">
     <h2>📂 CSV статус</h2>
     <div id="csv-info">Строк: ... | Размер: ... KB | Последнее обновление: ...</div>
     <pre id="csv-preview"></pre>
   </div>
 
+  <!-- Workflow статус -->
   <div class="section">
     <h2>⚙️ Workflow статус</h2>
     <div id="workflow-status">...</div>
   </div>
 
+  <!-- Диагностика парсера -->
   <div class="section">
     <h2>🔍 Диагностика парсера</h2>
     <div id="parser-status">Keywords: ... | Найдено результатов: ...</div>
   </div>
 
+  <!-- Ошибки -->
   <div class="section">
     <h2>❌ Ошибки</h2>
     <div id="errors">...</div>
@@ -77,12 +92,40 @@
       }
     }
 
+    function saveKeyword() {
+      const kw = document.getElementById("keywordInput").value.trim();
+      if (kw) {
+        fetch("keywords.txt", {
+          method: "POST",
+          body: kw,
+        }).then(() => {
+          document.getElementById("keywordStatus").innerHTML = "<span class='ok'>Ключевое слово сохранено</span>";
+          log("Ключевое слово сохранено: " + kw);
+        }).catch(err => {
+          document.getElementById("keywordStatus").innerHTML = "<span class='error'>Ошибка сохранения</span>";
+          log("Ошибка сохранения keywords.txt: " + err.message);
+        });
+      } else {
+        document.getElementById("keywordStatus").innerHTML = "<span class='error'>Введите слово</span>";
+      }
+    }
+
     async function runScraper() {
+      if (!localStorage.getItem("GH_TOKEN")) {
+        log("Ошибка: нет токена");
+        document.getElementById("errors").innerHTML = "<span class='error'>Нет токена</span>";
+        return;
+      }
       log("Запуск workflow Run Scraper...");
       await dispatchEvent("run-scraper");
     }
 
     async function updateKeywords() {
+      if (!localStorage.getItem("GH_TOKEN")) {
+        log("Ошибка: нет токена");
+        document.getElementById("errors").innerHTML = "<span class='error'>Нет токена</span>";
+        return;
+      }
       log("Запуск workflow Update Keywords...");
       await dispatchEvent("update-keywords");
     }
@@ -90,11 +133,6 @@
     async function dispatchEvent(eventType) {
       try {
         const token = localStorage.getItem("GH_TOKEN");
-        if (!token) {
-          log("Ошибка: нет токена");
-          document.getElementById("errors").innerHTML = "<span class='error'>Нет токена</span>";
-          return;
-        }
         const resp = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
           method: "POST",
           headers: {
