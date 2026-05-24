@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>eBay Analyzer — Debug</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        padding: 20px;
+    }
+    h1 { margin-bottom: 10px; }
+    .card {
+        background: white;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    pre {
+        background: #222;
+        color: #0f0;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
+    .error { color: red; font-weight: bold; }
+    .ok { color: green; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>🔧 Debug Dashboard</h1>
+<p>Страница диагностики для поиска проблем в проекте.</p>
+
+<div class="card">
+    <h2>1. Проверка GitHub API</h2>
+    <div id="apiStatus">Загрузка…</div>
+</div>
+
+<div class="card">
+    <h2>2. Проверка CSV</h2>
+    <div id="csvStatus">Загрузка…</div>
+</div>
+
+<div class="card">
+    <h2>3. Последние строки CSV</h2>
+    <pre id="csvPreview">Загрузка…</pre>
+</div>
+
+<div class="card">
+    <h2>4. Ошибки backend (колонка error)</h2>
+    <pre id="backendErrors">Загрузка…</pre>
+</div>
+
+<div class="card">
+    <h2>5. Ошибки браузера</h2>
+    <pre id="browserErrors">Пока нет ошибок</pre>
+</div>
+
+<script>
+const USER = "avatiah";
+const REPO = "ebay-analyzer";
+
+const apiStatus = document.getElementById("apiStatus");
+const csvStatus = document.getElementById("csvStatus");
+const csvPreview = document.getElementById("csvPreview");
+const backendErrors = document.getElementById("backendErrors");
+const browserErrors = document.getElementById("browserErrors");
+
+let browserErrorLog = "";
+
+// Перехват ошибок JS
+window.onerror = function(msg, url, line, col, error) {
+    browserErrorLog += `[JS ERROR] ${msg} at ${url}:${line}\n`;
+    browserErrors.textContent = browserErrorLog;
+};
+
+// Перехват ошибок fetch
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+    try {
+        const res = await originalFetch(...args);
+        if (!res.ok) {
+            browserErrorLog += `[FETCH ERROR] ${args[0]} → ${res.status}\n`;
+            browserErrors.textContent = browserErrorLog;
+        }
+        return res;
+    } catch (e) {
+        browserErrorLog += `[FETCH FAIL] ${args[0]} → ${e}\n`;
+        browserErrors.textContent = browserErrorLog;
+        throw e;
+    }
+};
+
+// Проверка GitHub API
+async function checkAPI() {
+    let out = "";
+
+    async function test(url, label) {
+        try {
+            const r = await fetch(url);
+            out += `${label}: ${r.status === 200 ? "OK" : "ERROR " + r.status}<br>`;
+        } catch (e) {
+            out += `${label}: FAIL (${e})<br>`;
+        }
+    }
+
+    await test(`https://raw.githubusercontent.com/${USER}/${REPO}/main/keywords.txt`, "keywords.txt");
+    await test(`https://raw.githubusercontent.com/${USER}/${REPO}/main/data/raw_data.csv`, "raw_data.csv");
+    await test(`https://api.github.com/repos/${USER}/${REPO}/dispatches`, "GitHub API (dispatch)");
+
+    apiStatus.innerHTML = out;
+}
+
+// Проверка CSV
+async function checkCSV() {
+    try {
+        const url = `https://raw.githubusercontent.com/${USER}/${REPO}/main/data/raw_data.csv`;
+        const resp = await fetch(url);
+        if (!resp.ok) {
+            csvStatus.innerHTML = `<span class="error">Ошибка загрузки CSV: ${resp.status}</span>`;
+            return;
+        }
+
+        const text = await resp.text();
+        const lines = text.trim().split("\n");
+
+        csvStatus.innerHTML = `
+            Строк: <b>${lines.length - 1}</b><br>
+            Заголовок: <code>${lines[0]}</code>
+        `;
+
+        csvPreview.textContent = lines.slice(-10).join("\n");
+
+        const errors = lines
+            .map(l => l.split(",").slice(-1)[0])
+            .filter(e => e && e !== "error" && e !== "");
+
+        backendErrors.textContent = errors.length
+            ? errors.join("\n")
+            : "Ошибок нет";
+    } catch (e) {
+        csvStatus.innerHTML = `<span class="error">Ошибка: ${e}</span>`;
+    }
+}
+
+checkAPI();
+checkCSV();
+</script>
+
+</body>
+</html>
