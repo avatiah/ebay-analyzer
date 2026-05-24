@@ -1,4 +1,4 @@
-import csv, datetime, requests
+import csv, datetime, requests, os
 from bs4 import BeautifulSoup
 
 def load_keywords():
@@ -36,6 +36,7 @@ def scrape(keyword):
     return results
 
 def save_to_csv(rows):
+    os.makedirs("data", exist_ok=True)
     header = ["timestamp","source","keyword","title","url","price","currency","watchers","avg_price","trend","sold","error"]
     with open("data/raw_data.csv", "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=header)
@@ -46,6 +47,9 @@ def save_to_csv(rows):
 
 def main():
     keywords = load_keywords()
+    if not keywords:
+        print("Нет ключевых слов")
+        return
     all_rows = []
     for kw in keywords:
         results = scrape(kw)
