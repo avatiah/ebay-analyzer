@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PUT_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
           persist-credentials: true
 
       - name: Set up Python
