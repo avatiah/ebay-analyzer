@@ -2,134 +2,505 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>eBay Market Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { color: #333; }
-    .section { margin-bottom: 25px; }
-    .ok { color: green; font-weight: bold; }
-    .error { color: red; font-weight: bold; }
-    pre { background: #f4f4f4; padding: 10px; border-radius: 5px; max-height: 300px; overflow-y: auto; }
-    input, button { padding: 5px; margin: 5px 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #151820;
+      --surface2: #1c2030;
+      --border: #252a3a;
+      --accent: #4f8ef7;
+      --accent-dim: rgba(79,142,247,0.12);
+      --green: #3ecf7a;
+      --green-dim: rgba(62,207,122,0.12);
+      --red: #f75a5a;
+      --red-dim: rgba(247,90,90,0.12);
+      --yellow: #f7c04f;
+      --text: #c8d0e8;
+      --text-muted: #5a6480;
+      --text-bright: #eef0f8;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Syne', sans-serif;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+    .header-icon {
+      width: 44px; height: 44px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 22px;
+    }
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-bright);
+      letter-spacing: -0.3px;
+    }
+    .header p {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      margin-top: 2px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Inputs ── */
+    .field { margin-bottom: 12px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      margin-bottom: 6px;
+    }
+    .input-row { display: flex; gap: 10px; align-items: stretch; }
+    input[type="text"], input[type="password"] {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-bright);
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      border-color: var(--accent);
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    .btn:not(:disabled):active { transform: scale(0.97); }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:not(:disabled):hover { opacity: 0.88; }
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:not(:disabled):hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid rgba(247,90,90,0.25);
+    }
+
+    /* ── Status badges ── */
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+    .status.ok   { background: var(--green-dim); color: var(--green); }
+    .status.err  { background: var(--red-dim);   color: var(--red); }
+    .status.info { background: var(--accent-dim); color: var(--accent); }
+    .status.warn { background: rgba(247,192,79,0.12); color: var(--yellow); }
+    .status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    /* ── Log ── */
+    .log-wrap {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .log-line { display: flex; gap: 10px; }
+    .log-time { color: var(--text-muted); flex-shrink: 0; }
+    .log-msg.ok   { color: var(--green); }
+    .log-msg.err  { color: var(--red); }
+    .log-msg.info { color: var(--accent); }
+    .log-msg.warn { color: var(--yellow); }
+    .log-empty { color: var(--text-muted); font-style: italic; }
+
+    .log-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 8px;
+    }
+
+    /* ── Spinner ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .btn.loading .spinner { display: inline-block; }
+    .btn.loading .btn-label { opacity: 0.6; }
+
+    /* ── Token visibility ── */
+    .token-wrapper { position: relative; flex: 1; }
+    .token-wrapper input { width: 100%; padding-right: 44px; }
+    .toggle-vis {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--text-muted); font-size: 15px; padding: 0;
+    }
+    .toggle-vis:hover { color: var(--text); }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
   </style>
 </head>
 <body>
-  <h1>eBay Market Analyzer</h1>
-  <p>Автоматический сбор и анализ данных с eBay</p>
+
+  <div class="header">
+    <div class="header-icon">📊</div>
+    <div>
+      <h1>eBay Market Analyzer</h1>
+      <p>avatiah / ebay-analyzer · GitHub Actions</p>
+    </div>
+  </div>
 
   <!-- Авторизация -->
-  <div class="section">
-    <h2>🔑 Авторизация</h2>
-    <input type="text" id="tokenInput" placeholder="ghp_...">
-    <button onclick="saveToken()">Сохранить токен</button>
+  <div class="card">
+    <div class="card-title">🔑 Авторизация</div>
+    <div class="field">
+      <label>GitHub Personal Access Token</label>
+      <div class="input-row">
+        <div class="token-wrapper">
+          <input type="password" id="tokenInput" placeholder="ghp_...">
+          <button class="toggle-vis" id="toggleVis" title="Показать/скрыть токен">👁</button>
+        </div>
+        <button class="btn btn-primary" id="saveTokenBtn" onclick="saveToken()">
+          <span class="spinner"></span>
+          <span class="btn-label">Сохранить</span>
+        </button>
+      </div>
+    </div>
     <div id="tokenStatus"></div>
   </div>
 
   <!-- Ключевые слова -->
-  <div class="section">
-    <h2>📝 Ключевые слова</h2>
-    <input type="text" id="keywordInput" placeholder="Введите ключевое слово">
-    <button onclick="saveKeyword()">💾 Сохранить</button>
+  <div class="card">
+    <div class="card-title">📝 Ключевое слово</div>
+    <div class="field">
+      <label>Поисковый запрос для eBay</label>
+      <div class="input-row">
+        <input type="text" id="keywordInput" placeholder="Например: vintage camera">
+        <button class="btn btn-ghost" id="saveKwBtn" onclick="saveKeyword()">
+          <span class="spinner"></span>
+          <span class="btn-label">💾 Сохранить</span>
+        </button>
+      </div>
+    </div>
     <div id="keywordStatus"></div>
-  </div>
 
-  <!-- Управление -->
-  <div class="section">
-    <h2>⚙️ Управление</h2>
-    <button onclick="runScraper()">🔄 Запустить сбор данных</button>
+    <div class="divider"></div>
+
+    <button class="btn btn-primary" id="runBtn" onclick="runScraper()">
+      <span class="spinner"></span>
+      <span class="btn-label">🔄 Запустить сбор данных</span>
+    </button>
+    <div id="workflowStatus"></div>
   </div>
 
   <!-- Журнал событий -->
-  <div class="section">
-    <h2>📊 Журнал событий</h2>
-    <pre id="log"></pre>
-  </div>
-
-  <!-- CSV статус -->
-  <div class="section">
-    <h2>📂 CSV статус</h2>
-    <div id="csv-info">Строк: ... | Размер: ... KB | Последнее обновление: ...</div>
-    <pre id="csv-preview"></pre>
-  </div>
-
-  <!-- Workflow статус -->
-  <div class="section">
-    <h2>⚙️ Workflow статус</h2>
-    <div id="workflow-status">...</div>
-  </div>
-
-  <!-- Ошибки -->
-  <div class="section">
-    <h2>❌ Ошибки</h2>
-    <div id="errors">...</div>
+  <div class="card">
+    <div class="card-title">📋 Журнал событий</div>
+    <div class="log-toolbar">
+      <button class="btn btn-danger" onclick="clearLog()" style="padding:6px 12px;font-size:12px;">
+        🗑 Очистить лог
+      </button>
+    </div>
+    <div class="log-wrap" id="log">
+      <span class="log-empty">Событий пока нет...</span>
+    </div>
   </div>
 
   <script>
     const GITHUB_USER = "avatiah";
     const GITHUB_REPO = "ebay-analyzer";
+    const LOG_MAX_LINES = 200;
 
-    function log(message) {
-      const logEl = document.getElementById("log");
-      logEl.textContent += `[${new Date().toLocaleTimeString()}] ${message}\n`;
-    }
-
-    function saveToken() {
-      const token = document.getElementById("tokenInput").value.trim();
-      if (token) {
-        localStorage.setItem("GH_TOKEN", token);
-        document.getElementById("tokenStatus").innerHTML = "<span class='ok'>Токен сохранён</span>";
-        log("Токен сохранён");
-      } else {
-        document.getElementById("tokenStatus").innerHTML = "<span class='error'>Введите токен</span>";
+    // ── Безопасная работа с localStorage ──────────────────────────────────
+    const storage = {
+      get(key) {
+        try { return localStorage.getItem(key); }
+        catch { return null; }
+      },
+      set(key, value) {
+        try { localStorage.setItem(key, value); return true; }
+        catch { return false; }
       }
+    };
+
+    // ── Лог ───────────────────────────────────────────────────────────────
+    function log(message, type = "info") {
+      const logEl = document.getElementById("log");
+      const empty = logEl.querySelector(".log-empty");
+      if (empty) empty.remove();
+
+      // Ограничение числа строк
+      const lines = logEl.querySelectorAll(".log-line");
+      if (lines.length >= LOG_MAX_LINES) lines[0].remove();
+
+      const time = new Date().toLocaleTimeString("ru-RU");
+      const line = document.createElement("div");
+      line.className = "log-line";
+      line.innerHTML = `<span class="log-time">${time}</span><span class="log-msg ${type}">${escapeHtml(message)}</span>`;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
     }
 
-    async function dispatchEvent(eventType, clientPayload = {}) {
-      try {
-        const token = localStorage.getItem("GH_TOKEN");
-        if (!token) {
-          document.getElementById("errors").innerHTML = "<span class='error'>Нет токена</span>";
-          return;
+    function clearLog() {
+      const logEl = document.getElementById("log");
+      logEl.innerHTML = '<span class="log-empty">Журнал очищен.</span>';
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // ── Статусы ───────────────────────────────────────────────────────────
+    function setStatus(elementId, message, type = "info") {
+      const el = document.getElementById(elementId);
+      el.innerHTML = `<span class="status ${type}">${escapeHtml(message)}</span>`;
+    }
+
+    function clearStatus(elementId) {
+      document.getElementById(elementId).innerHTML = "";
+    }
+
+    // ── Блокировка кнопок во время запроса ───────────────────────────────
+    function setButtonLoading(btn, loading) {
+      btn.disabled = loading;
+      btn.classList.toggle("loading", loading);
+    }
+
+    // ── Видимость токена ──────────────────────────────────────────────────
+    document.getElementById("toggleVis").addEventListener("click", () => {
+      const inp = document.getElementById("tokenInput");
+      inp.type = inp.type === "password" ? "text" : "password";
+    });
+
+    // ── Восстановить токен из хранилища ───────────────────────────────────
+    window.addEventListener("DOMContentLoaded", () => {
+      const saved = storage.get("GH_TOKEN");
+      if (saved) {
+        document.getElementById("tokenInput").value = saved;
+        setStatus("tokenStatus", "Токен загружен из хранилища", "ok");
+        log("Токен загружен из хранилища", "ok");
+      }
+    });
+
+    // ── Сохранить токен ───────────────────────────────────────────────────
+    function saveToken() {
+      const btn = document.getElementById("saveTokenBtn");
+      const token = document.getElementById("tokenInput").value.trim();
+
+      if (!token) {
+        setStatus("tokenStatus", "Введите токен", "err");
+        log("Ошибка: токен не введён", "err");
+        return;
+      }
+
+      setButtonLoading(btn, true);
+
+      const ok = storage.set("GH_TOKEN", token);
+
+      // Имитируем минимальную задержку для UX
+      setTimeout(() => {
+        setButtonLoading(btn, false);
+        if (ok) {
+          setStatus("tokenStatus", "Токен сохранён", "ok");
+          log("Токен сохранён успешно", "ok");
+        } else {
+          setStatus("tokenStatus", "Не удалось сохранить токен (хранилище недоступно)", "warn");
+          log("Предупреждение: localStorage недоступен", "warn");
         }
-        const resp = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
+      }, 300);
+    }
+
+    // ── Отправить GitHub dispatch ─────────────────────────────────────────
+    async function sendDispatch(eventType, clientPayload = {}) {
+      const token = storage.get("GH_TOKEN");
+
+      if (!token) {
+        const msg = "Токен не найден — сначала сохраните токен";
+        log(msg, "err");
+        setStatus("workflowStatus", msg, "err");
+        return false;
+      }
+
+      log(`Отправка dispatch: ${eventType}...`, "info");
+
+      const resp = await fetch(
+        `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`,
+        {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${token}`,
-            "Accept": "application/vnd.github+json"
+            "Accept": "application/vnd.github+json",
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({ event_type: eventType, client_payload: clientPayload })
-        });
-        if (resp.status === 204) {
-          log(`Dispatch ${eventType} отправлен успешно`);
-          document.getElementById("workflow-status").innerHTML = `<span class='ok'>Workflow ${eventType} запущен</span>`;
+        }
+      );
+
+      if (resp.status === 204) {
+        log(`Dispatch «${eventType}» принят GitHub (204)`, "ok");
+        return true;
+      }
+
+      // Попытка получить текст ошибки от GitHub
+      let detail = "";
+      try {
+        const body = await resp.json();
+        detail = body.message ? ` — ${body.message}` : "";
+      } catch { /* игнорируем */ }
+
+      log(`Ошибка dispatch: HTTP ${resp.status}${detail}`, "err");
+      return false;
+    }
+
+    // ── Сохранить ключевое слово ──────────────────────────────────────────
+    async function saveKeyword() {
+      const btn = document.getElementById("saveKwBtn");
+      const kw = document.getElementById("keywordInput").value.trim();
+
+      if (!kw) {
+        setStatus("keywordStatus", "Введите ключевое слово", "err");
+        log("Ошибка: ключевое слово не введено", "err");
+        return;
+      }
+
+      clearStatus("keywordStatus");
+      setButtonLoading(btn, true);
+      log(`Сохранение ключевого слова: «${kw}»`, "info");
+
+      try {
+        const ok = await sendDispatch("update-keywords", { keyword: kw });
+        if (ok) {
+          setStatus("keywordStatus", `Слово «${kw}» отправлено`, "ok");
         } else {
-          log(`Ошибка dispatch: ${resp.status}`);
-          document.getElementById("errors").innerHTML = `<span class='error'>Ошибка dispatch: ${resp.status}</span>`;
+          setStatus("keywordStatus", "Не удалось отправить ключевое слово", "err");
         }
       } catch (err) {
-        log("Ошибка FETCH: " + err.message);
-        document.getElementById("errors").innerText = err.message;
+        log("Сетевая ошибка: " + err.message, "err");
+        setStatus("keywordStatus", "Сетевая ошибка: " + err.message, "err");
+      } finally {
+        setButtonLoading(btn, false);
       }
     }
 
-    async function saveKeyword() {
-      const kw = document.getElementById("keywordInput").value.trim();
-      if (!kw) {
-        document.getElementById("keywordStatus").innerHTML = "<span class='error'>Введите слово</span>";
-        return;
-      }
-      log("Сохранение ключевого слова: " + kw);
-      await dispatchEvent("update-keywords", { keyword: kw });
-    }
-
+    // ── Запустить сбор данных ─────────────────────────────────────────────
     async function runScraper() {
+      const btn = document.getElementById("runBtn");
       const kw = document.getElementById("keywordInput").value.trim();
-      if (!kw) {
-        document.getElementById("errors").innerHTML = "<span class='error'>Нет ключевого слова</span>";
+
+      if (!storage.get("GH_TOKEN")) {
+        setStatus("workflowStatus", "Сначала сохраните токен", "err");
+        log("Ошибка: токен отсутствует", "err");
         return;
       }
-      log("Запуск workflow Run Scraper...");
-      await dispatchEvent("run-scraper", { keyword: kw });
+
+      if (!kw) {
+        setStatus("workflowStatus", "Введите ключевое слово перед запуском", "err");
+        log("Ошибка: ключевое слово не указано", "err");
+        return;
+      }
+
+      clearStatus("workflowStatus");
+      setButtonLoading(btn, true);
+      log(`Запуск workflow run-scraper для «${kw}»...`, "info");
+
+      try {
+        const ok = await sendDispatch("run-scraper", { keyword: kw });
+        if (ok) {
+          setStatus("workflowStatus", `Workflow запущен для «${kw}»`, "ok");
+        } else {
+          setStatus("workflowStatus", "Не удалось запустить workflow", "err");
+        }
+      } catch (err) {
+        log("Сетевая ошибка: " + err.message, "err");
+        setStatus("workflowStatus", "Сетевая ошибка: " + err.message, "err");
+      } finally {
+        setButtonLoading(btn, false);
+      }
     }
   </script>
 </body>
