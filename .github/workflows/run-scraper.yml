@@ -10,6 +10,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,7 +39,6 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
           git add data/raw_data.csv keywords.txt
           git diff --staged --quiet || git commit -m "Scraper results: ${{ github.event.client_payload.keyword }}"
           git push
