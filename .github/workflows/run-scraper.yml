@@ -22,7 +22,6 @@ jobs:
 
       - name: Run scraper
         run: |
-          echo "Keyword from payload: ${{ github.event.client_payload.keyword }}"
           echo "${{ github.event.client_payload.keyword }}" > keywords.txt
           python main.py
 
