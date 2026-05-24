@@ -7,16 +7,24 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Update keywords.txt
-        run: echo "${{ github.event.client_payload.keyword }}" > keywords.txt
+        env:
+          KEYWORD: ${{ github.event.client_payload.keyword }}
+        run: |
+          test -n "$KEYWORD" || (echo "Ошибка: keyword пустой" && exit 1)
+          echo "$KEYWORD" > keywords.txt
 
       - name: Commit changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
           git add keywords.txt
-          git commit -m "Update keywords"
+          git diff --staged --quiet || git commit -m "Update keywords: ${{ github.event.client_payload.keyword }}"
           git push
