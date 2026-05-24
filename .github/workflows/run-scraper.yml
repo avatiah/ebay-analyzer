@@ -1,0 +1,31 @@
+name: Run Scraper
+
+on:
+  repository_dispatch:
+    types: [run-scraper-from-ui]
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scraper
+        run: python main.py
+
+      - name: Commit CSV
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add data/raw_data.csv
+          git commit -m "Update CSV"
+          git push
