@@ -17,6 +17,7 @@
   <h1>eBay Market Analyzer</h1>
   <p>Автоматический сбор и анализ данных с eBay</p>
 
+  <!-- Авторизация -->
   <div class="section">
     <h2>🔑 Авторизация</h2>
     <input type="text" id="tokenInput" placeholder="ghp_...">
@@ -24,6 +25,7 @@
     <div id="tokenStatus"></div>
   </div>
 
+  <!-- Ключевые слова -->
   <div class="section">
     <h2>📝 Ключевые слова</h2>
     <input type="text" id="keywordInput" placeholder="Введите ключевое слово">
@@ -31,27 +33,32 @@
     <div id="keywordStatus"></div>
   </div>
 
+  <!-- Управление -->
   <div class="section">
     <h2>⚙️ Управление</h2>
     <button onclick="runScraper()">🔄 Запустить сбор данных</button>
   </div>
 
+  <!-- Журнал событий -->
   <div class="section">
     <h2>📊 Журнал событий</h2>
     <pre id="log"></pre>
   </div>
 
+  <!-- CSV статус -->
   <div class="section">
     <h2>📂 CSV статус</h2>
     <div id="csv-info">Строк: ... | Размер: ... KB | Последнее обновление: ...</div>
     <pre id="csv-preview"></pre>
   </div>
 
+  <!-- Workflow статус -->
   <div class="section">
     <h2>⚙️ Workflow статус</h2>
     <div id="workflow-status">...</div>
   </div>
 
+  <!-- Ошибки -->
   <div class="section">
     <h2>❌ Ошибки</h2>
     <div id="errors">...</div>
@@ -77,35 +84,13 @@
       }
     }
 
-    async function saveKeyword() {
-      const kw = document.getElementById("keywordInput").value.trim();
-      if (!kw) {
-        document.getElementById("keywordStatus").innerHTML = "<span class='error'>Введите слово</span>";
-        return;
-      }
-      log("Сохранение ключевого слова: " + kw);
-      await dispatchEvent("update-keywords", { keyword: kw });
-    }
-
-    async function runScraper() {
-      const kw = document.getElementById("keywordInput").value.trim();
-      if (!localStorage.getItem("GH_TOKEN")) {
-        log("Ошибка: нет токена");
-        document.getElementById("errors").innerHTML = "<span class='error'>Нет токена</span>";
-        return;
-      }
-      if (!kw) {
-        log("Ошибка: нет ключевого слова");
-        document.getElementById("errors").innerHTML = "<span class='error'>Нет ключевого слова</span>";
-        return;
-      }
-      log("Запуск workflow Run Scraper...");
-      await dispatchEvent("run-scraper", { keyword: kw });
-    }
-
     async function dispatchEvent(eventType, clientPayload = {}) {
       try {
         const token = localStorage.getItem("GH_TOKEN");
+        if (!token) {
+          document.getElementById("errors").innerHTML = "<span class='error'>Нет токена</span>";
+          return;
+        }
         const resp = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
           method: "POST",
           headers: {
@@ -125,6 +110,26 @@
         log("Ошибка FETCH: " + err.message);
         document.getElementById("errors").innerText = err.message;
       }
+    }
+
+    async function saveKeyword() {
+      const kw = document.getElementById("keywordInput").value.trim();
+      if (!kw) {
+        document.getElementById("keywordStatus").innerHTML = "<span class='error'>Введите слово</span>";
+        return;
+      }
+      log("Сохранение ключевого слова: " + kw);
+      await dispatchEvent("update-keywords", { keyword: kw });
+    }
+
+    async function runScraper() {
+      const kw = document.getElementById("keywordInput").value.trim();
+      if (!kw) {
+        document.getElementById("errors").innerHTML = "<span class='error'>Нет ключевого слова</span>";
+        return;
+      }
+      log("Запуск workflow Run Scraper...");
+      await dispatchEvent("run-scraper", { keyword: kw });
     }
   </script>
 </body>
