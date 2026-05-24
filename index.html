@@ -17,16 +17,13 @@
   <h1>eBay Market Analyzer</h1>
   <p>Автоматический сбор и анализ данных с eBay</p>
 
-  <!-- Авторизация -->
   <div class="section">
     <h2>🔑 Авторизация</h2>
-    <p>Введите ваш GitHub токен:</p>
     <input type="text" id="tokenInput" placeholder="ghp_...">
     <button onclick="saveToken()">Сохранить токен</button>
     <div id="tokenStatus"></div>
   </div>
 
-  <!-- Ключевые слова -->
   <div class="section">
     <h2>📝 Ключевые слова</h2>
     <input type="text" id="keywordInput" placeholder="Введите ключевое слово">
@@ -34,32 +31,27 @@
     <div id="keywordStatus"></div>
   </div>
 
-  <!-- Управление -->
   <div class="section">
     <h2>⚙️ Управление</h2>
     <button onclick="runScraper()">🔄 Запустить сбор данных</button>
   </div>
 
-  <!-- Журнал событий -->
   <div class="section">
     <h2>📊 Журнал событий</h2>
     <pre id="log"></pre>
   </div>
 
-  <!-- CSV статус -->
   <div class="section">
     <h2>📂 CSV статус</h2>
     <div id="csv-info">Строк: ... | Размер: ... KB | Последнее обновление: ...</div>
     <pre id="csv-preview"></pre>
   </div>
 
-  <!-- Workflow статус -->
   <div class="section">
     <h2>⚙️ Workflow статус</h2>
     <div id="workflow-status">...</div>
   </div>
 
-  <!-- Ошибки -->
   <div class="section">
     <h2>❌ Ошибки</h2>
     <div id="errors">...</div>
