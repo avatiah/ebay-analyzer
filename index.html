@@ -1,250 +1,161 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>eBay Market Analyzer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
   <style>
-    body {
-      margin: 0;
-      font-family: "Inter", sans-serif;
-      background: radial-gradient(circle at top left, #e0e7ff 0, #f5f7fb 40%, #f5f7fb 100%);
-      color: #111827;
-    }
-    .app { max-width: 1200px; margin: 0 auto; padding: 24px 16px 40px; }
-    .header { display: flex; justify-content: space-between; margin-bottom: 24px; }
-    .title { font-size: 24px; font-weight: 700; }
-    .card {
-      background: white;
-      border-radius: 18px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
-      border: 1px solid rgba(148, 163, 184, 0.18);
-    }
-    .btn-primary {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      background: linear-gradient(135deg, #4f46e5, #6366f1);
-      color: white;
-      cursor: pointer;
-    }
-    .btn-secondary {
-      border-radius: 999px;
-      padding: 6px 12px;
-      font-size: 12px;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      background: rgba(15, 23, 42, 0.02);
-      cursor: pointer;
-    }
-    textarea {
-      width: 100%;
-      min-height: 80px;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      padding: 10px;
-      font-size: 13px;
-      background: #f9fafb;
-    }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; }
-    thead { background: #eef2ff; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    .section { margin-bottom: 25px; }
+    .ok { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    pre { background: #f4f4f4; padding: 10px; border-radius: 5px; max-height: 300px; overflow-y: auto; }
+    input, button { padding: 5px; margin: 5px 0; }
   </style>
 </head>
-
 <body>
-  <div class="app">
+  <h1>eBay Market Analyzer</h1>
+  <p>Автоматический сбор и анализ данных с eBay</p>
 
-    <div class="header">
-      <div>
-        <div class="title">eBay Market Analyzer</div>
-        <div>Автоматический сбор и анализ данных с eBay</div>
-      </div>
-      <div id="workflowStatusText">Ожидание…</div>
-    </div>
-
-    <!-- SYSTEM STATUS -->
-    <div class="card">
-      <h3>Состояние системы</h3>
-      <button class="btn-primary" id="runWorkflowBtn">🔄 Запустить сбор данных</button>
-
-      <p>Последний запуск: <span id="sysLastRun">–</span></p>
-      <p>Статус: <span id="sysLastStatus">–</span></p>
-      <p>Длительность: <span id="sysLastDuration">–</span></p>
-      <p>Строк в CSV: <span id="sysCsvRows">0</span></p>
-      <p>Размер CSV: <span id="sysCsvSize">–</span></p>
-      <p>Ошибки: <span id="sysErrors">–</span></p>
-    </div>
-
-    <!-- KEYWORDS -->
-    <div class="card">
-      <h3>Ключевые слова</h3>
-      <textarea id="keywordsInput"></textarea>
-      <br><br>
-      <button class="btn-primary" id="saveKeywordsBtn">💾 Сохранить</button>
-      <button class="btn-secondary" id="reloadKeywordsBtn">🔄 Обновить</button>
-      <p id="keywordsStatus">Готово</p>
-    </div>
-
-    <!-- DATA TABLE -->
-    <div class="card">
-      <h3>Последние данные</h3>
-      <table id="dataTable">
-        <thead>
-          <tr>
-            <th>Время</th>
-            <th>Источник</th>
-            <th>Ключевое слово</th>
-            <th>Цена</th>
-            <th>Watchers</th>
-            <th>Avg Price</th>
-            <th>Trend</th>
-            <th>Sold</th>
-            <th>Ошибка</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
+  <div class="section">
+    <h2>🔑 Авторизация</h2>
+    <p>Введите ваш GitHub токен:</p>
+    <input type="text" id="tokenInput" placeholder="GH_TOKEN">
+    <button onclick="saveToken()">Сохранить токен</button>
+    <div id="tokenStatus"></div>
   </div>
 
-<script>
-/* ✔ ИСПРАВЛЕНО: правильные USER/REPO */
-const GITHUB_USER = "avatiah";
-const GITHUB_REPO = "ebay-analyzer";
+  <div class="section">
+    <h2>⚙️ Управление</h2>
+    <button onclick="runScraper()">🔄 Запустить сбор данных</button>
+    <button onclick="updateKeywords()">💾 Обновить ключевые слова</button>
+  </div>
 
-/* -------------------- WORKFLOW TRIGGER -------------------- */
-async function triggerScraperFromUI() {
-  document.getElementById("workflowStatusText").textContent = "Запуск…";
+  <div class="section">
+    <h2>📊 Журнал событий</h2>
+    <pre id="log"></pre>
+  </div>
 
-  await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
-    method: "POST",
-    headers: { "Accept": "application/vnd.github+json" },
-    body: JSON.stringify({ event_type: "run-scraper-from-ui" })
-  });
+  <div class="section">
+    <h2>📂 CSV статус</h2>
+    <div id="csv-info">Строк: ... | Размер: ... KB | Последнее обновление: ...</div>
+    <pre id="csv-preview"></pre>
+  </div>
 
-  updateSystemStatus();
-}
+  <div class="section">
+    <h2>⚙️ Workflow статус</h2>
+    <div id="workflow-status">...</div>
+  </div>
 
-/* -------------------- LOAD WORKFLOW STATUS -------------------- */
-async function fetchLastRun() {
-  const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/actions/runs?per_page=1`;
-  const resp = await fetch(url);
-  if (!resp.ok) return null;
-  const data = await resp.json();
-  return data.workflow_runs?.[0] || null;
-}
+  <div class="section">
+    <h2>🔍 Диагностика парсера</h2>
+    <div id="parser-status">Keywords: ... | Найдено результатов: ...</div>
+  </div>
 
-function formatDuration(start, end) {
-  if (!start || !end) return "–";
-  const diff = (new Date(end) - new Date(start)) / 1000;
-  return diff < 60 ? `${Math.round(diff)} сек` : `${Math.round(diff/60)} мин`;
-}
+  <div class="section">
+    <h2>❌ Ошибки</h2>
+    <div id="errors">...</div>
+  </div>
 
-async function updateSystemStatus() {
-  const run = await fetchLastRun();
-  if (!run) return;
+  <script>
+    const GITHUB_USER = "avatiah";
+    const GITHUB_REPO = "ebay-analyzer";
 
-  document.getElementById("sysLastRun").textContent = new Date(run.updated_at).toLocaleString();
-  document.getElementById("sysLastDuration").textContent = formatDuration(run.run_started_at, run.updated_at);
-
-  if (run.conclusion === "success") {
-    document.getElementById("sysLastStatus").textContent = "Успешно";
-    document.getElementById("workflowStatusText").textContent = "Последний запуск: успешно";
-  } else {
-    document.getElementById("sysLastStatus").textContent = "Ошибка";
-    document.getElementById("workflowStatusText").textContent = "Последний запуск: ошибка";
-  }
-
-  updateCsvStats();
-}
-
-/* -------------------- CSV -------------------- */
-async function updateCsvStats() {
-  const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/data/raw_data.csv`;
-  const resp = await fetch(url);
-  if (!resp.ok) return;
-
-  const text = await resp.text();
-  const rows = text.trim().split("\n").length - 1;
-
-  document.getElementById("sysCsvRows").textContent = rows;
-  document.getElementById("sysCsvSize").textContent = (new Blob([text]).size / 1024).toFixed(1) + " KB";
-
-  loadTable(text);
-}
-
-function loadTable(csvText) {
-  const tbody = document.querySelector("#dataTable tbody");
-  tbody.innerHTML = "";
-
-  Papa.parse(csvText, {
-    header: true,
-    skipEmptyLines: true,
-    complete: function (results) {
-      results.data.slice(-50).forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.timestamp || ""}</td>
-          <td>${row.source || ""}</td>
-          <td>${row.keyword || ""}</td>
-          <td>${row.price || ""}</td>
-          <td>${row.watchers || ""}</td>
-          <td>${row.avg_price || ""}</td>
-          <td>${row.trend || ""}</td>
-          <td>${row.sold || ""}</td>
-          <td>${row.error || ""}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+    function log(message) {
+      const logEl = document.getElementById("log");
+      logEl.textContent += `[${new Date().toLocaleTimeString()}] ${message}\n`;
     }
-  });
-}
 
-/* -------------------- KEYWORDS -------------------- */
-async function loadKeywords() {
-  const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/keywords.txt`;
-  const resp = await fetch(url);
-  if (!resp.ok) {
-    document.getElementById("keywordsStatus").textContent = "Не удалось загрузить keywords.txt";
-    return;
-  }
-  const text = await resp.text();
-  document.getElementById("keywordsInput").value = text.trim();
-  document.getElementById("keywordsStatus").textContent = "Ключевые слова загружены";
-}
+    function saveToken() {
+      const token = document.getElementById("tokenInput").value.trim();
+      if (token) {
+        localStorage.setItem("GH_TOKEN", token);
+        document.getElementById("tokenStatus").innerHTML = "<span class='ok'>Токен сохранён</span>";
+        log("Токен сохранён");
+      } else {
+        document.getElementById("tokenStatus").innerHTML = "<span class='error'>Введите токен</span>";
+      }
+    }
 
-async function saveKeywords() {
-  document.getElementById("keywordsStatus").textContent = "Сохранение…";
+    async function runScraper() {
+      log("Запуск workflow Run Scraper...");
+      await dispatchEvent("run-scraper");
+    }
 
-  await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
-    method: "POST",
-    headers: { "Accept": "application/vnd.github+json" },
-    body: JSON.stringify({
-      event_type: "update-keywords",
-      client_payload: { content: document.getElementById("keywordsInput").value }
-    })
-  });
+    async function updateKeywords() {
+      log("Запуск workflow Update Keywords...");
+      await dispatchEvent("update-keywords");
+    }
 
-  document.getElementById("keywordsStatus").textContent = "Сохранено";
-}
+    async function dispatchEvent(eventType) {
+      try {
+        const token = localStorage.getItem("GH_TOKEN");
+        if (!token) {
+          log("Ошибка: нет токена");
+          document.getElementById("errors").innerHTML = "<span class='error'>Нет токена</span>";
+          return;
+        }
+        const resp = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Accept": "application/vnd.github+json"
+          },
+          body: JSON.stringify({ event_type: eventType })
+        });
+        if (resp.status === 204) {
+          log(`Dispatch ${eventType} отправлен успешно`);
+          document.getElementById("workflow-status").innerHTML = `<span class='ok'>Workflow ${eventType} запущен</span>`;
+        } else {
+          log(`Ошибка dispatch: ${resp.status}`);
+          document.getElementById("errors").innerHTML = `<span class='error'>Ошибка dispatch: ${resp.status}</span>`;
+        }
+      } catch (err) {
+        log("Ошибка FETCH: " + err.message);
+        document.getElementById("errors").innerText = err.message;
+      }
+    }
 
-/* -------------------- INIT -------------------- */
-document.getElementById("runWorkflowBtn").onclick = triggerScraperFromUI;
-document.getElementById("reloadKeywordsBtn").onclick = loadKeywords;
-document.getElementById("saveKeywordsBtn").onclick = saveKeywords;
+    async function checkCSV() {
+      try {
+        const resp = await fetch("data/raw_data.csv");
+        if (!resp.ok) {
+          document.getElementById("csv-info").innerHTML = "<span class='error'>Нет доступа к CSV</span>";
+          return;
+        }
+        const text = await resp.text();
+        const lines = text.trim().split("\n");
+        const sizeKB = (new Blob([text]).size / 1024).toFixed(1);
+        document.getElementById("csv-info").innerText = `Строк: ${lines.length - 1} | Размер: ${sizeKB} KB | Последнее обновление: ${new Date().toLocaleString()}`;
+        document.getElementById("csv-preview").innerText = lines.slice(-10).join("\n");
+        log(`CSV проверен: ${lines.length - 1} строк`);
+      } catch (err) {
+        document.getElementById("csv-info").innerHTML = "<span class='error'>Ошибка чтения CSV</span>";
+        log("Ошибка чтения CSV: " + err.message);
+      }
+    }
 
-updateSystemStatus();
-loadKeywords();
-</script>
+    async function checkKeywords() {
+      try {
+        const resp = await fetch("keywords.txt");
+        if (resp.ok) {
+          const text = await resp.text();
+          const keywords = text.trim().split("\n").filter(Boolean);
+          document.getElementById("parser-status").innerText = `Keywords: ${keywords.join(", ")} | Найдено результатов: ...`;
+          log("Ключевые слова загружены: " + keywords.join(", "));
+        } else {
+          document.getElementById("parser-status").innerHTML = "<span class='error'>Нет доступа к keywords.txt</span>";
+          log("Ошибка доступа к keywords.txt");
+        }
+      } catch (err) {
+        document.getElementById("parser-status").innerHTML = "<span class='error'>Ошибка чтения keywords.txt</span>";
+        log("Ошибка чтения keywords.txt: " + err.message);
+      }
+    }
 
+    // Запускаем проверки при загрузке
+    checkCSV();
+    checkKeywords();
+  </script>
 </body>
 </html>
