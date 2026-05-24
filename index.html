@@ -21,7 +21,7 @@
   <div class="section">
     <h2>🔑 Авторизация</h2>
     <p>Введите ваш GitHub токен:</p>
-    <input type="text" id="tokenInput" placeholder="GH_TOKEN">
+    <input type="text" id="tokenInput" placeholder="ghp_...">
     <button onclick="saveToken()">Сохранить токен</button>
     <div id="tokenStatus"></div>
   </div>
@@ -95,16 +95,10 @@
     function saveKeyword() {
       const kw = document.getElementById("keywordInput").value.trim();
       if (kw) {
-        fetch("keywords.txt", {
-          method: "POST",
-          body: kw,
-        }).then(() => {
-          document.getElementById("keywordStatus").innerHTML = "<span class='ok'>Ключевое слово сохранено</span>";
-          log("Ключевое слово сохранено: " + kw);
-        }).catch(err => {
-          document.getElementById("keywordStatus").innerHTML = "<span class='error'>Ошибка сохранения</span>";
-          log("Ошибка сохранения keywords.txt: " + err.message);
-        });
+        // сохраняем ключевое слово в localStorage
+        localStorage.setItem("LAST_KEYWORD", kw);
+        document.getElementById("keywordStatus").innerHTML = "<span class='ok'>Ключевое слово сохранено</span>";
+        log("Ключевое слово сохранено: " + kw);
       } else {
         document.getElementById("keywordStatus").innerHTML = "<span class='error'>Введите слово</span>";
       }
@@ -174,20 +168,13 @@
     }
 
     async function checkKeywords() {
-      try {
-        const resp = await fetch("keywords.txt");
-        if (resp.ok) {
-          const text = await resp.text();
-          const keywords = text.trim().split("\n").filter(Boolean);
-          document.getElementById("parser-status").innerText = `Keywords: ${keywords.join(", ")} | Найдено результатов: ...`;
-          log("Ключевые слова загружены: " + keywords.join(", "));
-        } else {
-          document.getElementById("parser-status").innerHTML = "<span class='error'>Нет доступа к keywords.txt</span>";
-          log("Ошибка доступа к keywords.txt");
-        }
-      } catch (err) {
-        document.getElementById("parser-status").innerHTML = "<span class='error'>Ошибка чтения keywords.txt</span>";
-        log("Ошибка чтения keywords.txt: " + err.message);
+      const kw = localStorage.getItem("LAST_KEYWORD");
+      if (kw) {
+        document.getElementById("parser-status").innerText = `Keywords: ${kw} | Найдено результатов: ...`;
+        log("Ключевые слова загружены: " + kw);
+      } else {
+        document.getElementById("parser-status").innerHTML = "<span class='error'>Нет ключевых слов</span>";
+        log("Нет ключевых слов");
       }
     }
 
