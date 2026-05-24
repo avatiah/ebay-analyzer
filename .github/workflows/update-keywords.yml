@@ -1,15 +1,10 @@
-name: Update Keywords
-
-on:
-  repository_dispatch:
-    types: [update-keywords]
-
 jobs:
   update:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Update keywords.txt
         run: |
