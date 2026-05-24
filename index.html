@@ -38,7 +38,6 @@
   <div class="section">
     <h2>⚙️ Управление</h2>
     <button onclick="runScraper()">🔄 Запустить сбор данных</button>
-    <button onclick="updateKeywords()">📥 Обновить keywords.txt</button>
   </div>
 
   <!-- Журнал событий -->
@@ -58,12 +57,6 @@
   <div class="section">
     <h2>⚙️ Workflow статус</h2>
     <div id="workflow-status">...</div>
-  </div>
-
-  <!-- Диагностика парсера -->
-  <div class="section">
-    <h2>🔍 Диагностика парсера</h2>
-    <div id="parser-status">Keywords: ... | Найдено результатов: ...</div>
   </div>
 
   <!-- Ошибки -->
@@ -92,16 +85,14 @@
       }
     }
 
-    function saveKeyword() {
+    async function saveKeyword() {
       const kw = document.getElementById("keywordInput").value.trim();
-      if (kw) {
-        // сохраняем ключевое слово в localStorage
-        localStorage.setItem("LAST_KEYWORD", kw);
-        document.getElementById("keywordStatus").innerHTML = "<span class='ok'>Ключевое слово сохранено</span>";
-        log("Ключевое слово сохранено: " + kw);
-      } else {
+      if (!kw) {
         document.getElementById("keywordStatus").innerHTML = "<span class='error'>Введите слово</span>";
+        return;
       }
+      log("Сохранение ключевого слова: " + kw);
+      await dispatchEvent("update-keywords", { keyword: kw });
     }
 
     async function runScraper() {
@@ -114,17 +105,7 @@
       await dispatchEvent("run-scraper");
     }
 
-    async function updateKeywords() {
-      if (!localStorage.getItem("GH_TOKEN")) {
-        log("Ошибка: нет токена");
-        document.getElementById("errors").innerHTML = "<span class='error'>Нет токена</span>";
-        return;
-      }
-      log("Запуск workflow Update Keywords...");
-      await dispatchEvent("update-keywords");
-    }
-
-    async function dispatchEvent(eventType) {
+    async function dispatchEvent(eventType, clientPayload = {}) {
       try {
         const token = localStorage.getItem("GH_TOKEN");
         const resp = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
@@ -133,7 +114,7 @@
             "Authorization": `Bearer ${token}`,
             "Accept": "application/vnd.github+json"
           },
-          body: JSON.stringify({ event_type: eventType })
+          body: JSON.stringify({ event_type: eventType, client_payload: clientPayload })
         });
         if (resp.status === 204) {
           log(`Dispatch ${eventType} отправлен успешно`);
@@ -147,40 +128,6 @@
         document.getElementById("errors").innerText = err.message;
       }
     }
-
-    async function checkCSV() {
-      try {
-        const resp = await fetch("data/raw_data.csv");
-        if (!resp.ok) {
-          document.getElementById("csv-info").innerHTML = "<span class='error'>Нет доступа к CSV</span>";
-          return;
-        }
-        const text = await resp.text();
-        const lines = text.trim().split("\n");
-        const sizeKB = (new Blob([text]).size / 1024).toFixed(1);
-        document.getElementById("csv-info").innerText = `Строк: ${lines.length - 1} | Размер: ${sizeKB} KB | Последнее обновление: ${new Date().toLocaleString()}`;
-        document.getElementById("csv-preview").innerText = lines.slice(-10).join("\n");
-        log(`CSV проверен: ${lines.length - 1} строк`);
-      } catch (err) {
-        document.getElementById("csv-info").innerHTML = "<span class='error'>Ошибка чтения CSV</span>";
-        log("Ошибка чтения CSV: " + err.message);
-      }
-    }
-
-    async function checkKeywords() {
-      const kw = localStorage.getItem("LAST_KEYWORD");
-      if (kw) {
-        document.getElementById("parser-status").innerText = `Keywords: ${kw} | Найдено результатов: ...`;
-        log("Ключевые слова загружены: " + kw);
-      } else {
-        document.getElementById("parser-status").innerHTML = "<span class='error'>Нет ключевых слов</span>";
-        log("Нет ключевых слов");
-      }
-    }
-
-    // Запускаем проверки при загрузке
-    checkCSV();
-    checkKeywords();
   </script>
 </body>
 </html>
