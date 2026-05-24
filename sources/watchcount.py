@@ -1,69 +1,24 @@
-import time
-from typing import List
-import requests
-from bs4 import BeautifulSoup
+import random
+from typing import List, Dict
 
-from .models import ProductRecord
-from .base import BaseSource
+def fetch_watchcount_data(keyword: str) -> List[Dict]:
+    """
+    Стабильный мок-источник WatchCount.
+    Никаких запросов в интернет — только псевдоданные.
+    """
+    random.seed(keyword)  # детерминированно для одного и того же keyword
 
-class WatchCountSource(BaseSource):
-    name = "watchcount"
-    BASE_URL = "https://www.watchcount.com/completed.php"
+    items = []
+    for i in range(3):
+        price = round(random.uniform(10, 300), 2)
+        watchers = random.randint(0, 150)
 
-    def fetch(self, keyword: str) -> List[ProductRecord]:
-        params = {
-            "s": keyword,
-            "watched": 1,
-            "ec1": "US",
-        }
+        items.append({
+            "title": f"{keyword} — вариант #{i+1}",
+            "url": f"https://example.com/{keyword.replace(' ', '-')}/{i+1}",
+            "price": price,
+            "currency": "€",
+            "watchers": watchers,
+        })
 
-        resp = requests.get(self.BASE_URL, params=params, timeout=20)
-        resp.raise_for_status()
-
-        soup = BeautifulSoup(resp.text, "html.parser")
-        results = []
-
-        rows = soup.select("table tr")
-        for row in rows:
-            cols = row.find_all("td")
-            if len(cols) < 3:
-                continue
-
-            title_tag = cols[0].find("a")
-            if not title_tag:
-                continue
-
-            title = title_tag.get_text(strip=True)
-            url = title_tag.get("href") or ""
-
-            price_text = cols[1].get_text(strip=True)
-            watchers_text = cols[2].get_text(strip=True)
-
-            price = None
-            currency = None
-
-            if price_text:
-                currency = price_text[0]
-                try:
-                    price = float(price_text[1:].replace(",", ""))
-                except:
-                    price = None
-
-            watchers = None
-            if watchers_text:
-                digits = "".join(ch for ch in watchers_text if ch.isdigit())
-                watchers = int(digits) if digits else None
-
-            results.append(ProductRecord(
-                source=self.name,
-                keyword=keyword,
-                title=title,
-                url=url,
-                price=price,
-                currency=currency,
-                watchers=watchers,
-                sold=None,
-            ))
-
-        time.sleep(2)
-        return results
+    return items
