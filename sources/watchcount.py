@@ -1,9 +1,9 @@
 import time
-from typing import List, Optional
+from typing import List
 import requests
 from bs4 import BeautifulSoup
 
-from models import ProductRecord
+from .models import ProductRecord
 from .base import BaseSource
 
 class WatchCountSource(BaseSource):
