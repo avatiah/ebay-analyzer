@@ -1,0 +1,26 @@
+name: Trigger Scraper (Proxy)
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [run-scraper-from-ui]
+
+jobs:
+  trigger-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call GitHub API to trigger scraper
+        env:
+          GH_TOKEN: ${{ secrets.ACTIONS_TRIGGER_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Triggering scraper workflow from proxy..."
+
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            https://api.github.com/repos/${REPO}/actions/workflows/scraper.yml/dispatches \
+            -d '{"ref":"main"}'
+
+          echo "Scraper workflow dispatched."
