@@ -22,6 +22,7 @@ jobs:
 
       - name: Run scraper
         run: |
+          mkdir -p data
           echo "${{ github.event.client_payload.keyword }}" > keywords.txt
           python main.py
 
