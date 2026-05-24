@@ -7,16 +7,11 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_TOKEN }}
+      - uses: actions/checkout@v3
 
       - name: Update keywords.txt
-        run: |
-          echo "${{ github.event.client_payload.content }}" > keywords.txt
+        run: echo "${{ github.event.client_payload.keyword }}" > keywords.txt
 
       - name: Commit changes
         run: |
