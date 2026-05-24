@@ -53,7 +53,6 @@
         const resp = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem("GH_TOKEN")}`,
             "Accept": "application/vnd.github+json"
           },
           body: JSON.stringify({ event_type: "debug-check" })
