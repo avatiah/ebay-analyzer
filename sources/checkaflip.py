@@ -1,16 +1,13 @@
 import random
 
-def fetch_checkaflip_data(keyword: str) -> dict:
+def fetch_checkaflip_data(keyword: str):
     """
-    Стабильный мок-источник CheckAFlip.
+    Стабильный мок CheckAFlip.
     Возвращает среднюю цену и количество продаж.
     """
-    random.seed("checkaflip_" + keyword)
-
-    avg_price = round(random.uniform(20, 250), 2)
-    sold = random.randint(5, 200)
+    random.seed("cf_" + keyword)
 
     return {
-        "avg_price": avg_price,
-        "sold": sold,
+        "avg_price": round(random.uniform(20, 250), 2),
+        "sold": random.randint(5, 200),
     }
