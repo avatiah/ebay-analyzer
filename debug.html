@@ -10,11 +10,21 @@
     .ok { color: green; font-weight: bold; }
     .error { color: red; font-weight: bold; }
     pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
+    input { padding: 5px; width: 400px; }
+    button { padding: 5px 10px; margin-left: 10px; }
   </style>
 </head>
 <body>
   <h1>Debug Dashboard</h1>
   <p>Страница диагностики для поиска проблем в проекте.</p>
+
+  <div class="section">
+    <h2>🔑 Авторизация</h2>
+    <p>Введите ваш GitHub токен один раз, чтобы убрать ошибку 401:</p>
+    <input type="text" id="tokenInput" placeholder="Вставьте сюда GH_TOKEN">
+    <button onclick="saveToken()">Сохранить токен</button>
+    <div id="tokenStatus"></div>
+  </div>
 
   <div class="section" id="github-api">
     <h2>1. Проверка GitHub API</h2>
@@ -46,13 +56,30 @@
 
   <script>
     const GITHUB_USER = "avatiah";
-    const GITHUB_REPO = "ebay-analyzer"; // исправлено!
+    const GITHUB_REPO = "ebay-analyzer";
+
+    function saveToken() {
+      const token = document.getElementById("tokenInput").value.trim();
+      if (token) {
+        localStorage.setItem("GH_TOKEN", token);
+        document.getElementById("tokenStatus").innerHTML = "<span class='ok'>Токен сохранён</span>";
+        checkDispatch(); // сразу проверим
+      } else {
+        document.getElementById("tokenStatus").innerHTML = "<span class='error'>Введите токен</span>";
+      }
+    }
 
     async function checkDispatch() {
       try {
+        const token = localStorage.getItem("GH_TOKEN");
+        if (!token) {
+          document.getElementById("dispatch-status").innerHTML = "GitHub API (dispatch): <span class='error'>Нет токена</span>";
+          return;
+        }
         const resp = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
           method: "POST",
           headers: {
+            "Authorization": `Bearer ${token}`,
             "Accept": "application/vnd.github+json"
           },
           body: JSON.stringify({ event_type: "debug-check" })
@@ -99,6 +126,7 @@
       }
     }
 
+    // Запускаем проверки при загрузке
     checkDispatch();
     checkCSV();
     checkKeywords();
