@@ -4,12 +4,10 @@
   <meta charset="UTF-8" />
   <title>eBay Market Analyzer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- PapaParse (CSV парсер) -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
   <style>
     :root {
       --bg: #f5f7fb;
@@ -23,12 +21,10 @@
       --danger: #ef4444;
       --success: #16a34a;
     }
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "Inter", sans-serif;
       background: radial-gradient(circle at top left, #e0e7ff 0, #f5f7fb 40%, #f5f7fb 100%);
       color: var(--text-main);
     }
@@ -44,11 +40,7 @@
       gap: 16px;
       margin-bottom: 24px;
     }
-    .title-block {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+    .title-block { display: flex; flex-direction: column; gap: 4px; }
     .title {
       font-size: 24px;
       font-weight: 700;
@@ -67,10 +59,7 @@
       color: var(--accent-strong);
       font-weight: 600;
     }
-    .subtitle {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
+    .subtitle { font-size: 13px; color: var(--text-muted); }
     .badge-live {
       display: inline-flex;
       align-items: center;
@@ -89,12 +78,7 @@
       background: #22c55e;
       box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
     }
-    .controls {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      align-items: flex-end;
-    }
+    .controls { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
     .small-label {
       font-size: 11px;
       text-transform: uppercase;
@@ -115,24 +99,15 @@
       margin-bottom: 16px;
     }
     @media (max-width: 900px) {
-      .layout {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      .header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .controls {
-        align-items: flex-start;
-      }
+      .layout { grid-template-columns: 1fr; }
+      .header { flex-direction: column; align-items: flex-start; }
+      .controls { align-items: flex-start; }
     }
     .card {
       background: var(--card-bg);
       border-radius: 18px;
-      padding: 16px 16px 14px;
-      box-shadow:
-        0 18px 45px rgba(15, 23, 42, 0.06),
-        0 0 0 1px rgba(148, 163, 184, 0.12);
+      padding: 16px;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(148, 163, 184, 0.12);
       border: 1px solid rgba(148, 163, 184, 0.18);
     }
     .card-header {
@@ -154,20 +129,9 @@
       border-radius: 999px;
       background: var(--accent);
     }
-    .card-subtitle {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    .input-label {
-      font-size: 12px;
-      font-weight: 500;
-      margin-bottom: 6px;
-    }
-    .input-help {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
+    .card-subtitle { font-size: 12px; color: var(--text-muted); }
+    .input-label { font-size: 12px; font-weight: 500; margin-bottom: 6px; }
+    .input-help { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
     .textarea {
       width: 100%;
       min-height: 80px;
@@ -177,7 +141,6 @@
       font-size: 13px;
       resize: vertical;
       outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
       background: #f9fafb;
     }
     .textarea:focus {
@@ -204,33 +167,7 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      box-shadow:
-        0 12px 30px rgba(79, 70, 229, 0.35),
-        0 0 0 1px rgba(129, 140, 248, 0.4);
-      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
-    }
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      filter: brightness(1.03);
-      box-shadow:
-        0 16px 40px rgba(79, 70, 229, 0.45),
-        0 0 0 1px rgba(129, 140, 248, 0.5);
-    }
-    .btn-primary:active {
-      transform: translateY(0);
-      box-shadow:
-        0 8px 20px rgba(79, 70, 229, 0.3),
-        0 0 0 1px rgba(129, 140, 248, 0.4);
-    }
-    .btn-primary-icon {
-      width: 16px;
-      height: 16px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.12);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
+      box-shadow: 0 12px 30px rgba(79, 70, 229, 0.35), 0 0 0 1px rgba(129, 140, 248, 0.4);
     }
     .btn-secondary {
       border-radius: 999px;
@@ -240,15 +177,6 @@
       background: rgba(15, 23, 42, 0.02);
       color: var(--text-muted);
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-    }
-    .btn-secondary:hover {
-      background: rgba(15, 23, 42, 0.04);
-      border-color: rgba(148, 163, 184, 0.9);
-      color: #111827;
     }
     .status-line {
       font-size: 11px;
@@ -263,29 +191,257 @@
       border-radius: 999px;
       background: #9ca3af;
     }
-    .status-dot.ok {
-      background: #22c55e;
-    }
-    .status-dot.error {
-      background: #ef4444;
-    }
+    .status-dot.ok { background: #22c55e; }
+    .status-dot.error { background: #ef4444; }
     .metrics-row {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 10px;
       margin-top: 4px;
     }
-    @media (max-width: 700px) {
-      .metrics-row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
     .metric-card {
       border-radius: 14px;
-      padding: 10px 10px 9px;
+      padding: 10px;
       background: radial-gradient(circle at top left, rgba(79, 70, 229, 0.08), #ffffff 55%);
       border: 1px solid rgba(148, 163, 184, 0.4);
       box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
     }
-    .metric-label {
-      font-size: 11px;
+    .metric-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+    .metric-value { font-size: 18px; font-weight: 600; }
+    .chart-container { width: 100%; height: 220px; }
+    .table-card { margin-top: 16px; }
+    .table-wrapper {
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      overflow: hidden;
+      background: #ffffff;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead { background: linear-gradient(to right, #f3f4ff, #eef2ff); }
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+    tbody tr:hover { background: #f9fafb; }
+    .pill-small {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      background: rgba(15, 23, 42, 0.04);
+      color: var(--text-muted);
+    }
+    .pill-small.accent {
+      background: rgba(79, 70, 229, 0.08);
+      color: var(--accent-strong);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="title-block">
+        <div class="title">
+          eBay Market Analyzer
+          <span class="title-pill">Dashboard</span>
+        </div>
+        <div class="subtitle">Аналитика рынка eBay в реальном времени</div>
+        <div class="badge-live">
+          <span class="badge-live-dot"></span>
+          Live CSV Data
+        </div>
+      </div>
+      <div class="controls">
+        <div class="small-label">Режим</div>
+        <div class="pill">GitHub Pages + GitHub Actions</div>
+      </div>
+    </header>
+
+    <main>
+      <section class="layout">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span class="card-title-dot"></span>
+                Ключевые слова
+              </div>
+              <div class="card-subtitle">Введи товары или ниши</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="input-label">Ключевые слова</div>
+            <div class="input-help">Через запятую: iphone 13, lego star wars…</div>
+
+            <textarea id="keywordsInput" class="textarea"></textarea>
+
+            <div class="button-row">
+              <button id="runWorkflowBtn" class="btn-primary">▶ Запустить сбор</button>
+              <button id="saveKeywordsBtn" class="btn-secondary">💾 Сохранить</button>
+            </div>
+
+            <div class="status-line">
+              <span class="status-dot" id="workflowStatusDot"></span>
+              <span id="workflowStatusText">Ожидание…</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span class="card-title-dot"></span>
+                Сводка
+              </div>
+              <div class="card-subtitle">Быстрый обзор данных</div>
+            </div>
+          </div>
+
+          <div class="metrics-row">
+            <div class="metric-card">
+              <div class="metric-label">Всего записей</div>
+              <div class="metric-value" id="metricTotalRows">0</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-label">Средняя цена</div>
+              <div class="metric-value" id="metricAvgPrice">–</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-label">Средний интерес</div>
+              <div class="metric-value" id="metricAvgWatchers">–</div>
+            </div>
+          </div>
+
+          <div class="chart-container">
+            <canvas id="chartPrice"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="card table-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <span class="card-title-dot"></span>
+              Таблица данных
+            </div>
+            <div class="card-subtitle">Фильтры и сортировка</div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="dataTable">
+            <thead>
+              <tr>
+                <th>Время</th>
+                <th>Keyword</th>
+                <th>Товар</th>
+                <th>Цена</th>
+                <th>Watchers</th>
+                <th>Источник</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // === ТВОИ НАСТРОЙКИ ===
+    const GITHUB_USER = "avatiah";
+    const GITHUB_REPO = "ebay-analyzer";
+    const CSV_PATH = "data/raw_data.csv";
+
+    // === ЭЛЕМЕНТЫ ===
+    const keywordsInput = document.getElementById("keywordsInput");
+    const saveKeywordsBtn = document.getElementById("saveKeywordsBtn");
+    const runWorkflowBtn = document.getElementById("runWorkflowBtn");
+    const workflowStatusText = document.getElementById("workflowStatusText");
+    const workflowStatusDot = document.getElementById("workflowStatusDot");
+
+    const metricTotalRows = document.getElementById("metricTotalRows");
+    const metricAvgPrice = document.getElementById("metricAvgPrice");
+    const metricAvgWatchers = document.getElementById("metricAvgWatchers");
+
+    const dataTableBody = document.getElementById("dataTableBody");
+
+    let rawData = [];
+    let priceChart = null;
+
+    // === ЛОКАЛЬНОЕ ХРАНИЛИЩЕ ===
+    function loadKeywords() {
+      const saved = localStorage.getItem("ebay_keywords");
+      keywordsInput.value = saved || "iphone 13, lego star wars, pokemon cards";
+    }
+
+    function saveKeywords() {
+      localStorage.setItem("ebay_keywords", keywordsInput.value.trim());
+      workflowStatusText.textContent = "Ключевые слова сохранены";
+      workflowStatusDot.classList.add("ok");
+    }
+
+    saveKeywordsBtn.onclick = saveKeywords;
+
+    // === ЗАПУСК WORKFLOW (пока вручную) ===
+    runWorkflowBtn.onclick = () => {
+      saveKeywords();
+      alert("Ключевые слова сохранены.\nТеперь запусти workflow вручную:\nGitHub → Actions → eBay Analyzer Scraper → Run workflow");
+    };
+
+    // === ЗАГРУЗКА CSV ===
+    async function loadCsv() {
+      const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/${CSV_PATH}?t=${Date.now()}`;
+      const resp = await fetch(url);
+      const text = await resp.text();
+
+      const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+      rawData = parsed.data;
+
+      renderTable();
+      updateMetrics();
+      updateChart();
+    }
+
+    function renderTable() {
+      dataTableBody.innerHTML = "";
+
+      rawData.forEach(row => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${row.timestamp || ""}</td>
+          <td><span class="pill-small accent">${row.keyword || ""}</span></td>
+          <td>${row.title || ""}</td>
+          <td>${row.price ? "$" + row.price : "–"}</td>
+          <td>${row.watchers || "–"}</td>
+          <td>${row.source || ""}</td>
+        `;
+
+        dataTableBody.appendChild(tr);
+      });
+    }
+
+    function updateMetrics() {
+      metricTotalRows.textContent = rawData.length;
+
+      const prices = rawData
+        .map(r => parseFloat(r.price))
+        .filter(n => !isNaN(n));
+
+      const watchers = rawData
+        .map(r => parseInt(r.watchers))
+        .filter(n => !isNaN(n));
+
+      metricAvgPrice.textContent = prices.length
+        ? (prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(2)
+        : "–";
+
+      metricAvgWatchers.textContent = watchers.length
+        ? (watchers.reduce((a, b) => a + b, 0) / watchers.length).toFixed(
