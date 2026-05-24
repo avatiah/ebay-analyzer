@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>eBay Market Analyzer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Шрифты и библиотеки -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -21,18 +23,22 @@
       --danger: #ef4444;
       --success: #16a34a;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: "Inter", sans-serif;
       background: radial-gradient(circle at top left, #e0e7ff 0, #f5f7fb 40%, #f5f7fb 100%);
       color: var(--text-main);
     }
+
     .app {
       max-width: 1200px;
       margin: 0 auto;
       padding: 24px 16px 40px;
     }
+
     .header {
       display: flex;
       align-items: center;
@@ -40,7 +46,13 @@
       gap: 16px;
       margin-bottom: 24px;
     }
-    .title-block { display: flex; flex-direction: column; gap: 4px; }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
     .title {
       font-size: 24px;
       font-weight: 700;
@@ -49,6 +61,7 @@
       align-items: center;
       gap: 8px;
     }
+
     .title-pill {
       font-size: 11px;
       text-transform: uppercase;
@@ -59,7 +72,12 @@
       color: var(--accent-strong);
       font-weight: 600;
     }
-    .subtitle { font-size: 13px; color: var(--text-muted); }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
     .badge-live {
       display: inline-flex;
       align-items: center;
@@ -71,6 +89,7 @@
       color: #166534;
       font-weight: 500;
     }
+
     .badge-live-dot {
       width: 8px;
       height: 8px;
@@ -78,13 +97,21 @@
       background: #22c55e;
       box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
     }
-    .controls { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
     .small-label {
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: var(--text-muted);
     }
+
     .pill {
       font-size: 12px;
       padding: 4px 10px;
@@ -92,17 +119,27 @@
       background: rgba(15, 23, 42, 0.04);
       color: var(--text-muted);
     }
+
     .layout {
       display: grid;
       grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
       gap: 16px;
       margin-bottom: 16px;
     }
+
     @media (max-width: 900px) {
-      .layout { grid-template-columns: 1fr; }
-      .header { flex-direction: column; align-items: flex-start; }
-      .controls { align-items: flex-start; }
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .controls {
+        align-items: flex-start;
+      }
     }
+
     .card {
       background: var(--card-bg);
       border-radius: 18px;
@@ -110,12 +147,14 @@
       box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(148, 163, 184, 0.12);
       border: 1px solid rgba(148, 163, 184, 0.18);
     }
+
     .card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 12px;
     }
+
     .card-title {
       font-size: 14px;
       font-weight: 600;
@@ -123,15 +162,31 @@
       align-items: center;
       gap: 8px;
     }
+
     .card-title-dot {
       width: 8px;
       height: 8px;
       border-radius: 999px;
       background: var(--accent);
     }
-    .card-subtitle { font-size: 12px; color: var(--text-muted); }
-    .input-label { font-size: 12px; font-weight: 500; margin-bottom: 6px; }
-    .input-help { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .input-label {
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .input-help {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
     .textarea {
       width: 100%;
       min-height: 80px;
@@ -143,11 +198,13 @@
       outline: none;
       background: #f9fafb;
     }
+
     .textarea:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.25);
       background: #ffffff;
     }
+
     .button-row {
       display: flex;
       align-items: center;
@@ -155,6 +212,7 @@
       gap: 8px;
       margin-top: 8px;
     }
+
     .btn-primary {
       border: none;
       border-radius: 999px;
@@ -169,6 +227,7 @@
       gap: 8px;
       box-shadow: 0 12px 30px rgba(79, 70, 229, 0.35), 0 0 0 1px rgba(129, 140, 248, 0.4);
     }
+
     .btn-secondary {
       border-radius: 999px;
       padding: 6px 12px;
@@ -178,27 +237,38 @@
       color: var(--text-muted);
       cursor: pointer;
     }
+
     .status-line {
       font-size: 11px;
       color: var(--text-muted);
       display: flex;
       align-items: center;
       gap: 6px;
+      margin-top: 6px;
     }
+
     .status-dot {
       width: 8px;
       height: 8px;
       border-radius: 999px;
       background: #9ca3af;
     }
-    .status-dot.ok { background: #22c55e; }
-    .status-dot.error { background: #ef4444; }
+
+    .status-dot.ok {
+      background: #22c55e;
+    }
+
+    .status-dot.error {
+      background: #ef4444;
+    }
+
     .metrics-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
       margin-top: 4px;
     }
+
     .metric-card {
       border-radius: 14px;
       padding: 10px;
@@ -206,242 +276,343 @@
       border: 1px solid rgba(148, 163, 184, 0.4);
       box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
     }
-    .metric-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-    .metric-value { font-size: 18px; font-weight: 600; }
-    .chart-container { width: 100%; height: 220px; }
-    .table-card { margin-top: 16px; }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 220px;
+    }
+
+    .table-card {
+      margin-top: 16px;
+    }
+
     .table-wrapper {
       border-radius: 14px;
       border: 1px solid rgba(148, 163, 184, 0.5);
       overflow: hidden;
       background: #ffffff;
     }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    thead { background: linear-gradient(to right, #f3f4ff, #eef2ff); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead {
+      background: linear-gradient(to right, #f3f4ff, #eef2ff);
+    }
+
     th, td {
       padding: 8px 10px;
       border-bottom: 1px solid #e5e7eb;
       text-align: left;
     }
-    tbody tr:hover { background: #f9fafb; }
+
+    tbody tr:hover {
+      background: #f9fafb;
+    }
+
     .pill-small {
       padding: 2px 8px;
       border-radius: 999px;
       font-size: 10px;
       background: rgba(15, 23, 42, 0.04);
       color: var(--text-muted);
+      display: inline-block;
     }
+
     .pill-small.accent {
       background: rgba(79, 70, 229, 0.08);
       color: var(--accent-strong);
     }
   </style>
 </head>
-
 <body>
   <div class="app">
-    <header class="header">
+
+    <!-- HEADER -->
+    <div class="header">
       <div class="title-block">
         <div class="title">
           eBay Market Analyzer
           <span class="title-pill">Dashboard</span>
         </div>
-        <div class="subtitle">Аналитика рынка eBay в реальном времени</div>
-        <div class="badge-live">
-          <span class="badge-live-dot"></span>
-          Live CSV Data
-        </div>
+        <div class="subtitle">Автоматический сбор и анализ данных с eBay</div>
       </div>
+
       <div class="controls">
-        <div class="small-label">Режим</div>
-        <div class="pill">GitHub Pages + GitHub Actions</div>
+        <div class="small-label">Статус системы</div>
+        <div class="pill" id="workflowStatusText">
+          Ожидание данных…
+        </div>
       </div>
-    </header>
+    </div>
 
-    <main>
-      <section class="layout">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">
-                <span class="card-title-dot"></span>
-                Ключевые слова
-              </div>
-              <div class="card-subtitle">Введи товары или ниши</div>
-            </div>
+    <!-- SYSTEM STATUS CARD -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">
+            <span class="card-title-dot"></span>
+            Состояние системы
           </div>
+          <div class="card-subtitle">Мониторинг работы проекта</div>
+        </div>
 
-          <div>
-            <div class="input-label">Ключевые слова</div>
-            <div class="input-help">Через запятую: iphone 13, lego star wars…</div>
+        <button class="btn-primary" id="runWorkflowBtn">
+          🔄 Запустить сбор данных
+        </button>
+      </div>
 
-            <textarea id="keywordsInput" class="textarea"></textarea>
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-label">Последний запуск</div>
+          <div class="metric-value" id="sysLastRun">–</div>
+        </div>
 
-            <div class="button-row">
-              <button id="runWorkflowBtn" class="btn-primary">▶ Запустить сбор</button>
-              <button id="saveKeywordsBtn" class="btn-secondary">💾 Сохранить</button>
-            </div>
-
-            <div class="status-line">
-              <span class="status-dot" id="workflowStatusDot"></span>
-              <span id="workflowStatusText">Ожидание…</span>
-            </div>
+        <div class="metric-card">
+          <div class="metric-label">Статус</div>
+          <div class="metric-value">
+            <span id="sysLastStatus" class="pill-small">–</span>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">
-                <span class="card-title-dot"></span>
-                Сводка
-              </div>
-              <div class="card-subtitle">Быстрый обзор данных</div>
-            </div>
-          </div>
-
-          <div class="metrics-row">
-            <div class="metric-card">
-              <div class="metric-label">Всего записей</div>
-              <div class="metric-value" id="metricTotalRows">0</div>
-            </div>
-
-            <div class="metric-card">
-              <div class="metric-label">Средняя цена</div>
-              <div class="metric-value" id="metricAvgPrice">–</div>
-            </div>
-
-            <div class="metric-card">
-              <div class="metric-label">Средний интерес</div>
-              <div class="metric-value" id="metricAvgWatchers">–</div>
-            </div>
-          </div>
-
-          <div class="chart-container">
-            <canvas id="chartPrice"></canvas>
-          </div>
+        <div class="metric-card">
+          <div class="metric-label">Длительность</div>
+          <div class="metric-value" id="sysLastDuration">–</div>
         </div>
-      </section>
+      </div>
 
-      <section class="card table-card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">
-              <span class="card-title-dot"></span>
-              Таблица данных
-            </div>
-            <div class="card-subtitle">Фильтры и сортировка</div>
-          </div>
+      <div class="metrics-row" style="margin-top:12px;">
+        <div class="metric-card">
+          <div class="metric-label">Строк в CSV</div>
+          <div class="metric-value" id="sysCsvRows">0</div>
         </div>
 
-        <div class="table-wrapper">
-          <table id="dataTable">
-            <thead>
-              <tr>
-                <th>Время</th>
-                <th>Keyword</th>
-                <th>Товар</th>
-                <th>Цена</th>
-                <th>Watchers</th>
-                <th>Источник</th>
-              </tr>
-            </thead>
-            <tbody id="dataTableBody"></tbody>
-          </table>
+        <div class="metric-card">
+          <div class="metric-label">Размер CSV</div>
+          <div class="metric-value" id="sysCsvSize">–</div>
         </div>
-      </section>
-    </main>
+
+        <div class="metric-card">
+          <div class="metric-label">Ошибки</div>
+          <div class="metric-value" id="sysErrors">–</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE OF DATA -->
+    <div class="card table-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">
+            <span class="card-title-dot"></span>
+            Последние данные
+          </div>
+          <div class="card-subtitle">Сырые данные из WatchCount, CheckAFlip, Bidvoy</div>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>Время</th>
+              <th>Источник</th>
+              <th>Ключевое слово</th>
+              <th>Цена</th>
+              <th>Watchers</th>
+              <th>Avg Price</th>
+              <th>Trend</th>
+              <th>Sold</th>
+              <th>Ошибка</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
+  <!-- JAVASCRIPT -->
   <script>
-    // === ТВОИ НАСТРОЙКИ ===
     const GITHUB_USER = "avatiah";
     const GITHUB_REPO = "ebay-analyzer";
-    const CSV_PATH = "data/raw_data.csv";
 
-    // === ЭЛЕМЕНТЫ ===
-    const keywordsInput = document.getElementById("keywordsInput");
-    const saveKeywordsBtn = document.getElementById("saveKeywordsBtn");
-    const runWorkflowBtn = document.getElementById("runWorkflowBtn");
     const workflowStatusText = document.getElementById("workflowStatusText");
-    const workflowStatusDot = document.getElementById("workflowStatusDot");
+    const sysLastRun = document.getElementById("sysLastRun");
+    const sysLastStatus = document.getElementById("sysLastStatus");
+    const sysLastDuration = document.getElementById("sysLastDuration");
+    const sysCsvRows = document.getElementById("sysCsvRows");
+    const sysCsvSize = document.getElementById("sysCsvSize");
+    const sysErrors = document.getElementById("sysErrors");
+    const runWorkflowBtn = document.getElementById("runWorkflowBtn");
 
-    const metricTotalRows = document.getElementById("metricTotalRows");
-    const metricAvgPrice = document.getElementById("metricAvgPrice");
-    const metricAvgWatchers = document.getElementById("metricAvgWatchers");
+    async function triggerScraperFromUI() {
+      workflowStatusText.textContent = "Запуск…";
 
-    const dataTableBody = document.getElementById("dataTableBody");
+      await fetch(
+        `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`,
+        {
+          method: "POST",
+          headers: {
+            "Accept": "application/vnd.github+json"
+          },
+          body: JSON.stringify({
+            event_type: "run-scraper-from-ui"
+          })
+        }
+      ).catch(() => {});
 
-    let rawData = [];
-    let priceChart = null;
-
-    // === ЛОКАЛЬНОЕ ХРАНИЛИЩЕ ===
-    function loadKeywords() {
-      const saved = localStorage.getItem("ebay_keywords");
-      keywordsInput.value = saved || "iphone 13, lego star wars, pokemon cards";
+      pollWorkflowStatus();
     }
 
-    function saveKeywords() {
-      localStorage.setItem("ebay_keywords", keywordsInput.value.trim());
-      workflowStatusText.textContent = "Ключевые слова сохранены";
-      workflowStatusDot.classList.add("ok");
-    }
-
-    saveKeywordsBtn.onclick = saveKeywords;
-
-    // === ЗАПУСК WORKFLOW (пока вручную) ===
-    runWorkflowBtn.onclick = () => {
-      saveKeywords();
-      alert("Ключевые слова сохранены.\nТеперь запусти workflow вручную:\nGitHub → Actions → eBay Analyzer Scraper → Run workflow");
-    };
-
-    // === ЗАГРУЗКА CSV ===
-    async function loadCsv() {
-      const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/${CSV_PATH}?t=${Date.now()}`;
+    async function fetchLastRun() {
+      const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/actions/runs?per_page=1`;
       const resp = await fetch(url);
-      const text = await resp.text();
-
-      const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-      rawData = parsed.data;
-
-      renderTable();
-      updateMetrics();
-      updateChart();
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      return data.workflow_runs?.[0] || null;
     }
 
-    function renderTable() {
-      dataTableBody.innerHTML = "";
+    function formatDuration(start, end) {
+      if (!start || !end) return "–";
+      const s = new Date(start).getTime();
+      const e = new Date(end).getTime();
+      const diff = Math.max(0, e - s) / 1000;
+      if (diff < 60) return `${Math.round(diff)} сек`;
+      return `${Math.round(diff / 60)} мин`;
+    }
 
-      rawData.forEach(row => {
-        const tr = document.createElement("tr");
+    async function updateSystemStatus() {
+      const run = await fetchLastRun();
+      if (!run) return;
 
-        tr.innerHTML = `
-          <td>${row.timestamp || ""}</td>
-          <td><span class="pill-small accent">${row.keyword || ""}</span></td>
-          <td>${row.title || ""}</td>
-          <td>${row.price ? "$" + row.price : "–"}</td>
-          <td>${row.watchers || "–"}</td>
-          <td>${row.source || ""}</td>
-        `;
+      const status = run.status;
+      const conclusion = run.conclusion;
+      const started = run.run_started_at;
+      const updated = run.updated_at;
 
-        dataTableBody.appendChild(tr);
+      sysLastRun.textContent = new Date(updated).toLocaleString();
+      sysLastDuration.textContent = formatDuration(started, updated);
+
+      if (status !== "completed") {
+        sysLastStatus.textContent = "Выполняется…";
+        sysLastStatus.className = "pill-small accent";
+        workflowStatusText.textContent = "Сбор выполняется…";
+      } else if (conclusion === "success") {
+        sysLastStatus.textContent = "Успешно";
+        sysLastStatus.className = "pill-small accent";
+        workflowStatusText.textContent = "Последний запуск: успешно";
+        showCompletionNotification();
+      } else {
+        sysLastStatus.textContent = "Ошибка";
+        sysLastStatus.className = "pill-small";
+        workflowStatusText.textContent = "Последний запуск: ошибка";
+      }
+
+      updateCsvStats();
+      updateErrors();
+    }
+
+    async function updateCsvStats() {
+      try {
+        const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/data/raw_data.csv`;
+        const resp = await fetch(url);
+        if (!resp.ok) return;
+
+        const text = await resp.text();
+        const rows = text.split("\n").filter(l => l.trim()).length - 1;
+        sysCsvRows.textContent = rows >= 0 ? rows : 0;
+
+        const sizeKB = (new Blob([text]).size / 1024).toFixed(1);
+        sysCsvSize.textContent = `${sizeKB} KB`;
+
+        loadTable(text);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function loadTable(csvText) {
+      const tbody = document.querySelector("#dataTable tbody");
+      tbody.innerHTML = "";
+
+      Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function (results) {
+          results.data.slice(-50).forEach(row => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${row.timestamp || ""}</td>
+              <td>${row.source || ""}</td>
+              <td>${row.keyword || ""}</td>
+              <td>${row.price || ""}</td>
+              <td>${row.watchers || ""}</td>
+              <td>${row.avg_price || ""}</td>
+              <td>${row.trend || ""}</td>
+              <td>${row.sold || ""}</td>
+              <td>${row.error || ""}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
       });
     }
 
-    function updateMetrics() {
-      metricTotalRows.textContent = rawData.length;
+    async function updateErrors() {
+      const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/data/raw_data.csv`;
+      const resp = await fetch(url);
+      if (!resp.ok) return;
 
-      const prices = rawData
-        .map(r => parseFloat(r.price))
-        .filter(n => !isNaN(n));
+      const text = await resp.text();
+      const lines = text.split("\n");
+      const last = lines[lines.length - 1];
+      const parts = last.split(",");
 
-      const watchers = rawData
-        .map(r => parseInt(r.watchers))
-        .filter(n => !isNaN(n));
+      const error = parts[parts.length - 1];
+      sysErrors.textContent = error && error.trim() ? error : "Нет";
+    }
 
-      metricAvgPrice.textContent = prices.length
-        ? (prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(2)
-        : "–";
+    function requestNotificationPermission() {
+      if (!("Notification" in window)) return;
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    }
 
-      metricAvgWatchers.textContent = watchers.length
-        ? (watchers.reduce((a, b) => a + b, 0) / watchers.length).toFixed(
+    function showCompletionNotification() {
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+
+      new Notification("Сбор данных завершён", {
+        body: "Данные обновлены, можно смотреть аналитику."
+      });
+    }
+
+    function pollWorkflowStatus() {
+      updateSystemStatus();
+      setInterval(updateSystemStatus, 10000);
+    }
+
+    runWorkflowBtn.addEventListener("click", triggerScraperFromUI);
+
+    requestNotificationPermission();
+    pollWorkflowStatus();
+  </script>
+</body>
+</html>
