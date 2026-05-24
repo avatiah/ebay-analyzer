@@ -1,14 +1,12 @@
 import random
 
-def fetch_bidvoy_data(keyword: str) -> dict:
+def fetch_bidvoy_data(keyword: str):
     """
-    Стабильный мок-источник Bidvoy.
-    Возвращает тренд в процентах (-30% .. +40%).
+    Стабильный мок Bidvoy.
+    Возвращает тренд (-30% .. +40%).
     """
-    random.seed("bidvoy_" + keyword)
-
-    trend = round(random.uniform(-30, 40), 1)
+    random.seed("bv_" + keyword)
 
     return {
-        "trend": trend
+        "trend": round(random.uniform(-30, 40), 1)
     }
