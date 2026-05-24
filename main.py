@@ -6,8 +6,7 @@ from bs4 import BeautifulSoup
 def load_keywords():
     try:
         with open("keywords.txt", "r", encoding="utf-8") as f:
-            keywords = [line.strip() for line in f if line.strip()]
-        return keywords
+            return [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         return []
 
@@ -17,7 +16,7 @@ def scrape(keyword):
     soup = BeautifulSoup(resp.text, "html.parser")
     items = soup.select(".s-item")
     results = []
-    for item in items[:10]:  # до 10 результатов
+    for item in items[:10]:
         title = item.select_one(".s-item__title")
         price = item.select_one(".s-item__price")
         link = item.select_one(".s-item__link")
@@ -43,4 +42,8 @@ def save_to_csv(rows):
     with open("data/raw_data.csv", "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=header)
         if f.tell() == 0:
-            writer.writeheader
+            writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+def main():
