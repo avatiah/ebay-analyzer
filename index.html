@@ -96,13 +96,19 @@
     }
 
     async function runScraper() {
+      const kw = document.getElementById("keywordInput").value.trim();
       if (!localStorage.getItem("GH_TOKEN")) {
         log("Ошибка: нет токена");
         document.getElementById("errors").innerHTML = "<span class='error'>Нет токена</span>";
         return;
       }
+      if (!kw) {
+        log("Ошибка: нет ключевого слова");
+        document.getElementById("errors").innerHTML = "<span class='error'>Нет ключевого слова</span>";
+        return;
+      }
       log("Запуск workflow Run Scraper...");
-      await dispatchEvent("run-scraper");
+      await dispatchEvent("run-scraper", { keyword: kw });
     }
 
     async function dispatchEvent(eventType, clientPayload = {}) {
