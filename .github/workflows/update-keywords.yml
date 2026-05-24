@@ -1,0 +1,27 @@
+name: Update Keywords
+
+on:
+  repository_dispatch:
+    types: [update-keywords]
+
+jobs:
+  update-file:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update keywords.txt
+        run: |
+          echo "${{ github.event.client_payload.content }}" > keywords.txt
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add keywords.txt
+          git commit -m "Update keywords"
+          git push
