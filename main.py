@@ -15,9 +15,16 @@ HEADERS = {
         "Chrome/124.0.0.0 Safari/537.36"
     ),
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Encoding": "gzip, deflate, br",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate",
     "Connection": "keep-alive",
+    "Referer": "https://www.ebay.com/",
+    "DNT": "1",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
 }
 
 CSV_HEADER = [
@@ -49,19 +56,37 @@ def parse_price(text):
 
 
 def scrape(keyword):
-    url = f"https://www.ebay.com/sch/i.html?_nkw={requests.utils.quote(keyword)}&_sacat=0"
+    url = f"https://www.ebay.com/sch/i.html?_nkw={requests.utils.quote(keyword)}&_sacat=0&LH_BIN=1&_sop=12"
     print(f"  GET {url}")
 
+    session = requests.Session()
+    # Сначала заходим на главную чтобы получить cookies
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=20)
+        session.get("https://www.ebay.com/", headers=HEADERS, timeout=15)
+        time.sleep(1)
+    except Exception:
+        pass
+
+    try:
+        resp = session.get(url, headers=HEADERS, timeout=20)
+        print(f"  HTTP {resp.status_code}, размер: {len(resp.text)} байт")
         resp.raise_for_status()
     except requests.RequestException as e:
         print(f"  Ошибка запроса: {e}")
         return []
 
+    # Проверка на блокировку
+    if "captcha" in resp.text.lower() or "robot" in resp.text.lower():
+        print("  ВНИМАНИЕ: обнаружена капча или блокировка")
+        return []
+
     soup = BeautifulSoup(resp.text, "html.parser")
     items = soup.select(".s-item")
     print(f"  Найдено элементов .s-item: {len(items)}")
+
+    # Отладка: если нет результатов — покажем кусок HTML
+    if not items:
+        print(f"  Первые 500 символов HTML: {resp.text[:500]}")
 
     results = []
     for item in items:
