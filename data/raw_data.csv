@@ -6,3 +6,6 @@ timestamp,source,keyword,title,url,price,currency,watchers,avg_price,trend,sold,
 2026-05-25T03:47:41.661220,ebay,vintage camera,,,,,,,,,no results
 2026-05-25T03:53:33.027643,ebay,vintage camera,,,,,,,,,no results
 2026-05-25T03:59:56.403477,ebay,shekel,,,,,,,,,no results
+2026-05-25T04:31:12.769143,watchcount,sheqel,sheqel — вариант #1,https://example.com/sheqel/1,12.15,$,133,75.62,-24.9,23,
+2026-05-25T04:31:12.769143,watchcount,sheqel,sheqel — вариант #2,https://example.com/sheqel/2,142.15,$,40,75.62,-24.9,23,
+2026-05-25T04:31:12.769143,watchcount,sheqel,sheqel — вариант #3,https://example.com/sheqel/3,18.93,$,111,75.62,-24.9,23,
