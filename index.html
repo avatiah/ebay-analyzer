@@ -476,17 +476,17 @@
         return;
       }
 
-      const headers = lines[0].split(",");
-      const rows = lines.slice(1).map(l => {
-        // Handle quoted fields
+      const headers = lines[0].replace(/\r/g, "").split(",");
+      const rows = lines.slice(1).filter(l => l.trim()).map(l => {
+        l = l.replace(/\r/g, "");
         const result = [];
         let cur = "", inQ = false;
         for (const ch of l) {
           if (ch === '"') { inQ = !inQ; }
-          else if (ch === "," && !inQ) { result.push(cur.trim()); cur = ""; }
+          else if (ch === "," && !inQ) { result.push(cur); cur = ""; }
           else cur += ch;
         }
-        result.push(cur.trim());
+        result.push(cur);
         return result;
       });
 
@@ -508,15 +508,15 @@
 
   function renderResults(headers, rows) {
     // Stats
-    const colIdx = name => headers.findIndex(h => h.toLowerCase().includes(name));
-    const priceIdx = colIdx("price");
-    const titleIdx = colIdx("title");
-    const urlIdx   = colIdx("url");
-    const errIdx   = colIdx("error");
-    const trendIdx = colIdx("trend");
-    const avgIdx   = colIdx("avg_price");
-    const kwIdx    = colIdx("keyword");
-    const tsIdx    = colIdx("timestamp");
+    const colIdx = (name, exact=false) => exact ? headers.findIndex(h => h.toLowerCase() === name) : headers.findIndex(h => h.toLowerCase().includes(name));
+    const priceIdx = colIdx("price", true);
+    const titleIdx = colIdx("title", true);
+    const urlIdx   = colIdx("url", true);
+    const errIdx   = colIdx("error", true);
+    const trendIdx = colIdx("trend", true);
+    const avgIdx   = colIdx("avg_price", true);
+    const kwIdx    = colIdx("keyword", true);
+    const tsIdx    = colIdx("timestamp", true);
 
     const prices = rows
       .map(r => parseFloat(r[priceIdx]))
@@ -556,7 +556,12 @@
         const v = row[i] || "";
         if (i === titleIdx) return `<td class="td-title" title="${esc(v)}">${esc(v)}</td>`;
         if (i === urlIdx)   return `<td class="td-url">${v ? `<a href="${esc(v)}" target="_blank">🔗 открыть</a>` : "—"}</td>`;
-        if (i === priceIdx) return `<td class="td-price">${v ? "$"+v : "—"}</td>`;
+        if (i === priceIdx) {
+          const currIdx = headers.findIndex(h => h.toLowerCase() === "currency");
+          const curr = currIdx >= 0 ? (row[currIdx] || "USD") : "USD";
+          const sym = curr === "EUR" ? "€" : curr === "GBP" ? "£" : "$";
+          return `<td class="td-price">${v ? sym+parseFloat(v).toFixed(2) : "—"}</td>`;
+        }
         if (i === errIdx)   return `<td class="td-err">${esc(v)}</td>`;
         if (i === trendIdx) {
           const cls = v==="up"?"badge-up":v==="down"?"badge-down":"badge-flat";
