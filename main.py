@@ -1,31 +1,14 @@
 import csv
 import datetime
 import os
-import re
-import time
+import sys
 
-import requests
-from bs4 import BeautifulSoup
+# Добавляем sources/ в путь
+sys.path.insert(0, os.path.dirname(__file__))
 
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-    "Accept-Encoding": "gzip, deflate",
-    "Connection": "keep-alive",
-    "Referer": "https://www.ebay.com/",
-    "DNT": "1",
-    "Upgrade-Insecure-Requests": "1",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "same-origin",
-    "Sec-Fetch-User": "?1",
-}
+from sources.watchcount import fetch_watchcount_data
+from sources.checkaflip import fetch_checkaflip_data
+from sources.bidvoy import fetch_bidvoy_data
 
 CSV_HEADER = [
     "timestamp", "source", "keyword", "title", "url",
@@ -41,112 +24,75 @@ def load_keywords():
         return []
 
 
-def parse_price(text):
-    """Извлекает первое числовое значение цены из строки."""
-    if not text:
-        return "", ""
-    # Берём первую цену если диапазон (например "10.00 to 20.00")
-    match = re.search(r"([\$€£]?)\s*([\d,]+\.?\d*)", text.replace(",", ""))
-    if match:
-        symbol = match.group(1) or "$"
-        value = match.group(2)
-        currency_map = {"$": "USD", "€": "EUR", "£": "GBP"}
-        return value, currency_map.get(symbol, "USD")
-    return "", ""
+def collect(keyword: str) -> list:
+    """Собирает данные из всех источников для одного ключевого слова."""
+    print(f"\n  Сбор данных для «{keyword}»")
+    rows = []
+    ts = datetime.datetime.utcnow().isoformat()
 
-
-def scrape(keyword):
-    url = f"https://www.ebay.com/sch/i.html?_nkw={requests.utils.quote(keyword)}&_sacat=0&LH_BIN=1&_sop=12"
-    print(f"  GET {url}")
-
-    session = requests.Session()
-    # Сначала заходим на главную чтобы получить cookies
+    # ── WatchCount: список товаров ────────────────────────────────────────
     try:
-        session.get("https://www.ebay.com/", headers=HEADERS, timeout=15)
-        time.sleep(1)
-    except Exception:
-        pass
+        wc_items = fetch_watchcount_data(keyword)
+        print(f"  WatchCount: {len(wc_items)} товаров")
+    except Exception as e:
+        print(f"  WatchCount ошибка: {e}")
+        wc_items = []
 
+    # ── CheckAFlip: средняя цена и продажи ────────────────────────────────
     try:
-        resp = session.get(url, headers=HEADERS, timeout=20)
-        print(f"  HTTP {resp.status_code}, размер: {len(resp.text)} байт")
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        print(f"  Ошибка запроса: {e}")
-        return []
+        cf = fetch_checkaflip_data(keyword)
+        avg_price = cf.get("avg_price", "")
+        sold_total = cf.get("sold", "")
+        print(f"  CheckAFlip: avg_price={avg_price}, sold={sold_total}")
+    except Exception as e:
+        print(f"  CheckAFlip ошибка: {e}")
+        avg_price = ""
+        sold_total = ""
 
-    # Проверка на блокировку
-    if "captcha" in resp.text.lower() or "robot" in resp.text.lower():
-        print("  ВНИМАНИЕ: обнаружена капча или блокировка")
-        return []
+    # ── Bidvoy: тренд ─────────────────────────────────────────────────────
+    try:
+        bv = fetch_bidvoy_data(keyword)
+        trend = bv.get("trend", "")
+        print(f"  Bidvoy: trend={trend}%")
+    except Exception as e:
+        print(f"  Bidvoy ошибка: {e}")
+        trend = ""
 
-    soup = BeautifulSoup(resp.text, "html.parser")
-    items = soup.select(".s-item")
-    print(f"  Найдено элементов .s-item: {len(items)}")
-
-    # Отладка: если нет результатов — покажем кусок HTML
-    if not items:
-        print(f"  Первые 500 символов HTML: {resp.text[:500]}")
-
-    results = []
-    for item in items:
-        title_el = item.select_one(".s-item__title")
-        price_el = item.select_one(".s-item__price")
-        link_el  = item.select_one("a.s-item__link")
-
-        if not (title_el and price_el and link_el):
-            continue
-
-        title = title_el.get_text(strip=True)
-
-        # Пропускаем мусорный первый элемент "Shop on eBay"
-        if title.lower() in ("shop on ebay", ""):
-            continue
-
-        href = link_el.get("href", "")
-        # Убираем tracking параметры, оставляем чистый URL
-        href = href.split("?")[0] if "?" in href else href
-
-        price_text = price_el.get_text(strip=True)
-        price_val, currency = parse_price(price_text)
-
-        # Дополнительные поля
-        watchers_el = item.select_one(".s-item__hotness, .s-item__watchcount")
-        watchers = watchers_el.get_text(strip=True) if watchers_el else ""
-
-        sold_el = item.select_one(".s-item__quantity-sold")
-        sold = sold_el.get_text(strip=True) if sold_el else ""
-
-        results.append({
-            "timestamp": datetime.datetime.utcnow().isoformat(),
-            "source":    "ebay",
-            "keyword":   keyword,
-            "title":     title,
-            "url":       href,
-            "price":     price_val,
-            "currency":  currency,
-            "watchers":  watchers,
-            "avg_price": "",
-            "trend":     "",
-            "sold":      sold,
-            "error":     ""
+    # ── Собираем строки ───────────────────────────────────────────────────
+    if wc_items:
+        for item in wc_items:
+            rows.append({
+                "timestamp":  ts,
+                "source":     "watchcount",
+                "keyword":    keyword,
+                "title":      item.get("title", ""),
+                "url":        item.get("url", ""),
+                "price":      item.get("price", ""),
+                "currency":   item.get("currency", "USD"),
+                "watchers":   item.get("watchers", ""),
+                "avg_price":  avg_price,
+                "trend":      trend,
+                "sold":       sold_total,
+                "error":      ""
+            })
+    else:
+        rows.append({
+            "timestamp":  ts,
+            "source":     "watchcount",
+            "keyword":    keyword,
+            "title":      "", "url":   "",
+            "price":      "", "currency": "",
+            "watchers":   "",
+            "avg_price":  avg_price,
+            "trend":      trend,
+            "sold":       sold_total,
+            "error":      "no items from watchcount"
         })
 
-        if len(results) >= 10:
-            break
-
-    # Считаем среднюю цену по выборке
-    prices = [float(r["price"]) for r in results if r["price"]]
-    if prices:
-        avg = round(sum(prices) / len(prices), 2)
-        for r in results:
-            r["avg_price"] = avg
-
-    print(f"  Извлечено товаров: {len(results)}")
-    return results
+    return rows
 
 
-def save_to_csv(rows):
+def save_to_csv(rows: list):
     os.makedirs("data", exist_ok=True)
     path = "data/raw_data.csv"
     file_exists = os.path.isfile(path) and os.path.getsize(path) > 0
@@ -158,7 +104,7 @@ def save_to_csv(rows):
         for row in rows:
             writer.writerow(row)
 
-    print(f"  Сохранено строк: {len(rows)} → {path}")
+    print(f"\n  Сохранено {len(rows)} строк → {path}")
 
 
 def main():
@@ -170,31 +116,15 @@ def main():
     print(f"Ключевые слова: {keywords}")
     all_rows = []
 
-    for i, kw in enumerate(keywords):
-        print(f"\n[{i+1}/{len(keywords)}] Скрапинг: «{kw}»")
-        results = scrape(kw)
-
-        if results:
-            all_rows.extend(results)
-        else:
-            print(f"  Нет результатов для «{kw}»")
-            all_rows.append({
-                "timestamp": datetime.datetime.utcnow().isoformat(),
-                "source":    "ebay",
-                "keyword":   kw,
-                "title":     "", "url":      "",
-                "price":     "", "currency": "",
-                "watchers":  "", "avg_price":"",
-                "trend":     "", "sold":     "",
-                "error":     "no results"
-            })
-
-        # Пауза между запросами чтобы не получить бан
-        if i < len(keywords) - 1:
-            time.sleep(2)
+    for kw in keywords:
+        rows = collect(kw)
+        all_rows.extend(rows)
 
     if all_rows:
         save_to_csv(all_rows)
+        print("Готово!")
+    else:
+        print("Нет данных для сохранения")
 
 
 if __name__ == "__main__":
