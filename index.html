@@ -8,14 +8,24 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0d0f14; --surface: #151820; --surface2: #1c2030;
-      --border: #252a3a; --accent: #3ecf7a; --accent-dim: rgba(62,207,122,0.12); /* Изменено на зеленый по правилам Threat Engine */
-      --green: #3ecf7a; --green-dim: rgba(62,207,122,0.12);
-      --red: #f75a5a; --red-dim: rgba(247,90,90,0.12);
-      --yellow: #f7c04f; --yellow-dim: rgba(247,192,79,0.12);
-      --text: #c8d0e8; --text-muted: #5a6480; --text-bright: #eef0f8;
-      --mono: 'JetBrains Mono', monospace; --sans: 'Syne', sans-serif; --radius: 0px; /* Прямые углы */
+      --bg: #0d0f14; 
+      --surface: #151820; 
+      --surface2: #1c2030;
+      --border: #252a3a; 
+      --accent: #3ecf7a; 
+      --accent-dim: rgba(62,207,122,0.12);
+      --green: #3ecf7a; 
+      --green-dim: rgba(62,207,122,0.12);
+      --red: #f75a5a; 
+      --red-dim: rgba(247,90,90,0.12);
+      --text: #c8d0e8; 
+      --text-muted: #5a6480; 
+      --text-bright: #eef0f8;
+      --mono: 'JetBrains Mono', monospace; 
+      --sans: 'Syne', sans-serif; 
+      --radius: 0px; /* Строго прямые углы */
     }
+    
     body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; padding: 28px 24px; }
 
     .header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
@@ -23,80 +33,104 @@
     .header h1 { font-size: 22px; font-weight: 700; color: var(--text-bright); letter-spacing: -0.3px; }
     .header p { font-size: 13px; color: var(--text-muted); font-family: var(--mono); margin-top: 2px; }
 
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 14px; }
-    .card-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 20px; }
+    .card-title { font-size: 11px; font-weight: 600; color: var(--text-bright); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; border-left: 3px solid var(--accent); padding-left: 8px; }
 
     .field { margin-bottom: 12px; }
-    .field label { display: block; font-size: 12px; color: var(--text-muted); font-family: var(--mono); margin-bottom: 6px; }
-    .input-row { display: flex; gap: 10px; align-items: stretch; }
+    .field label { display: block; font-size: 12px; color: var(--text-muted); font-family: var(--mono); margin-bottom: 8px; text-transform: uppercase; }
+    
+    /* Оболочка строк ввода для высокой контрастности */
+    .input-row { display: flex; gap: 12px; align-items: stretch; }
+    
     input[type="text"], input[type="password"] {
-      flex: 1; background: var(--surface2); border: 1px solid var(--border);
-      border-radius: var(--radius); color: var(--text-bright); font-family: var(--mono);
-      font-size: 13px; padding: 10px 14px; outline: none; transition: border-color 0.2s;
+      flex: 1; 
+      background: var(--surface2); 
+      border: 1px solid var(--border);
+      border-radius: var(--radius); 
+      color: var(--text-bright); 
+      font-family: var(--mono);
+      font-size: 13px; 
+      padding: 12px 14px; 
+      outline: none; 
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    input:focus { border-color: var(--accent); }
+    input[type="text"]:focus, input[type="password"]:focus { 
+      border-color: var(--accent); 
+      box-shadow: 0 0 8px rgba(62,207,122,0.2);
+    }
 
-    .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: var(--radius); border: none; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s, transform 0.1s; white-space: nowrap; }
+    /* Кнопки управления */
+    .btn { 
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center;
+      gap: 8px; 
+      padding: 12px 24px; 
+      border-radius: var(--radius); 
+      font-family: var(--mono); 
+      font-size: 13px; 
+      font-weight: 700; 
+      cursor: pointer; 
+      transition: background 0.2s, color 0.2s, border-color 0.2s; 
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
     .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn:not(:disabled):active { transform: scale(0.97); }
-    .btn-primary { background: var(--accent); color: #0d0f14; font-weight: 700; }
-    .btn-primary:not(:disabled):hover { opacity: 0.88; }
-    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-    .btn-ghost:not(:disabled):hover { border-color: var(--accent); color: var(--accent); }
-    .btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(247,90,90,0.25); }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    
+    /* Основная контрастная кнопка запуска */
+    .btn-trigger { 
+      background: var(--accent); 
+      color: #0d0f14; 
+      border: 1px solid var(--accent);
+    }
+    .btn-trigger:not(:disabled):hover { 
+      background: transparent; 
+      color: var(--accent); 
+    }
+
+    .btn-ghost { 
+      background: var(--surface2); 
+      color: var(--text); 
+      border: 1px solid var(--border); 
+    }
+    .btn-ghost:not(:disabled):hover { 
+      border-color: var(--accent); 
+      color: var(--text-bright); 
+    }
 
     @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+    .spinner { width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
     .btn.loading .spinner { display: inline-block; }
 
     .token-wrapper { position: relative; flex: 1; }
     .token-wrapper input { width: 100%; padding-right: 44px; }
     .toggle-vis { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 15px; padding: 0; }
 
-    .status { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12px; padding: 5px 10px; border-radius: 0px; margin-top: 10px; }
-    .status.ok   { background: var(--green-dim); color: var(--green); }
-    .status.err  { background: var(--red-dim); color: var(--red); }
-    .status.info { background: rgba(79,142,247,0.12); color: #4f8ef7; }
-    .status::before { content: ''; width: 6px; height: 6px; background: currentColor; flex-shrink: 0; }
-
-    .divider { height: 1px; background: var(--border); margin: 16px 0; }
-
-    .poll-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--accent-dim); border: 1px solid var(--border); margin-top: 10px; font-family: var(--mono); font-size: 12px; color: var(--accent); display: none; }
-    .poll-spinner { width: 12px; height: 12px; border: 2px solid rgba(62,207,122,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
-
     .results-wrap { overflow-x: auto; border: 1px solid var(--border); margin-top: 12px; }
     table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
-    th { background: var(--surface2); color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
-    td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+    th { background: var(--surface2); color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
     tr:hover td { background: var(--surface2); }
+    
     .td-title { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .td-url a { color: #4f8ef7; text-decoration: none; }
-    .td-url a:hover { text-decoration: underline; }
     .td-price { color: var(--green); font-weight: 600; }
     
     .badge-trend { padding: 2px 6px; font-size: 10px; font-weight: 600; }
-    .badge-up   { background: var(--red-dim); color: var(--red); } /* Для закупок рост цены — это алярм */
+    .badge-up { background: var(--red-dim); color: var(--red); }
     .badge-down { background: var(--green-dim); color: var(--green); }
     .badge-flat { background: var(--surface2); color: var(--text-muted); }
 
     .stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-    .stat-chip { background: var(--surface2); border: 1px solid var(--border); padding: 10px 16px; font-family: var(--mono); flex: 1; min-width: 150px; }
+    .stat-chip { background: var(--surface2); border: 1px solid var(--border); padding: 12px 16px; font-family: var(--mono); flex: 1; min-width: 150px; }
     .stat-chip .val { font-size: 20px; font-weight: 700; color: var(--text-bright); }
-    .stat-chip .lbl { font-size: 10px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; }
+    .stat-chip .lbl { font-size: 10px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; }
 
-    .log-wrap { background: var(--surface2); border: 1px solid var(--border); padding: 12px; height: 140px; overflow-y: auto; font-family: var(--mono); font-size: 11px; line-height: 1.7; }
-    .log-line { display: flex; gap: 10px; }
-    .log-time { color: var(--text-muted); flex-shrink: 0; }
-    
     .competitors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 12px; }
     .comp-card { background: var(--surface2); border: 1px solid var(--border); padding: 12px; font-family: var(--mono); }
-    .comp-name { color: var(--text-bright); font-weight: 600; font-size: 13px; }
-    .comp-stat { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-thumb { background: var(--border); }
-    .empty-state { text-align: center; padding: 32px; color: var(--text-muted); font-family: var(--mono); font-size: 12px; }
+    
+    .log-wrap { background: var(--surface2); border: 1px solid var(--border); padding: 12px; height: 140px; overflow-y: auto; font-family: var(--mono); font-size: 11px; }
+    .empty-state { text-align: center; padding: 32px; color: var(--text-muted); font-family: var(--mono); }
   </style>
 </head>
 <body>
@@ -116,36 +150,32 @@
     <div class="input-row">
       <div class="token-wrapper">
         <input type="password" id="tokenInput" placeholder="ghp_...">
-        <button class="toggle-vis" id="toggleVis">👁</button>
+        <button class="toggle-vis" id="toggleVis" type="button">👁</button>
       </div>
-      <button class="btn btn-primary" id="saveTokenBtn" onclick="saveToken()">Сохранить</button>
+      <button class="btn btn-ghost" id="saveTokenBtn" onclick="saveToken()">Сохранить токен</button>
     </div>
   </div>
-  <div id="tokenStatus"></div>
 </div>
 
 <div class="card">
-  <div class="card-title">🎯 Scan Target</div>
+  <div class="card-title">🎯 Scan Execution Target</div>
   <div class="field">
-    <label>Ключевое слово для анализа рынка</label>
+    <label for="keywordInput">Целевое ключевое слово (Keyword Search)</label>
     <div class="input-row">
-      <input type="text" id="keywordInput" placeholder="Например: tactical backpack">
-      <button class="btn btn-ghost" onclick="runScraper()">⚡ Запустить мониторинг</button>
+      <input type="text" id="keywordInput" placeholder="Введите нишу (например: tactical tactical knife, vintage watch)">
+      <button class="btn btn-trigger" id="startAnalysisBtn" onclick="runScraper()">
+        <div class="spinner"></div>
+        <span>Запустить анализ ниши</span>
+      </button>
     </div>
   </div>
-  <div style="margin-top: 14px;">
-    <button class="btn btn-ghost btn-sm" onclick="loadResults()">🔄 Перечитать CSV из репозитория</button>
-  </div>
-  <div id="workflowStatus"></div>
-
-  <div class="poll-bar" id="pollBar">
-    <div class="poll-spinner"></div>
-    <span id="pollMsg">Анализ очереди GitHub Actions...</span>
+  <div style="margin-top: 16px;">
+    <button class="btn btn-ghost" onclick="loadResults()">🔄 Перечитать CSV базу данных</button>
   </div>
 </div>
 
 <div class="card">
-  <div class="card-title">📈 Сводные метрики (Текущий Срез) <span id="resultsTimestamp" style="color:var(--text-muted); font-size:11px; margin-left:10px"></span></div>
+  <div class="card-title">📈 Сводные метрики текущего среза</div>
   <div class="stats-row" id="statsRow" style="display:none">
     <div class="stat-chip"><div class="val" id="statRows">—</div><div class="lbl">Листингов в ТОП</div></div>
     <div class="stat-chip"><div class="val" id="statTotal">—</div><div class="lbl">Всего в выдаче eBay</div></div>
@@ -153,7 +183,7 @@
     <div class="stat-chip"><div class="val" id="statMedian">—</div><div class="lbl">Медиана цен</div></div>
     <div class="stat-chip"><div class="val" id="statTrend">—</div><div class="lbl">Тренд рынка</div></div>
   </div>
-  <div id="analyticsBody"></div>
+  <div id="analyticsBody" class="empty-state">Для расчета метрик загрузите существующую базу или запустите новый скан.</div>
 </div>
 
 <div class="card">
@@ -166,7 +196,7 @@
 <div class="card">
   <div class="card-title">📋 Детализированный отчет выдачи</div>
   <div id="resultsBody">
-    <div class="empty-state">Инициализируйте чтение данных</div>
+    <div class="empty-state">База данных не загружена.</div>
   </div>
 </div>
 
@@ -178,18 +208,26 @@
 <script>
   const GITHUB_USER = "avatiah";
   const GITHUB_REPO = "ebay-analyzer";
-  let currentRunId = null;
 
   function log(msg, type = "info") {
     const el = document.getElementById("log");
     const t = new Date().toLocaleTimeString("ru-RU");
-    el.innerHTML += `<div class="log-line"><span class="log-time">[${t}]</span><span style="color:${type==='err'?'var(--red)':type==='ok'?'var(--green)':'#4f8ef7'}">${msg}</span></div>`;
+    el.innerHTML += `<div style="line-height:1.6; font-family:var(--mono)"><span style="color:var(--text-muted)">[${t}]</span> <span style="color:${type==='err'?'var(--red)':type==='ok'?'var(--green)':'#4f8ef7'}">${msg}</span></div>`;
     el.scrollTop = el.scrollHeight;
   }
 
   window.addEventListener("DOMContentLoaded", () => {
+    // Показ/скрытие токена
+    document.getElementById("toggleVis").addEventListener("click", () => {
+      const inp = document.getElementById("tokenInput");
+      inp.type = inp.type === "password" ? "text" : "password";
+    });
+
     const t = localStorage.getItem("GH_TOKEN");
-    if (t) { document.getElementById("tokenInput").value = t; log("Конфигурационный токен развернут", "ok"); }
+    if (t) { 
+      document.getElementById("tokenInput").value = t; 
+      log("Токен авторизации успешно развернут из локального кэша", "ok"); 
+    }
     loadResults();
   });
 
@@ -199,42 +237,69 @@
     log("Токен авторизации сохранен локально", "ok");
   }
 
-  async function ghFetch(path) {
-    const token = localStorage.getItem("GH_TOKEN");
-    const res = await fetch(`https://api.github.com${path}`, {
-      headers: token ? { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github+json" } : {}
-    });
-    return { ok: res.ok, status: res.status, body: await res.json().catch(() => ({})) };
-  }
-
   async function runScraper() {
     const kw = document.getElementById("keywordInput").value.trim();
     const token = localStorage.getItem("GH_TOKEN");
-    if (!token || !kw) return log("Отказ запуска: Проверьте токен и поисковый запрос", "err");
+    const btn = document.getElementById("startAnalysisBtn");
 
-    log(`Инициализация диспетчера для таргета: «${kw}»`);
-    const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ event_type: "run-scraper", client_payload: { keyword: kw } })
-    });
+    if (!token) {
+      log("Ошибка: Сначала укажите и сохраните GitHub Personal Access Token", "err");
+      return;
+    }
+    if (!kw) {
+      log("Ошибка: Поле ключевого слова пустое. Укажите таргет для сканирования", "err");
+      return;
+    }
 
-    if (res.status === 204) {
-      log("Сигнал dispatch успешно принят GitHub Actions", "ok");
-      document.getElementById("pollBar").style.display = "flex";
-      // Здесь можно развернуть поллинг как в вашей старой версии
-    } else {
-      log(`Сбой отправки: HTTP ${res.status}`, "err");
+    btn.classList.add("loading");
+    btn.disabled = true;
+    log(`Инициализация триггера для таргета: «${kw}»...`);
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
+        method: "POST",
+        headers: { 
+          "Authorization": `Bearer ${token}`, 
+          "Content-Type": "application/json",
+          "Accept": "application/vnd.github+json"
+        },
+        body: JSON.stringify({ event_type: "run-scraper", client_payload: { keyword: kw } })
+      });
+
+      if (res.status === 204) {
+        log("Сигнал dispatch успешно отправлен и принят GitHub Actions! Скрипт запущен на сервере.", "ok");
+        log("Подождите примерно 30-40 секунд, пока отработает eBay API, затем нажмите 'Перечитать CSV базу данных'.");
+      } else {
+        log(`Сбой отправки события: HTTP статус ${res.status}`, "err");
+      }
+    } catch (e) {
+      log(`Ошибка соединения с GitHub API: ${e.message}`, "err");
+    } finally {
+      btn.classList.remove("loading");
+      btn.disabled = false;
     }
   }
 
   async function loadResults() {
     log("Запрос сырых данных CSV из репозитория...");
-    const { ok, body } = await ghFetch(`/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/data/raw_data.csv`);
-    if (!ok) return log("Файл базы данных CSV еще не сформирован в репозитории", "err");
+    const token = localStorage.getItem("GH_TOKEN");
+    
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/data/raw_data.csv`, {
+        headers: token ? { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github+json" } : {}
+      });
 
-    const csvText = atob(body.content.replace(/\n/g, ""));
-    parseAndAnalyze(csvText);
+      if (!res.ok) {
+        log("База данных CSV пуста или еще не создана коммитом в репозитории.", "err");
+        return;
+      }
+
+      const body = await res.json();
+      const csvText = atob(body.content.replace(/\n/g, ""));
+      parseAndAnalyze(csvText);
+    } catch(e) {
+      log(`Исключение при чтении базы данных: ${e.message}`, "err");
+    }
   }
 
   function parseAndAnalyze(csv) {
@@ -254,37 +319,40 @@
     });
 
     const hIdx = name => headers.indexOf(name);
-    
-    // Вытаскиваем уникальные таймштампы, чтобы отделить последний запуск от истории
     const tsIdx = hIdx("timestamp");
+    
+    if (tsIdx === -1) {
+      log("Ошибка: Неверный формат заголовков CSV файла.", "err");
+      return;
+    }
+
     const timestamps = [...new Set(allRows.map(r => r[tsIdx]))].sort();
     const latestTs = timestamps[timestamps.length - 1];
     const prevTs = timestamps[timestamps.length - 2];
 
-    // Фильтруем строки текущего среза
     const currentRows = allRows.filter(r => r[tsIdx] === latestTs && r[hIdx("error")] === "");
-    if (!currentRows.length) return log("Последний запуск пуст или содержит ошибки", "err");
+    if (!currentRows.length) {
+      document.getElementById("analyticsBody").innerHTML = `<div class="empty-state">Нет валидных данных в последнем срезе.</div>`;
+      return;
+    }
 
-    log(`Успешно обработано строк текущего среза: ${currentRows.length}`, "ok");
+    log(`Успешно отрисовано строк текущего среза: ${currentRows.length}`, "ok");
+    document.getElementById("analyticsBody").style.display = "none";
 
-    // Метрики
-    const prices = currentRows.map(r => parseFloat(r[hIdx("price")])).filter(p => !isNaN(p));
     const avgPrice = parseFloat(currentRows[0][hIdx("avg_price")]) || 0;
     const medianPrice = parseFloat(currentRows[0][hIdx("median_price")]) || 0;
     const totalResults = currentRows[0][hIdx("total_results")] || "0";
 
-    // Вычисляем тренд на основе истории
     let trendHtml = '<span class="badge-trend badge-flat">⚖️ СТАБИЛЬНО</span>';
     if (prevTs) {
       const prevRows = allRows.filter(r => r[tsIdx] === prevTs);
       if (prevRows.length) {
         const prevAvg = parseFloat(prevRows[0][hIdx("avg_price")]) || 0;
-        if (avgPrice > prevAvg) trendHtml = `<span class="badge-trend badge-up">▲ РОСТ (+${((avgPrice-prevAvg)/prevAvg*100).toFixed(1)}%)</span>`;
-        if (avgPrice < prevAvg) trendHtml = `<span class="badge-trend badge-down">▼ ПАДЕНИЕ (-${((prevAvg-avgPrice)/prevAvg*100).toFixed(1)}%)</span>`;
+        if (avgPrice > prevAvg && prevAvg > 0) trendHtml = `<span class="badge-trend badge-up">▲ РОСТ (+${((avgPrice-prevAvg)/prevAvg*100).toFixed(1)}%)</span>`;
+        if (avgPrice < prevAvg && avgPrice > 0) trendHtml = `<span class="badge-trend badge-down">▼ ПАДЕНИЕ (-${((prevAvg-avgPrice)/prevAvg*100).toFixed(1)}%)</span>`;
       }
     }
 
-    // Рендер виджетов статистики
     document.getElementById("statsRow").style.display = "flex";
     document.getElementById("statRows").textContent = currentRows.length;
     document.getElementById("statTotal").textContent = parseInt(totalResults).toLocaleString();
@@ -292,7 +360,7 @@
     document.getElementById("statMedian").textContent = `$${medianPrice.toFixed(2)}`;
     document.getElementById("statTrend").innerHTML = trendHtml;
 
-    // Анализ конкурентов (Доминация продавцов)
+    // Группировка конкурентов
     const sellerIdx = hIdx("seller");
     const fbIdx = hIdx("feedback");
     const competitorMap = {};
@@ -305,16 +373,15 @@
     });
 
     const sortedCompetitors = Object.entries(competitorMap).sort((a,b) => b[1].count - a[1].count).slice(0, 8);
-    const compBody = document.getElementById("competitorsBody");
-    compBody.innerHTML = sortedCompetitors.map(([name, stat]) => `
+    document.getElementById("competitorsBody").innerHTML = sortedCompetitors.map(([name, stat]) => `
       <div class="comp-card">
-        <div class="comp-name">👤 ${name}</div>
-        <div class="comp-stat">Листингов в выдаче: <b>${stat.count}</b></div>
-        <div class="comp-stat">Рейтинг фидбека: ${stat.feedback || '—'}</div>
+        <div style="color:var(--accent); font-weight:700">👤 ${name}</div>
+        <div style="font-size:11px; margin-top:4px">Листингов в ТОП: <b>${stat.count}</b></div>
+        <div style="font-size:11px; color:var(--text-muted)">Фидбек-скор: ${stat.feedback || '—'}</div>
       </div>
     `).join("");
 
-    // Рендер основной таблицы
+    // Отрисовка таблицы
     const titleIdx = hIdx("title");
     const urlIdx = hIdx("url");
     const priceIdx = hIdx("price");
@@ -324,7 +391,7 @@
       <div class="results-wrap">
         <table>
           <thead>
-            <tr><th>Товар</th><th>Ссылка</th><th>Цена</th><th>Наблюдают (Watchers)</th><th>Продавец</th></tr>
+            <tr><th>Товар</th><th>Ссылка</th><th>Цена</th><th>Наблюдают</th><th>Продавец</th></tr>
           </thead>
           <tbody>
     `;
@@ -336,7 +403,7 @@
           <td class="td-url"><a href="${r[urlIdx]}" target="_blank">🔗 Открыть</a></td>
           <td class="td-price">$${parseFloat(r[priceIdx]).toFixed(2)}</td>
           <td>👁️ ${r[watchIdx] || 0}</td>
-          <td>${r[sellerIdx]} (${r[fbIdx]})</td>
+          <td>${r[sellerIdx]} <span style="color:var(--text-muted)">(${r[fbIdx]})</span></td>
         </tr>
       `;
     });
