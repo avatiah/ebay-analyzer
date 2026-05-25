@@ -3,12 +3,9 @@ import datetime
 import os
 import sys
 
-# Добавляем sources/ в путь
 sys.path.insert(0, os.path.dirname(__file__))
 
 from sources.watchcount import fetch_watchcount_data
-from sources.checkaflip import fetch_checkaflip_data
-from sources.bidvoy import fetch_bidvoy_data
 
 CSV_HEADER = [
     "timestamp", "source", "keyword", "title", "url",
@@ -24,43 +21,29 @@ def load_keywords():
         return []
 
 
-def collect(keyword: str) -> list:
-    """Собирает данные из всех источников для одного ключевого слова."""
-    print(f"\n  Сбор данных для «{keyword}»")
-    rows = []
-    ts = datetime.datetime.utcnow().isoformat()
+def calc_avg(items: list) -> str:
+    prices = [float(i["price"]) for i in items if i.get("price")]
+    if not prices:
+        return ""
+    return str(round(sum(prices) / len(prices), 2))
 
-    # ── WatchCount: список товаров ────────────────────────────────────────
+
+def collect(keyword: str) -> list:
+    print(f"\n  Сбор данных для «{keyword}»")
+    ts = datetime.datetime.utcnow().isoformat()
+    rows = []
+
+    # ── WatchCount ────────────────────────────────────────────────────────
     try:
-        wc_items = fetch_watchcount_data(keyword)
-        print(f"  WatchCount: {len(wc_items)} товаров")
+        items = fetch_watchcount_data(keyword, limit=10)
     except Exception as e:
         print(f"  WatchCount ошибка: {e}")
-        wc_items = []
+        items = []
 
-    # ── CheckAFlip: средняя цена и продажи ────────────────────────────────
-    try:
-        cf = fetch_checkaflip_data(keyword)
-        avg_price = cf.get("avg_price", "")
-        sold_total = cf.get("sold", "")
-        print(f"  CheckAFlip: avg_price={avg_price}, sold={sold_total}")
-    except Exception as e:
-        print(f"  CheckAFlip ошибка: {e}")
-        avg_price = ""
-        sold_total = ""
+    avg_price = calc_avg(items)
 
-    # ── Bidvoy: тренд ─────────────────────────────────────────────────────
-    try:
-        bv = fetch_bidvoy_data(keyword)
-        trend = bv.get("trend", "")
-        print(f"  Bidvoy: trend={trend}%")
-    except Exception as e:
-        print(f"  Bidvoy ошибка: {e}")
-        trend = ""
-
-    # ── Собираем строки ───────────────────────────────────────────────────
-    if wc_items:
-        for item in wc_items:
+    if items:
+        for item in items:
             rows.append({
                 "timestamp":  ts,
                 "source":     "watchcount",
@@ -71,39 +54,31 @@ def collect(keyword: str) -> list:
                 "currency":   item.get("currency", "USD"),
                 "watchers":   item.get("watchers", ""),
                 "avg_price":  avg_price,
-                "trend":      trend,
-                "sold":       sold_total,
+                "trend":      "",
+                "sold":       item.get("sold", ""),
                 "error":      ""
             })
     else:
         rows.append({
-            "timestamp":  ts,
-            "source":     "watchcount",
-            "keyword":    keyword,
-            "title":      "", "url":   "",
-            "price":      "", "currency": "",
-            "watchers":   "",
-            "avg_price":  avg_price,
-            "trend":      trend,
-            "sold":       sold_total,
-            "error":      "no items from watchcount"
+            "timestamp": ts, "source": "watchcount",
+            "keyword": keyword, "title": "", "url": "",
+            "price": "", "currency": "", "watchers": "",
+            "avg_price": "", "trend": "", "sold": "",
+            "error": "no results"
         })
 
     return rows
 
 
 def save_to_csv(rows: list):
+    """Перезаписывает CSV полностью — только свежие данные."""
     os.makedirs("data", exist_ok=True)
     path = "data/raw_data.csv"
-    file_exists = os.path.isfile(path) and os.path.getsize(path) > 0
-
-    with open(path, "a", newline="", encoding="utf-8") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=CSV_HEADER)
-        if not file_exists:
-            writer.writeheader()
+        writer.writeheader()
         for row in rows:
             writer.writerow(row)
-
     print(f"\n  Сохранено {len(rows)} строк → {path}")
 
 
@@ -115,16 +90,12 @@ def main():
 
     print(f"Ключевые слова: {keywords}")
     all_rows = []
-
     for kw in keywords:
-        rows = collect(kw)
-        all_rows.extend(rows)
+        all_rows.extend(collect(kw))
 
     if all_rows:
         save_to_csv(all_rows)
         print("Готово!")
-    else:
-        print("Нет данных для сохранения")
 
 
 if __name__ == "__main__":
