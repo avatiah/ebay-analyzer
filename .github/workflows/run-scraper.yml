@@ -7,6 +7,7 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,11 +27,13 @@ jobs:
       - name: Run scraper
         env:
           KEYWORD: ${{ github.event.client_payload.keyword }}
+          EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+          EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
         run: |
           mkdir -p data
           echo "$KEYWORD" > keywords.txt
           python main.py
-          test -f data/raw_data.csv || (echo "CSV не создан" && exit 1)
+          test -f data/raw_data.csv || (echo "Ошибка: CSV не создан" && exit 1)
 
       - name: Commit CSV results
         env:
