@@ -1,113 +1,108 @@
+import os
 import requests
-import re
-import xml.etree.ElementTree as ET
+import base64
 
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept": "application/rss+xml, application/xml, text/xml, */*",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate",
-}
+EBAY_API_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search"
+EBAY_TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token"
 
 
-def parse_price(text: str):
-    """Извлекает числовое значение цены из строки."""
-    if not text:
-        return "", "USD"
-    sym_map = {"$": "USD", "€": "EUR", "£": "GBP"}
-    match = re.search(r"([\$€£])?\s*([\d,]+\.?\d*)", text.replace(",", ""))
-    if match:
-        sym = match.group(1) or "$"
-        val = match.group(2)
-        return val, sym_map.get(sym, "USD")
-    return "", "USD"
+def get_oauth_token(client_id: str, client_secret: str) -> str:
+    """Получает OAuth токен через Client Credentials Grant."""
+    credentials = base64.b64encode(
+        f"{client_id}:{client_secret}".encode()
+    ).decode()
+
+    resp = requests.post(
+        EBAY_TOKEN_URL,
+        headers={
+            "Authorization": f"Basic {credentials}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data="grant_type=client_credentials&scope=https%3A%2F%2Fapi.ebay.com%2Foauth%2Fapi_scope",
+        timeout=15,
+    )
+
+    if resp.status_code != 200:
+        raise RuntimeError(f"Ошибка получения токена: {resp.status_code} {resp.text[:200]}")
+
+    token = resp.json().get("access_token")
+    print(f"    OAuth токен получен (expires_in: {resp.json().get('expires_in')}s)")
+    return token
 
 
 def fetch_watchcount_data(keyword: str, limit: int = 10) -> list:
     """
-    Получает товары через eBay RSS-фид — не требует JS, не блокируется.
-    URL: https://rss.ebay.com/rss2?satitle=...&sacat=0
+    Получает товары через официальный eBay Browse API.
+    Требует переменные окружения EBAY_CLIENT_ID и EBAY_CLIENT_SECRET.
     """
-    url = (
-        f"https://rss.ebay.com/rss2"
-        f"?satitle={requests.utils.quote(keyword)}"
-        f"&sacat=0&LH_BIN=1&_sop=12"
-    )
-    print(f"    eBay RSS GET {url}")
+    client_id     = os.environ.get("EBAY_CLIENT_ID", "")
+    client_secret = os.environ.get("EBAY_CLIENT_SECRET", "")
+
+    if not client_id or not client_secret:
+        print("    ОШИБКА: EBAY_CLIENT_ID или EBAY_CLIENT_SECRET не заданы")
+        return []
+
+    # Получаем токен
+    try:
+        token = get_oauth_token(client_id, client_secret)
+    except Exception as e:
+        print(f"    Ошибка авторизации: {e}")
+        return []
+
+    # Запрос к Browse API
+    params = {
+        "q":           keyword,
+        "limit":       limit,
+        "sort":        "newlyListed",
+        "filter":      "buyingOptions:{FIXED_PRICE}",
+    }
+
+    print(f"    eBay Browse API: q={keyword}, limit={limit}")
 
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=20)
-        print(f"    HTTP {resp.status_code}, размер: {len(resp.content)} байт")
+        resp = requests.get(
+            EBAY_API_URL,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "X-EBAY-C-MARKETPLACE-ID": "EBAY_US",
+                "Content-Type": "application/json",
+            },
+            params=params,
+            timeout=20,
+        )
+        print(f"    HTTP {resp.status_code}")
         resp.raise_for_status()
     except requests.RequestException as e:
         print(f"    Ошибка запроса: {e}")
         return []
 
-    try:
-        root = ET.fromstring(resp.content)
-    except ET.ParseError as e:
-        print(f"    Ошибка парсинга XML: {e}")
-        print(f"    Ответ (первые 500): {resp.text[:500]}")
-        return []
-
-    # RSS namespace для eBay
-    ns = {
-        "ebay": "urn:ebay:apis:eBLBaseComponents",
-    }
+    data = resp.json()
+    raw_items = data.get("itemSummaries", [])
+    print(f"    Найдено товаров: {data.get('total', '?')}, получено: {len(raw_items)}")
 
     items = []
-    channel = root.find("channel")
-    if channel is None:
-        print("    Нет тега <channel> в RSS")
-        return []
+    for item in raw_items:
+        # Цена
+        price_obj = item.get("price", {})
+        price_val = price_obj.get("value", "")
+        currency  = price_obj.get("currency", "USD")
 
-    rss_items = channel.findall("item")
-    print(f"    Найдено RSS-элементов: {len(rss_items)}")
+        # Watchers
+        watchers = str(item.get("watchCount", ""))
 
-    for item in rss_items[:limit]:
-        title = (item.findtext("title") or "").strip()
-        link  = (item.findtext("link")  or "").strip()
-
-        # Цена из description или специального тега
-        description = item.findtext("description") or ""
-        price_raw = ""
-
-        # eBay кладёт цену в description как "$XX.XX"
-        price_match = re.search(r"([\$€£])\s*([\d,]+\.?\d*)", description)
-        if price_match:
-            price_raw = price_match.group(1) + price_match.group(2)
-
-        price_val, currency = parse_price(price_raw)
-
-        # Watchers — eBay RSS не даёт watchers, оставляем пустым
-        watchers = ""
-
-        # Sold — тоже не в RSS
+        # Sold — Browse API не даёт напрямую, берём из additionalImages count как прокси
         sold = ""
 
-        # Убираем мусор из title
-        title = re.sub(r"\s+", " ", title).strip()
+        # Thumbnail
+        image = item.get("image", {}).get("imageUrl", "")
 
-        # Убираем tracking из URL
-        clean_url = link.split("?")[0] if "?" in link else link
-
-        if title and link:
-            items.append({
-                "title":    title,
-                "url":      clean_url,
-                "price":    price_val,
-                "currency": currency,
-                "watchers": watchers,
-                "sold":     sold,
-            })
-
-    print(f"    Извлечено товаров: {len(items)}")
-
-    if not items:
-        print(f"    XML (первые 800):\n{resp.text[:800]}")
+        items.append({
+            "title":    item.get("title", ""),
+            "url":      item.get("itemWebUrl", ""),
+            "price":    price_val,
+            "currency": currency,
+            "watchers": watchers,
+            "sold":     sold,
+        })
 
     return items
