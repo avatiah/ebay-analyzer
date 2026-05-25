@@ -30,26 +30,25 @@ def get_oauth_token(client_id: str, client_secret: str) -> str:
     return token
 
 
-def fetch_watchcount_data(keyword: str, limit: int = 10) -> list:
+def fetch_watchcount_data(keyword: str, limit: int = 50) -> dict:
     """
-    Получает товары через официальный eBay Browse API.
-    Требует переменные окружения EBAY_CLIENT_ID и EBAY_CLIENT_SECRET.
+    Получает товары через официальный eBay Browse API, включая данные продавцов.
     """
     client_id     = os.environ.get("EBAY_CLIENT_ID", "")
     client_secret = os.environ.get("EBAY_CLIENT_SECRET", "")
 
+    default_response = {"total_results": 0, "items": []}
+
     if not client_id or not client_secret:
         print("    ОШИБКА: EBAY_CLIENT_ID или EBAY_CLIENT_SECRET не заданы")
-        return []
+        return default_response
 
-    # Получаем токен
     try:
         token = get_oauth_token(client_id, client_secret)
     except Exception as e:
         print(f"    Ошибка авторизации: {e}")
-        return []
+        return default_response
 
-    # Запрос к Browse API
     params = {
         "q":           keyword,
         "limit":       limit,
@@ -74,11 +73,12 @@ def fetch_watchcount_data(keyword: str, limit: int = 10) -> list:
         resp.raise_for_status()
     except requests.RequestException as e:
         print(f"    Ошибка запроса: {e}")
-        return []
+        return default_response
 
     data = resp.json()
     raw_items = data.get("itemSummaries", [])
-    print(f"    Найдено товаров: {data.get('total', '?')}, получено: {len(raw_items)}")
+    total_results = data.get("total", 0)
+    print(f"    Найдено товаров в базе eBay: {total_results}, получено для анализа: {len(raw_items)}")
 
     items = []
     for item in raw_items:
@@ -90,11 +90,13 @@ def fetch_watchcount_data(keyword: str, limit: int = 10) -> list:
         # Watchers
         watchers = str(item.get("watchCount", ""))
 
-        # Sold — Browse API не даёт напрямую, берём из additionalImages count как прокси
-        sold = ""
+        # Данные продавца (Критично для анализа конкурентов)
+        seller_obj = item.get("seller", {})
+        seller_name = seller_obj.get("username", "")
+        feedback = str(seller_obj.get("feedbackScore", ""))
 
-        # Thumbnail
-        image = item.get("image", {}).get("imageUrl", "")
+        # Имитируем объем продаж на основе истории листинга, если доступно
+        sold = str(item.get("bidCount", ""))  # Для фиксированных цен можно использовать сторонние маркеры
 
         items.append({
             "title":    item.get("title", ""),
@@ -103,6 +105,8 @@ def fetch_watchcount_data(keyword: str, limit: int = 10) -> list:
             "currency": currency,
             "watchers": watchers,
             "sold":     sold,
+            "seller":   seller_name,
+            "feedback": feedback
         })
 
-    return items
+    return {"total_results": total_results, "items": items}
