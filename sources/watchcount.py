@@ -1,6 +1,6 @@
 import requests
-from bs4 import BeautifulSoup
 import re
+import xml.etree.ElementTree as ET
 
 HEADERS = {
     "User-Agent": (
@@ -8,125 +8,106 @@ HEADERS = {
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/124.0.0.0 Safari/537.36"
     ),
+    "Accept": "application/rss+xml, application/xml, text/xml, */*",
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Encoding": "gzip, deflate",
-    "Referer": "https://www.watchcount.com/",
 }
 
 
-def parse_number(text: str) -> str:
-    """Извлекает первое число из строки."""
+def parse_price(text: str):
+    """Извлекает числовое значение цены из строки."""
     if not text:
-        return ""
-    match = re.search(r"[\d,]+\.?\d*", text.replace(",", ""))
-    return match.group().replace(",", "") if match else ""
+        return "", "USD"
+    sym_map = {"$": "USD", "€": "EUR", "£": "GBP"}
+    match = re.search(r"([\$€£])?\s*([\d,]+\.?\d*)", text.replace(",", ""))
+    if match:
+        sym = match.group(1) or "$"
+        val = match.group(2)
+        return val, sym_map.get(sym, "USD")
+    return "", "USD"
 
 
 def fetch_watchcount_data(keyword: str, limit: int = 10) -> list:
     """
-    Скрапит watchcount.com и возвращает список товаров.
-    Каждый элемент: title, url, price, currency, watchers, sold
+    Получает товары через eBay RSS-фид — не требует JS, не блокируется.
+    URL: https://rss.ebay.com/rss2?satitle=...&sacat=0
     """
     url = (
-        f"https://www.watchcount.com/live/"
-        f"{requests.utils.quote(keyword)}/-/all?site=EBAY_US"
+        f"https://rss.ebay.com/rss2"
+        f"?satitle={requests.utils.quote(keyword)}"
+        f"&sacat=0&LH_BIN=1&_sop=12"
     )
-    print(f"    WatchCount GET {url}")
+    print(f"    eBay RSS GET {url}")
 
     try:
         resp = requests.get(url, headers=HEADERS, timeout=20)
-        print(f"    HTTP {resp.status_code}, размер: {len(resp.text)} байт")
+        print(f"    HTTP {resp.status_code}, размер: {len(resp.content)} байт")
         resp.raise_for_status()
     except requests.RequestException as e:
         print(f"    Ошибка запроса: {e}")
         return []
 
-    soup = BeautifulSoup(resp.text, "html.parser")
+    try:
+        root = ET.fromstring(resp.content)
+    except ET.ParseError as e:
+        print(f"    Ошибка парсинга XML: {e}")
+        print(f"    Ответ (первые 500): {resp.text[:500]}")
+        return []
+
+    # RSS namespace для eBay
+    ns = {
+        "ebay": "urn:ebay:apis:eBLBaseComponents",
+    }
 
     items = []
+    channel = root.find("channel")
+    if channel is None:
+        print("    Нет тега <channel> в RSS")
+        return []
 
-    # Каждый товар на watchcount.com находится в блоке с классом содержащим данные
-    # Структура: таблица или div-блоки с данными о товарах
-    # Пробуем несколько селекторов
-    rows = (
-        soup.select("table.wctable tr.wcrow") or
-        soup.select("tr.wcrow") or
-        soup.select(".wcitem") or
-        soup.select("div.item")
-    )
-    print(f"    Найдено блоков товаров: {len(rows)}")
+    rss_items = channel.findall("item")
+    print(f"    Найдено RSS-элементов: {len(rss_items)}")
 
-    # Если не нашли через классы — ищем через структуру страницы
-    if not rows:
-        # Ищем все ссылки на ebay внутри результатов
-        ebay_links = soup.select('a[href*="ebay.com/itm"]')
-        print(f"    Найдено eBay ссылок: {len(ebay_links)}")
-        for link in ebay_links[:limit]:
-            parent = link.find_parent("td") or link.find_parent("div") or link.find_parent("li")
-            if not parent:
-                continue
-            block_text = parent.get_text(" ", strip=True)
+    for item in rss_items[:limit]:
+        title = (item.findtext("title") or "").strip()
+        link  = (item.findtext("link")  or "").strip()
 
-            title = link.get_text(strip=True)
-            href  = link.get("href", "")
+        # Цена из description или специального тега
+        description = item.findtext("description") or ""
+        price_raw = ""
 
-            # Цена
-            price_match = re.search(r"\$\s*([\d,]+\.?\d*)", block_text)
-            price = price_match.group(1).replace(",", "") if price_match else ""
+        # eBay кладёт цену в description как "$XX.XX"
+        price_match = re.search(r"([\$€£])\s*([\d,]+\.?\d*)", description)
+        if price_match:
+            price_raw = price_match.group(1) + price_match.group(2)
 
-            # Watchers
-            watch_match = re.search(r"([\d,]+)\s*(?:watch|watcher)", block_text, re.I)
-            watchers = watch_match.group(1).replace(",", "") if watch_match else ""
+        price_val, currency = parse_price(price_raw)
 
-            # Sold
-            sold_match = re.search(r"([\d,]+)\s*(?:sold|sale)", block_text, re.I)
-            sold = sold_match.group(1).replace(",", "") if sold_match else ""
+        # Watchers — eBay RSS не даёт watchers, оставляем пустым
+        watchers = ""
 
-            if title and href:
-                items.append({
-                    "title":    title,
-                    "url":      href,
-                    "price":    price,
-                    "currency": "USD",
-                    "watchers": watchers,
-                    "sold":     sold,
-                })
-            if len(items) >= limit:
-                break
+        # Sold — тоже не в RSS
+        sold = ""
 
-    else:
-        for row in rows[:limit]:
-            # Заголовок и ссылка
-            link_el = row.select_one('a[href*="ebay.com"]') or row.select_one("a")
-            title   = link_el.get_text(strip=True) if link_el else ""
-            href    = link_el.get("href", "") if link_el else ""
+        # Убираем мусор из title
+        title = re.sub(r"\s+", " ", title).strip()
 
-            text = row.get_text(" ", strip=True)
+        # Убираем tracking из URL
+        clean_url = link.split("?")[0] if "?" in link else link
 
-            price_match = re.search(r"\$\s*([\d,]+\.?\d*)", text)
-            price = price_match.group(1).replace(",", "") if price_match else ""
-
-            watch_match = re.search(r"([\d,]+)\s*(?:watch|watcher)", text, re.I)
-            watchers = watch_match.group(1).replace(",", "") if watch_match else ""
-
-            sold_match = re.search(r"Sold[:\s]*([\d,]+)", text, re.I)
-            sold = sold_match.group(1).replace(",", "") if sold_match else ""
-
-            if title:
-                items.append({
-                    "title":    title,
-                    "url":      href,
-                    "price":    price,
-                    "currency": "USD",
-                    "watchers": watchers,
-                    "sold":     sold,
-                })
+        if title and link:
+            items.append({
+                "title":    title,
+                "url":      clean_url,
+                "price":    price_val,
+                "currency": currency,
+                "watchers": watchers,
+                "sold":     sold,
+            })
 
     print(f"    Извлечено товаров: {len(items)}")
 
-    # Отладка: если пусто — покажем кусок HTML
     if not items:
-        print(f"    HTML (первые 1000 символов):\n{resp.text[:1000]}")
+        print(f"    XML (первые 800):\n{resp.text[:800]}")
 
     return items
