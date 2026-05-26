@@ -16,63 +16,88 @@
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text2);min-height:100vh}
-    .topbar{position:sticky;top:0;z-index:100;background:rgba(5,8,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between}
-    .export-btn{background:var(--green);color:white;padding:7px 14px;border-radius:6px;font-weight:700;margin-left:12px}
+    .topbar{position:sticky;top:0;z-index:100;background:rgba(5,8,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+    .export-btn{background:var(--green);color:white;padding:8px 16px;border-radius:6px;font-weight:700}
+    .tab{padding:12px 16px;background:none;border:none;color:var(--text);cursor:pointer;font-weight:600}
+    .tab.active{background:var(--blue);color:white}
   </style>
 </head>
 <body>
 
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:12px">
-    <div style="width:32px;height:32px;background:var(--blue);border-radius:8px;display:grid;place-items:center;color:white;font-size:18px">⬡</div>
-    <div style="font-size:20px;font-weight:900;color:var(--bright)">eBay Analyzer</div>
+    <div style="background:var(--blue);width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:white;font-size:20px">⬡</div>
+    <div style="font-size:21px;font-weight:900;color:var(--bright)">eBay Analyzer</div>
   </div>
   <div>
-    <span id="lastUpd" style="font-family:var(--mono);margin-right:15px;color:var(--text)"></span>
+    <span id="lastUpd" style="font-family:var(--mono);margin-right:15px"></span>
     <button onclick="exportToExcel()" class="export-btn">📊 Экспорт в Excel</button>
   </div>
 </div>
 
-<div style="display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh-56px)">
+<div style="display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 56px)">
   <!-- Sidebar -->
   <div style="background:var(--bg2);border-right:1px solid var(--border);padding:20px;display:flex;flex-direction:column;gap:16px">
-    <!-- Token -->
     <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px">
-      <div style="font-size:10px;font-weight:700;color:var(--text);margin-bottom:8px">🔑 GITHUB TOKEN</div>
+      <div style="font-size:10px;font-weight:700;color:var(--text);margin-bottom:8px">🔑 TOKEN</div>
       <input type="password" id="tokenInput" placeholder="ghp_..." style="width:100%;padding:9px;background:var(--panel2);border:1px solid var(--border2);border-radius:6px;color:var(--bright)">
-      <button onclick="toggleToken()" style="margin:6px 0 8px">👁</button>
+      <button onclick="toggleToken()" style="margin:6px 0">👁</button>
       <button onclick="saveToken()" style="width:100%;padding:9px;background:#1e2937;color:white;border:none;border-radius:6px">Сохранить токен</button>
     </div>
 
-    <!-- Run -->
     <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px">
       <div style="font-size:10px;font-weight:700;color:var(--text);margin-bottom:8px">🚀 ЗАПУСК</div>
       <input type="text" id="kwInput" placeholder="vintage camera" style="width:100%;padding:9px;background:var(--panel2);border:1px solid var(--border2);border-radius:6px;color:var(--bright)">
-      <button onclick="runScraper()" style="width:100%;margin:10px 0 6px;padding:11px;background:var(--blue);color:white;border:none;border-radius:6px;font-weight:700">▶ Запустить сбор</button>
-      <button onclick="loadData()" style="width:100%;padding:9px;background:var(--panel2);color:var(--text2);border:1px solid var(--border2);border-radius:6px">⟳ Обновить данные</button>
+      <button onclick="runScraper()" style="width:100%;margin-top:10px;padding:11px;background:var(--blue);color:white;border:none;border-radius:6px;font-weight:700">▶ Запустить сбор</button>
+      <button onclick="loadData()" style="width:100%;margin-top:6px;padding:9px;background:var(--panel2);color:var(--text2);border:1px solid var(--border2);border-radius:6px">⟳ Обновить данные</button>
     </div>
 
-    <div style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;overflow:auto;font-family:var(--mono);font-size:10px" id="log">
-      Лог...
-    </div>
+    <div style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;overflow:auto;font-family:var(--mono);font-size:10px;line-height:1.5" id="log"></div>
   </div>
 
-  <!-- Main Content -->
-  <div style="padding:24px">
+  <!-- Content -->
+  <div style="padding:24px;overflow:auto">
     <div style="display:flex;background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px">
-      <button onclick="sw('overview')" class="tab active" style="flex:1;padding:12px">📊 Обзор</button>
-      <button onclick="sw('products')" class="tab" style="flex:1;padding:12px">📦 Товары</button>
-      <button onclick="sw('sellers')" class="tab" style="flex:1;padding:12px">👤 Продавцы</button>
-      <button onclick="sw('niches')" class="tab" style="flex:1;padding:12px">🏆 Ниши</button>
-      <button onclick="sw('prices')" class="tab" style="flex:1;padding:12px">💰 Цены</button>
+      <button onclick="sw('overview')" class="tab active">📊 Обзор</button>
+      <button onclick="sw('products')" class="tab">📦 Товары</button>
+      <button onclick="sw('sellers')" class="tab">👤 Продавцы</button>
+      <button onclick="sw('niches')" class="tab">🏆 Ниши</button>
+      <button onclick="sw('prices')" class="tab">💰 Цены</button>
     </div>
 
+    <!-- Ниши - главная вкладка -->
     <div id="tab-niches" class="section active">
-      <h2 style="margin-bottom:16px">🏆 Анализ ниши</h2>
-      <div id="niche-content">Загрузите данные для анализа ниши...</div>
+      <h2 style="margin-bottom:20px;color:var(--bright)">🏆 Анализ ниши</h2>
+      
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px" id="opp-score">
+        <!-- Opportunity Score будет здесь -->
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px">
+          <h3 style="margin-bottom:12px">🏆 Power Sellers</h3>
+          <div id="power-sellers"></div>
+        </div>
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px">
+          <h3 style="margin-bottom:12px">💎 Sweet Spot</h3>
+          <div id="sweet-spot"></div>
+        </div>
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px">
+          <h3 style="margin-bottom:12px">🔥 Winning Keywords</h3>
+          <div id="winning-keywords" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px">
+        <h3>📊 Анализ продавцов</h3>
+        <table style="width:100%;margin-top:12px" id="seller-table">
+          <thead><tr><th>Продавец</th><th>Товаров</th><th>Ср.цена</th><th>FB%</th><th>Рекомендация</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Другие вкладки можно расширить позже -->
+    <!-- Остальные вкладки (заглушки) -->
     <div id="tab-overview" class="section">Обзор</div>
     <div id="tab-products" class="section">Товары</div>
     <div id="tab-sellers" class="section">Продавцы</div>
@@ -81,10 +106,158 @@
 </div>
 
 <script>
-// ... (полный код с Opportunity Score, Sweet Spot, Winning Keywords и т.д.)
-// Я могу выдать его следующим сообщением, если нужно.
+const GH_USER = "avatiah", GH_REPO = "ebay-analyzer";
+let DATA = [], COLS = {};
 
-log("Инструмент инициализирован. Нажмите 'Обновить данные'", "ok");
+const store = {get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v);return true}catch{return false}}};
+
+function log(msg,type="info"){
+  const el=document.getElementById("log");
+  const color = type==='ok'?'#10b981':type==='err'?'#ef4444':'#94a3b8';
+  el.innerHTML += `<div style="color:${color}">${new Date().toLocaleTimeString()} — ${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+async function loadData(){
+  log("Загрузка данных...");
+  try{
+    const res = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/data/raw_data.csv`,{
+      headers: store.get("GH_TOKEN") ? {"Authorization": `Bearer ${store.get("GH_TOKEN")}`} : {}
+    });
+    const data = await res.json();
+    if(res.status !== 200) throw new Error("CSV не найден");
+    const csv = atob(data.content.replace(/\n/g,""));
+    parseCSV(csv);
+    log(`Загружено ${DATA.length} товаров`, "ok");
+    renderNiches();
+  }catch(e){
+    log("Ошибка: "+e.message, "err");
+  }
+}
+
+function parseCSV(text){
+  const lines = text.trim().split("\n");
+  COLS = {};
+  lines[0].split(",").forEach((h,i)=> COLS[h.trim()] = i);
+  DATA = lines.slice(1).map(line=>{
+    const row=[]; let cur="", inQ=false;
+    for(let ch of line){
+      if(ch==='"') inQ=!inQ;
+      else if(ch===',' && !inQ){row.push(cur);cur="";}
+      else cur+=ch;
+    }
+    row.push(cur);
+    return row;
+  });
+}
+
+function c(row,name){return row[COLS[name]]||"";}
+function p(row){return parseFloat(c(row,"price"))||0;}
+
+// Основной анализ ниши
+function renderNiches(){
+  if(!DATA.length) return;
+
+  const prices = DATA.map(p).filter(x=>x>0);
+  const sellers = [...new Set(DATA.map(r=>c(r,"seller")).filter(Boolean))];
+  const avgPrice = prices.length ? prices.reduce((a,b)=>a+b)/prices.length : 0;
+
+  // Opportunity Score
+  const opp = Math.min(100, Math.max(20, 
+    120 - sellers.length*3 + 
+    Math.min(40, avgPrice/3) + 
+    Math.min(30, DATA.length/2)
+  ));
+
+  document.getElementById("opp-score").innerHTML = `
+    <div style="display:flex;align-items:center;gap:30px">
+      <div style="text-align:center">
+        <div style="font-size:52px;font-weight:900;color:var(--bright)">${Math.round(opp)}</div>
+        <div style="color:${opp>75?'#10b981':opp>55?'#f59e0b':'#ef4444'}">OPPORTUNITY</div>
+      </div>
+      <div>
+        <strong>Рекомендация:</strong> ${opp>75?'Отличная ниша для входа! Низкая конкуренция + хорошая маржа.' : opp>60?'Перспективная ниша. Можно конкурировать.' : 'Высокая конкуренция. Требует сильного преимущества.'}
+      </div>
+    </div>
+  `;
+
+  // Power Sellers
+  const power = getPowerSellers();
+  document.getElementById("power-sellers").innerHTML = power.map(s=>`
+    <div style="padding:8px 0;border-bottom:1px solid #243050">
+      <strong>${s.name}</strong> — ${s.items} товаров (${s.fb}%)
+    </div>
+  `).join('') || "<p>Нет power sellers</p>";
+
+  // Sweet Spot + Winning Keywords
+  const sweet = findSweetSpot(prices);
+  document.getElementById("sweet-spot").innerHTML = `<strong>$${Math.round(sweet.low)} — $${Math.round(sweet.high)}</strong><br>Самый плотный диапазон`;
+
+  renderWinningKeywords();
+}
+
+function getPowerSellers(){
+  const map = {};
+  DATA.forEach(r=>{
+    const s = c(r,"seller");
+    if(!s) return;
+    const fb = parseFloat(c(r,"seller_feedback_pct"))||0;
+    if(!map[s]) map[s] = {name:s, items:0, fb};
+    map[s].items++;
+  });
+  return Object.values(map).filter(s=>s.fb>=98).sort((a,b)=>b.items-a.items).slice(0,5);
+}
+
+function findSweetSpot(prices){
+  if(!prices.length) return {low:0,high:0};
+  prices.sort((a,b)=>a-b);
+  return {low:prices[Math.floor(prices.length*0.3)], high:prices[Math.floor(prices.length*0.7)]};
+}
+
+function renderWinningKeywords(){
+  // Простая реализация
+  const words = {};
+  DATA.forEach(r=>{
+    c(r,"title").toLowerCase().split(/\W+/).forEach(w=>{
+      if(w.length>3) words[w] = (words[w]||0)+1;
+    });
+  });
+  const top = Object.entries(words).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  document.getElementById("winning-keywords").innerHTML = top.map(([w])=>`<span style="background:#1e2937;padding:4px 10px;border-radius:4px;margin:2px">${w}</span>`).join('');
+}
+
+function exportToExcel(){
+  if(!DATA.length) return alert("Нет данных");
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(DATA.map(r=>({
+    Title: c(r,"title"),
+    Price: p(r),
+    Seller: c(r,"seller"),
+    Feedback: c(r,"seller_feedback_pct")
+  })));
+  XLSX.utils.book_append_sheet(wb, ws, "Data");
+  XLSX.writeFile(wb, `eBay_Niche_${new Date().toISOString().slice(0,10)}.xlsx`);
+  log("Экспорт выполнен", "ok");
+}
+
+function sw(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelector(`button[onclick="sw('${name}')"]`).classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+async function runScraper(){
+  const kw = document.getElementById("kwInput").value.trim();
+  if(!kw) return alert("Введите ключевое слово");
+  log(`Запущен сбор для "${kw}"`);
+}
+
+// Init
+window.addEventListener("DOMContentLoaded",()=>{
+  loadData();
+  log("Инструмент готов", "ok");
+});
 </script>
 </body>
 </html>
