@@ -1,17 +1,13 @@
 import os
-import requests
 import base64
+import requests
 
-EBAY_API_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search"
+EBAY_API_URL   = "https://api.ebay.com/buy/browse/v1/item_summary/search"
 EBAY_TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token"
 
 
 def get_oauth_token(client_id: str, client_secret: str) -> str:
-    """Получает OAuth токен через Client Credentials Grant."""
-    credentials = base64.b64encode(
-        f"{client_id}:{client_secret}".encode()
-    ).decode()
-
+    credentials = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
     resp = requests.post(
         EBAY_TOKEN_URL,
         headers={
@@ -21,92 +17,107 @@ def get_oauth_token(client_id: str, client_secret: str) -> str:
         data="grant_type=client_credentials&scope=https%3A%2F%2Fapi.ebay.com%2Foauth%2Fapi_scope",
         timeout=15,
     )
-
     if resp.status_code != 200:
-        raise RuntimeError(f"Ошибка получения токена: {resp.status_code} {resp.text[:200]}")
-
-    token = resp.json().get("access_token")
-    print(f"    OAuth токен получен (expires_in: {resp.json().get('expires_in')}s)")
-    return token
+        raise RuntimeError(f"Ошибка токена: {resp.status_code} {resp.text[:200]}")
+    print(f"    OAuth OK (expires_in: {resp.json().get('expires_in')}s)")
+    return resp.json()["access_token"]
 
 
-def fetch_watchcount_data(keyword: str, limit: int = 50) -> dict:
+def fetch_ebay_data(keyword: str, limit: int = 50) -> list:
     """
-    Получает товары через официальный eBay Browse API, включая данные продавцов.
+    Получает все доступные поля через eBay Browse API.
+    Переменные окружения: EBAY_CLIENT_ID, EBAY_CLIENT_SECRET
     """
     client_id     = os.environ.get("EBAY_CLIENT_ID", "")
     client_secret = os.environ.get("EBAY_CLIENT_SECRET", "")
 
-    default_response = {"total_results": 0, "items": []}
-
     if not client_id or not client_secret:
-        print("    ОШИБКА: EBAY_CLIENT_ID или EBAY_CLIENT_SECRET не заданы")
-        return default_response
+        print("    ОШИБКА: EBAY_CLIENT_ID / EBAY_CLIENT_SECRET не заданы")
+        return []
 
-    try:
-        token = get_oauth_token(client_id, client_secret)
-    except Exception as e:
-        print(f"    Ошибка авторизации: {e}")
-        return default_response
+    token = get_oauth_token(client_id, client_secret)
 
+    # fieldgroups=EXTENDED даёт доп. поля: seller, shipping, condition и др.
     params = {
         "q":           keyword,
-        "limit":       limit,
+        "limit":       min(limit, 200),
         "sort":        "newlyListed",
-        "filter":      "buyingOptions:{FIXED_PRICE}",
+        "fieldgroups": "EXTENDED",
     }
 
-    print(f"    eBay Browse API: q={keyword}, limit={limit}")
+    print(f"    Browse API: q={keyword!r}, limit={params['limit']}")
 
-    try:
-        resp = requests.get(
-            EBAY_API_URL,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "X-EBAY-C-MARKETPLACE-ID": "EBAY_US",
-                "Content-Type": "application/json",
-            },
-            params=params,
-            timeout=20,
-        )
-        print(f"    HTTP {resp.status_code}")
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        print(f"    Ошибка запроса: {e}")
-        return default_response
+    resp = requests.get(
+        EBAY_API_URL,
+        headers={
+            "Authorization":           f"Bearer {token}",
+            "X-EBAY-C-MARKETPLACE-ID": "EBAY_US",
+            "Content-Type":            "application/json",
+        },
+        params=params,
+        timeout=20,
+    )
+    print(f"    HTTP {resp.status_code}")
+    resp.raise_for_status()
 
-    data = resp.json()
+    data      = resp.json()
     raw_items = data.get("itemSummaries", [])
-    total_results = data.get("total", 0)
-    print(f"    Найдено товаров в базе eBay: {total_results}, получено для анализа: {len(raw_items)}")
+    print(f"    Всего на eBay: {data.get('total', '?')}, получено: {len(raw_items)}")
 
     items = []
-    for item in raw_items:
-        # Цена
-        price_obj = item.get("price", {})
-        price_val = price_obj.get("value", "")
-        currency  = price_obj.get("currency", "USD")
+    for r in raw_items:
+        # ── Цена ─────────────────────────────────────────────────────────
+        price_obj    = r.get("price", {})
+        price        = price_obj.get("value", "")
+        currency     = price_obj.get("currency", "USD")
 
-        # Watchers
-        watchers = str(item.get("watchCount", ""))
+        # ── Продавец ──────────────────────────────────────────────────────
+        seller_obj   = r.get("seller", {})
+        seller       = seller_obj.get("username", "")
+        fb_score     = str(seller_obj.get("feedbackScore", ""))
+        fb_pct       = str(seller_obj.get("feedbackPercentage", ""))
 
-        # Данные продавца (Критично для анализа конкурентов)
-        seller_obj = item.get("seller", {})
-        seller_name = seller_obj.get("username", "")
-        feedback = str(seller_obj.get("feedbackScore", ""))
+        # ── Доставка ──────────────────────────────────────────────────────
+        shipping_options = r.get("shippingOptions", [])
+        if shipping_options:
+            s = shipping_options[0]
+            ship_cost = s.get("shippingCost", {}).get("value", "0")
+            ship_type = s.get("shippingServiceCode", s.get("shippingType", ""))
+        else:
+            ship_cost = ""
+            ship_type = ""
 
-        # Имитируем объем продаж на основе истории листинга, если доступно
-        sold = str(item.get("bidCount", ""))  # Для фиксированных цен можно использовать сторонние маркеры
+        # ── Остальные поля ────────────────────────────────────────────────
+        categories   = r.get("categories", [])
+        category     = categories[0].get("categoryName", "") if categories else ""
+
+        buying_opts  = r.get("buyingOptions", [])
+        buying_opt   = "|".join(buying_opts) if buying_opts else ""
 
         items.append({
-            "title":    item.get("title", ""),
-            "url":      item.get("itemWebUrl", ""),
-            "price":    price_val,
-            "currency": currency,
-            "watchers": watchers,
-            "sold":     sold,
-            "seller":   seller_name,
-            "feedback": feedback
+            "item_id":               r.get("itemId", ""),
+            "title":                 r.get("title", ""),
+            "url":                   r.get("itemWebUrl", ""),
+            "image":                 r.get("image", {}).get("imageUrl", ""),
+            "price":                 price,
+            "currency":              currency,
+            "seller":                seller,
+            "seller_feedback_score": fb_score,
+            "seller_feedback_pct":   fb_pct,
+            "condition":             r.get("condition", ""),
+            "category":              category,
+            "buying_option":         buying_opt,
+            "quantity_available":    str(r.get("estimatedAvailabilities", [{}])[0]
+                                         .get("estimatedAvailableQuantity", "")),
+            "shipping_cost":         ship_cost,
+            "shipping_type":         ship_type,
+            "listing_end":           r.get("itemEndDate", ""),
+            "watchers":              str(r.get("watchCount", "")),
         })
 
-    return {"total_results": total_results, "items": items}
+    return items
+
+
+# Обратная совместимость со старым именем
+def fetch_watchcount_data(keyword: str, limit: int = 10) -> list:
+    return fetch_ebay_data(keyword, limit)
