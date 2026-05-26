@@ -3,414 +3,885 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>eBay Market Analyzer</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+  <title>eBay Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow:wght@300;400;500;600;700;900&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0d0f14; 
-      --surface: #151820; 
-      --surface2: #1c2030;
-      --border: #252a3a; 
-      --accent: #3ecf7a; 
-      --accent-dim: rgba(62,207,122,0.12);
-      --green: #3ecf7a; 
-      --green-dim: rgba(62,207,122,0.12);
-      --red: #f75a5a; 
-      --red-dim: rgba(247,90,90,0.12);
-      --text: #c8d0e8; 
-      --text-muted: #5a6480; 
-      --text-bright: #eef0f8;
-      --mono: 'JetBrains Mono', monospace; 
-      --sans: 'Syne', sans-serif; 
-      --radius: 0px; /* Строго прямые углы */
-    }
-    
-    body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; padding: 28px 24px; }
-
-    .header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
-    .header-icon { width: 44px; height: 44px; background: var(--accent-dim); border: 1px solid var(--accent); border-radius: var(--radius); display: grid; place-items: center; font-size: 22px; }
-    .header h1 { font-size: 22px; font-weight: 700; color: var(--text-bright); letter-spacing: -0.3px; }
-    .header p { font-size: 13px; color: var(--text-muted); font-family: var(--mono); margin-top: 2px; }
-
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 20px; }
-    .card-title { font-size: 11px; font-weight: 600; color: var(--text-bright); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; border-left: 3px solid var(--accent); padding-left: 8px; }
-
-    .field { margin-bottom: 12px; }
-    .field label { display: block; font-size: 12px; color: var(--text-muted); font-family: var(--mono); margin-bottom: 8px; text-transform: uppercase; }
-    
-    /* Оболочка строк ввода для высокой контрастности */
-    .input-row { display: flex; gap: 12px; align-items: stretch; }
-    
-    input[type="text"], input[type="password"] {
-      flex: 1; 
-      background: var(--surface2); 
-      border: 1px solid var(--border);
-      border-radius: var(--radius); 
-      color: var(--text-bright); 
-      font-family: var(--mono);
-      font-size: 13px; 
-      padding: 12px 14px; 
-      outline: none; 
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    input[type="text"]:focus, input[type="password"]:focus { 
-      border-color: var(--accent); 
-      box-shadow: 0 0 8px rgba(62,207,122,0.2);
+      --bg:       #05080f;
+      --bg2:      #090d18;
+      --panel:    #0d1220;
+      --panel2:   #111827;
+      --border:   #1a2540;
+      --border2:  #243050;
+      --blue:     #2563eb;
+      --blue-b:   #3b82f6;
+      --blue-dim: rgba(37,99,235,0.12);
+      --cyan:     #06b6d4;
+      --cyan-dim: rgba(6,182,212,0.1);
+      --green:    #10b981;
+      --green-dim:rgba(16,185,129,0.1);
+      --red:      #ef4444;
+      --red-dim:  rgba(239,68,68,0.1);
+      --amber:    #f59e0b;
+      --amber-dim:rgba(245,158,11,0.1);
+      --text:     #94a3b8;
+      --text2:    #cbd5e1;
+      --bright:   #f1f5f9;
+      --mono:     'Space Mono', monospace;
+      --sans:     'Barlow', sans-serif;
+      --cond:     'Barlow Condensed', sans-serif;
     }
 
-    /* Кнопки управления */
-    .btn { 
-      display: inline-flex; 
-      align-items: center; 
-      justify-content: center;
-      gap: 8px; 
-      padding: 12px 24px; 
-      border-radius: var(--radius); 
-      font-family: var(--mono); 
-      font-size: 13px; 
-      font-weight: 700; 
-      cursor: pointer; 
-      transition: background 0.2s, color 0.2s, border-color 0.2s; 
-      white-space: nowrap;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text2);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Grid noise overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        linear-gradient(rgba(37,99,235,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(5,8,15,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .brand-mark {
+      width: 32px; height: 32px;
+      background: var(--blue);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: grid; place-items: center;
+      font-size: 14px;
+    }
+    .brand-name {
+      font-family: var(--cond);
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 2px;
       text-transform: uppercase;
+      color: var(--bright);
     }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    
-    /* Основная контрастная кнопка запуска */
-    .btn-trigger { 
-      background: var(--accent); 
-      color: #0d0f14; 
-      border: 1px solid var(--accent);
-    }
-    .btn-trigger:not(:disabled):hover { 
-      background: transparent; 
-      color: var(--accent); 
+    .brand-name span { color: var(--blue-b); }
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+    .last-update {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text);
+      letter-spacing: 0.5px;
     }
 
-    .btn-ghost { 
-      background: var(--surface2); 
-      color: var(--text); 
-      border: 1px solid var(--border); 
+    /* ── Main layout ── */
+    .main { position: relative; z-index: 1; padding: 24px 28px; max-width: 1400px; margin: 0 auto; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex; gap: 0; margin-bottom: 24px;
+      border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+      background: var(--panel);
     }
-    .btn-ghost:not(:disabled):hover { 
-      border-color: var(--accent); 
-      color: var(--text-bright); 
+    .tab {
+      flex: 1; padding: 12px 16px; text-align: center;
+      font-family: var(--cond); font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--text); cursor: pointer;
+      border: none; background: none;
+      transition: all 0.2s; border-right: 1px solid var(--border);
+    }
+    .tab:last-child { border-right: none; }
+    .tab:hover { color: var(--blue-b); background: var(--blue-dim); }
+    .tab.active { color: var(--bright); background: var(--blue); }
+
+    /* ── Section ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── KPI row ── */
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      position: relative; overflow: hidden;
+    }
+    .kpi::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    }
+    .kpi.blue::before  { background: var(--blue-b); }
+    .kpi.cyan::before  { background: var(--cyan); }
+    .kpi.green::before { background: var(--green); }
+    .kpi.amber::before { background: var(--amber); }
+    .kpi.red::before   { background: var(--red); }
+
+    .kpi-val {
+      font-family: var(--cond);
+      font-size: 28px; font-weight: 900;
+      color: var(--bright);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .kpi-lbl {
+      font-family: var(--mono);
+      font-size: 9px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text);
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner { width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
-    .btn.loading .spinner { display: inline-block; }
+    /* ── Panel ── */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .panel-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel2);
+    }
+    .panel-title {
+      font-family: var(--cond);
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--text2);
+    }
+    .panel-body { padding: 16px 18px; }
 
-    .token-wrapper { position: relative; flex: 1; }
-    .token-wrapper input { width: 100%; padding-right: 44px; }
-    .toggle-vis { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 15px; padding: 0; }
+    /* ── Two-col ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 1100px) { .three-col { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 700px)  { .three-col { grid-template-columns: 1fr; } }
 
-    .results-wrap { overflow-x: auto; border: 1px solid var(--border); margin-top: 12px; }
-    table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
-    th { background: var(--surface2); color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
-    td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
-    tr:hover td { background: var(--surface2); }
-    
-    .td-title { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .td-url a { color: #4f8ef7; text-decoration: none; }
-    .td-price { color: var(--green); font-weight: 600; }
-    
-    .badge-trend { padding: 2px 6px; font-size: 10px; font-weight: 600; }
-    .badge-up { background: var(--red-dim); color: var(--red); }
-    .badge-down { background: var(--green-dim); color: var(--green); }
-    .badge-flat { background: var(--surface2); color: var(--text-muted); }
+    /* ── Chart bars ── */
+    .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; }
+    .bar-label { font-family: var(--mono); font-size: 10px; color: var(--text); width: 120px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+    .bar-val { font-family: var(--mono); font-size: 10px; color: var(--text2); width: 50px; text-align: right; flex-shrink: 0; }
 
-    .stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-    .stat-chip { background: var(--surface2); border: 1px solid var(--border); padding: 12px 16px; font-family: var(--mono); flex: 1; min-width: 150px; }
-    .stat-chip .val { font-size: 20px; font-weight: 700; color: var(--text-bright); }
-    .stat-chip .lbl { font-size: 10px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; }
+    /* ── Price histogram ── */
+    .histogram { display: flex; align-items: flex-end; gap: 3px; height: 80px; }
+    .hist-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .hist-bar { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.5s ease; }
+    .hist-lbl { font-family: var(--mono); font-size: 8px; color: var(--text); white-space: nowrap; }
 
-    .competitors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 12px; }
-    .comp-card { background: var(--surface2); border: 1px solid var(--border); padding: 12px; font-family: var(--mono); }
-    
-    .log-wrap { background: var(--surface2); border: 1px solid var(--border); padding: 12px; height: 140px; overflow-y: auto; font-family: var(--mono); font-size: 11px; }
-    .empty-state { text-align: center; padding: 32px; color: var(--text-muted); font-family: var(--mono); }
+    /* ── Table ── */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th {
+      font-family: var(--cond); font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text); padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      text-align: left; white-space: nowrap;
+      background: var(--panel2);
+    }
+    td {
+      padding: 9px 14px; border-bottom: 1px solid var(--border);
+      color: var(--text2); font-family: var(--sans); font-size: 12px;
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(37,99,235,0.04); }
+    .td-title { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--bright); }
+    .td-link a { color: var(--blue-b); text-decoration: none; font-family: var(--mono); font-size: 10px; }
+    .td-link a:hover { text-decoration: underline; }
+    .td-price { color: var(--green); font-family: var(--mono); font-weight: 700; }
+    .td-seller { color: var(--cyan); font-family: var(--mono); font-size: 11px; }
+    .td-fb { font-family: var(--mono); font-size: 10px; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-block; padding: 2px 7px; border-radius: 4px;
+      font-family: var(--mono); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .badge-new    { background: var(--green-dim); color: var(--green); }
+    .badge-used   { background: var(--amber-dim); color: var(--amber); }
+    .badge-bin    { background: var(--blue-dim);  color: var(--blue-b); }
+    .badge-other  { background: rgba(100,116,139,0.1); color: var(--text); }
+
+    /* ── Score ring ── */
+    .score-ring {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: conic-gradient(var(--green) calc(var(--pct) * 1%), var(--border) 0);
+      display: grid; place-items: center; position: relative;
+    }
+    .score-ring::before {
+      content: ''; position: absolute; inset: 6px;
+      border-radius: 50%; background: var(--panel);
+    }
+    .score-val {
+      position: relative; z-index: 1;
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--bright);
+    }
+
+    /* ── Keyword tags ── */
+    .kw-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
+    .kw-tag {
+      background: var(--panel2); border: 1px solid var(--border2);
+      border-radius: 6px; padding: 5px 12px;
+      font-family: var(--mono); font-size: 11px; color: var(--text2);
+      cursor: default; transition: all 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .kw-tag:hover { border-color: var(--blue-b); color: var(--blue-b); }
+    .kw-count {
+      font-size: 9px; color: var(--text); background: var(--border);
+      padding: 1px 5px; border-radius: 3px;
+    }
+
+    /* ── Seller card ── */
+    .seller-grid { display: flex; flex-direction: column; gap: 8px; }
+    .seller-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px;
+      background: var(--panel2); border: 1px solid var(--border);
+      border-radius: 8px; transition: border-color 0.15s;
+    }
+    .seller-row:hover { border-color: var(--blue-b); }
+    .seller-rank {
+      font-family: var(--cond); font-size: 18px; font-weight: 900;
+      color: var(--border2); width: 24px; text-align: center; flex-shrink: 0;
+    }
+    .seller-name { font-family: var(--mono); font-size: 12px; color: var(--cyan); flex: 1; }
+    .seller-meta { display: flex; gap: 14px; }
+    .seller-stat { text-align: right; }
+    .seller-stat-val { font-family: var(--cond); font-size: 14px; font-weight: 700; color: var(--bright); }
+    .seller-stat-lbl { font-family: var(--mono); font-size: 9px; color: var(--text); }
+
+    /* ── Empty ── */
+    .empty {
+      text-align: center; padding: 48px;
+      font-family: var(--mono); font-size: 12px; color: var(--text);
+    }
+    .empty-ico { font-size: 36px; margin-bottom: 12px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; border-radius: 7px; border: none;
+      font-family: var(--cond); font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: var(--blue-b); }
+    .btn-ghost { background: var(--panel2); color: var(--text2); border: 1px solid var(--border2); }
+    .btn-ghost:hover { border-color: var(--blue-b); color: var(--blue-b); }
+
+    /* ── Filter row ── */
+    .filter-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .filter-row input, .filter-row select {
+      background: var(--panel2); border: 1px solid var(--border2);
+      border-radius: 7px; color: var(--text2);
+      font-family: var(--mono); font-size: 11px;
+      padding: 8px 12px; outline: none;
+    }
+    .filter-row input:focus, .filter-row select:focus { border-color: var(--blue-b); }
+    .filter-row input { flex: 1; min-width: 180px; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+    .fade-in { animation: fadeUp 0.3s ease both; }
   </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-icon">⚔️</div>
-  <div>
-    <h1>eBay Market Intelligence Terminal</h1>
-    <p>Market Analyzer & Competitor Core Terminal</p>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">⬡</div>
+    <div class="brand-name">eBay <span>Analytics</span></div>
+  </div>
+  <div class="topbar-right">
+    <span class="last-update" id="lastUpdate">—</span>
+    <button class="btn btn-ghost" onclick="loadData()" style="padding:7px 14px;font-size:11px">⟳ Обновить</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-title">🔑 Access Configuration</div>
-  <div class="field">
-    <label>GitHub Personal Access Token</label>
-    <div class="input-row">
-      <div class="token-wrapper">
-        <input type="password" id="tokenInput" placeholder="ghp_...">
-        <button class="toggle-vis" id="toggleVis" type="button">👁</button>
+<div class="main">
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('overview')">📊 Обзор</button>
+    <button class="tab" onclick="switchTab('products')">📦 Товары</button>
+    <button class="tab" onclick="switchTab('sellers')">👤 Продавцы</button>
+    <button class="tab" onclick="switchTab('keywords')">🔍 Ключевые слова</button>
+    <button class="tab" onclick="switchTab('price')">💰 Цены</button>
+  </div>
+
+  <!-- ── ОБЗОР ── -->
+  <div class="section active fade-in" id="tab-overview">
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi blue"><div class="kpi-val" id="kpi-total">—</div><div class="kpi-lbl">Товаров</div></div>
+      <div class="kpi green"><div class="kpi-val" id="kpi-avg">—</div><div class="kpi-lbl">Средняя цена</div></div>
+      <div class="kpi cyan"><div class="kpi-val" id="kpi-min">—</div><div class="kpi-lbl">Мин цена</div></div>
+      <div class="kpi amber"><div class="kpi-val" id="kpi-max">—</div><div class="kpi-lbl">Макс цена</div></div>
+      <div class="kpi blue"><div class="kpi-val" id="kpi-sellers">—</div><div class="kpi-lbl">Продавцов</div></div>
+      <div class="kpi green"><div class="kpi-val" id="kpi-new">—</div><div class="kpi-lbl">Новых товаров</div></div>
+      <div class="kpi red"><div class="kpi-val" id="kpi-used">—</div><div class="kpi-lbl">Б/у товаров</div></div>
+      <div class="kpi cyan"><div class="kpi-val" id="kpi-free-ship">—</div><div class="kpi-lbl">Бесплатная доставка</div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Топ продавцов по кол-ву товаров</div></div>
+        <div class="panel-body"><div class="bar-chart" id="topSellersBar"></div></div>
       </div>
-      <button class="btn btn-ghost" id="saveTokenBtn" onclick="saveToken()">Сохранить токен</button>
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Распределение цен</div></div>
+        <div class="panel-body">
+          <div class="histogram" id="priceHistogram"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Состояние товаров</div></div>
+        <div class="panel-body"><div class="bar-chart" id="conditionBar"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Категории</div></div>
+        <div class="panel-body"><div class="bar-chart" id="categoryBar"></div></div>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="card">
-  <div class="card-title">🎯 Scan Execution Target</div>
-  <div class="field">
-    <label for="keywordInput">Целевое ключевое слово (Keyword Search)</label>
-    <div class="input-row">
-      <input type="text" id="keywordInput" placeholder="Введите нишу (например: tactical tactical knife, vintage watch)">
-      <button class="btn btn-trigger" id="startAnalysisBtn" onclick="runScraper()">
-        <div class="spinner"></div>
-        <span>Запустить анализ ниши</span>
-      </button>
+  <!-- ── ТОВАРЫ ── -->
+  <div class="section fade-in" id="tab-products">
+    <div class="filter-row">
+      <input type="text" id="searchInput" placeholder="Поиск по названию..." oninput="renderProducts()">
+      <select id="sortSelect" onchange="renderProducts()">
+        <option value="price_asc">Цена ↑</option>
+        <option value="price_desc">Цена ↓</option>
+        <option value="seller_score">Рейтинг продавца</option>
+        <option value="title">Название</option>
+      </select>
+      <select id="condFilter" onchange="renderProducts()">
+        <option value="">Все состояния</option>
+        <option value="NEW">Новый</option>
+        <option value="USED">Б/у</option>
+      </select>
+    </div>
+    <div class="panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Список товаров</div>
+        <span id="productsCount" style="font-family:var(--mono);font-size:10px;color:var(--text)"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Товар</th><th>Цена</th><th>Продавец</th><th>Рейтинг</th>
+            <th>Состояние</th><th>Доставка</th><th>Ссылка</th>
+          </tr></thead>
+          <tbody id="productsBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
-  <div style="margin-top: 16px;">
-    <button class="btn btn-ghost" onclick="loadResults()">🔄 Перечитать CSV базу данных</button>
-  </div>
-</div>
 
-<div class="card">
-  <div class="card-title">📈 Сводные метрики текущего среза</div>
-  <div class="stats-row" id="statsRow" style="display:none">
-    <div class="stat-chip"><div class="val" id="statRows">—</div><div class="lbl">Листингов в ТОП</div></div>
-    <div class="stat-chip"><div class="val" id="statTotal">—</div><div class="lbl">Всего в выдаче eBay</div></div>
-    <div class="stat-chip"><div class="val" id="statAvg">—</div><div class="lbl">Средняя цена</div></div>
-    <div class="stat-chip"><div class="val" id="statMedian">—</div><div class="lbl">Медиана цен</div></div>
-    <div class="stat-chip"><div class="val" id="statTrend">—</div><div class="lbl">Тренд рынка</div></div>
+  <!-- ── ПРОДАВЦЫ ── -->
+  <div class="section fade-in" id="tab-sellers">
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Топ продавцов</div></div>
+        <div class="panel-body"><div class="seller-grid" id="sellerGrid"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Рейтинг продавцов (feedback %)</div></div>
+        <div class="panel-body"><div class="bar-chart" id="sellerFbBar"></div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-hdr"><div class="panel-title">Все товары по продавцам</div></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Продавец</th><th>Товаров</th><th>Ср. цена</th>
+            <th>Мин цена</th><th>Макс цена</th><th>Feedback</th><th>Score</th>
+          </tr></thead>
+          <tbody id="sellersBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
-  <div id="analyticsBody" class="empty-state">Для расчета метрик загрузите существующую базу или запустите новый скан.</div>
-</div>
 
-<div class="card">
-  <div class="card-title">🥷 Топ-Продавцы в Нише (Доминация)</div>
-  <div class="competitors-grid" id="competitorsBody">
-    <div class="empty-state">Нет данных для группировки конкурентов</div>
+  <!-- ── КЛЮЧЕВЫЕ СЛОВА ── -->
+  <div class="section fade-in" id="tab-keywords">
+    <div class="panel">
+      <div class="panel-hdr"><div class="panel-title">Слова из названий товаров</div></div>
+      <div class="panel-body"><div class="kw-cloud" id="kwCloud"></div></div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Топ слов (частота)</div></div>
+        <div class="panel-body"><div class="bar-chart" id="kwBar"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Слова со средней ценой выше среднего</div></div>
+        <div class="panel-body"><div class="bar-chart" id="kwPriceBar"></div></div>
+      </div>
+    </div>
   </div>
-</div>
 
-<div class="card">
-  <div class="card-title">📋 Детализированный отчет выдачи</div>
-  <div id="resultsBody">
-    <div class="empty-state">База данных не загружена.</div>
+  <!-- ── ЦЕНЫ ── -->
+  <div class="section fade-in" id="tab-price">
+    <div class="kpi-row">
+      <div class="kpi green"><div class="kpi-val" id="p-avg">—</div><div class="kpi-lbl">Средняя</div></div>
+      <div class="kpi cyan"><div class="kpi-val" id="p-median">—</div><div class="kpi-lbl">Медиана</div></div>
+      <div class="kpi blue"><div class="kpi-val" id="p-min">—</div><div class="kpi-lbl">Минимум</div></div>
+      <div class="kpi amber"><div class="kpi-val" id="p-max">—</div><div class="kpi-lbl">Максимум</div></div>
+      <div class="kpi red"><div class="kpi-val" id="p-spread">—</div><div class="kpi-lbl">Разброс</div></div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Гистограмма цен (детальная)</div></div>
+        <div class="panel-body">
+          <div class="histogram" id="priceHistFull" style="height:120px"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:var(--mono);font-size:9px;color:var(--text)" id="histLabels"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Цены по продавцам (ср. цена)</div></div>
+        <div class="panel-body"><div class="bar-chart" id="sellerPriceBar"></div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-hdr"><div class="panel-title">Все товары — сортировка по цене</div></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Товар</th><th>Цена</th><th>Продавец</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th>
+          </tr></thead>
+          <tbody id="priceTableBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
-</div>
 
-<div class="card">
-  <div class="card-title">🖥 System Logs</div>
-  <div class="log-wrap" id="log"></div>
-</div>
+</div><!-- /main -->
 
 <script>
   const GITHUB_USER = "avatiah";
   const GITHUB_REPO = "ebay-analyzer";
 
-  function log(msg, type = "info") {
-    const el = document.getElementById("log");
-    const t = new Date().toLocaleTimeString("ru-RU");
-    el.innerHTML += `<div style="line-height:1.6; font-family:var(--mono)"><span style="color:var(--text-muted)">[${t}]</span> <span style="color:${type==='err'?'var(--red)':type==='ok'?'var(--green)':'#4f8ef7'}">${msg}</span></div>`;
-    el.scrollTop = el.scrollHeight;
-  }
+  let DATA = [];   // Все строки из CSV
+  let COLS = {};   // Имя колонки → индекс
 
-  window.addEventListener("DOMContentLoaded", () => {
-    // Показ/скрытие токена
-    document.getElementById("toggleVis").addEventListener("click", () => {
-      const inp = document.getElementById("tokenInput");
-      inp.type = inp.type === "password" ? "text" : "password";
+  // ── Tabs ──────────────────────────────────────────────────────────────
+  function switchTab(id) {
+    document.querySelectorAll(".tab").forEach((t, i) => {
+      const ids = ["overview","products","sellers","keywords","price"];
+      t.classList.toggle("active", ids[i] === id);
     });
-
-    const t = localStorage.getItem("GH_TOKEN");
-    if (t) { 
-      document.getElementById("tokenInput").value = t; 
-      log("Токен авторизации успешно развернут из локального кэша", "ok"); 
-    }
-    loadResults();
-  });
-
-  function saveToken() {
-    const v = document.getElementById("tokenInput").value.trim();
-    localStorage.setItem("GH_TOKEN", v);
-    log("Токен авторизации сохранен локально", "ok");
+    document.querySelectorAll(".section").forEach(s => {
+      s.classList.toggle("active", s.id === "tab-" + id);
+    });
   }
 
-  async function runScraper() {
-    const kw = document.getElementById("keywordInput").value.trim();
-    const token = localStorage.getItem("GH_TOKEN");
-    const btn = document.getElementById("startAnalysisBtn");
-
-    if (!token) {
-      log("Ошибка: Сначала укажите и сохраните GitHub Personal Access Token", "err");
-      return;
-    }
-    if (!kw) {
-      log("Ошибка: Поле ключевого слова пустое. Укажите таргет для сканирования", "err");
-      return;
-    }
-
-    btn.classList.add("loading");
-    btn.disabled = true;
-    log(`Инициализация триггера для таргета: «${kw}»...`);
-
+  // ── Load CSV from GitHub ──────────────────────────────────────────────
+  async function loadData() {
+    document.getElementById("lastUpdate").textContent = "загрузка...";
     try {
-      const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
-        method: "POST",
-        headers: { 
-          "Authorization": `Bearer ${token}`, 
-          "Content-Type": "application/json",
-          "Accept": "application/vnd.github+json"
-        },
-        body: JSON.stringify({ event_type: "run-scraper", client_payload: { keyword: kw } })
-      });
+      const token = localStorage.getItem("GH_TOKEN") || "";
+      const headers = {
+        "Accept": "application/vnd.github+json",
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      };
 
-      if (res.status === 204) {
-        log("Сигнал dispatch успешно отправлен и принят GitHub Actions! Скрипт запущен на сервере.", "ok");
-        log("Подождите примерно 30-40 секунд, пока отработает eBay API, затем нажмите 'Перечитать CSV базу данных'.");
-      } else {
-        log(`Сбой отправки события: HTTP статус ${res.status}`, "err");
-      }
-    } catch (e) {
-      log(`Ошибка соединения с GitHub API: ${e.message}`, "err");
-    } finally {
-      btn.classList.remove("loading");
-      btn.disabled = false;
-    }
-  }
-
-  async function loadResults() {
-    log("Запрос сырых данных CSV из репозитория...");
-    const token = localStorage.getItem("GH_TOKEN");
-    
-    try {
-      const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/data/raw_data.csv`, {
-        headers: token ? { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github+json" } : {}
-      });
-
-      if (!res.ok) {
-        log("База данных CSV пуста или еще не создана коммитом в репозитории.", "err");
-        return;
-      }
-
+      const res = await fetch(
+        `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/data/raw_data.csv`,
+        { headers }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const body = await res.json();
-      const csvText = atob(body.content.replace(/\n/g, ""));
-      parseAndAnalyze(csvText);
+      const csv = atob(body.content.replace(/\n/g, ""));
+
+      parseCSV(csv);
+      renderAll();
+
+      // Last commit date
+      const cRes = await fetch(
+        `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/commits?path=data/raw_data.csv&per_page=1`,
+        { headers }
+      );
+      const cBody = await cRes.json();
+      const date = cBody[0]?.commit?.author?.date
+        ? new Date(cBody[0].commit.author.date).toLocaleString("ru-RU")
+        : "—";
+      document.getElementById("lastUpdate").textContent = `обновлено ${date}`;
     } catch(e) {
-      log(`Исключение при чтении базы данных: ${e.message}`, "err");
+      document.getElementById("lastUpdate").textContent = "ошибка: " + e.message;
     }
   }
 
-  function parseAndAnalyze(csv) {
-    const lines = csv.trim().split("\n").map(l => l.replace(/\r/g, ""));
-    if (lines.length < 2) return;
+  // ── Parse CSV ─────────────────────────────────────────────────────────
+  function parseCSV(text) {
+    const lines = text.replace(/\r/g, "").trim().split("\n").filter(l => l.trim());
+    if (lines.length < 2) { DATA = []; return; }
 
     const headers = lines[0].split(",");
-    const allRows = lines.slice(1).map(l => {
-      const res = []; let cur = "", inQ = false;
-      for (const ch of l) {
-        if (ch === '"') inQ = !inQ;
-        else if (ch === "," && !inQ) { res.push(cur); cur = ""; }
+    headers.forEach((h, i) => { COLS[h.trim()] = i; });
+
+    DATA = lines.slice(1).map(line => {
+      const row = [];
+      let cur = "", inQ = false;
+      for (const ch of line) {
+        if (ch === '"') { inQ = !inQ; }
+        else if (ch === "," && !inQ) { row.push(cur); cur = ""; }
         else cur += ch;
       }
-      res.push(cur);
-      return res;
+      row.push(cur);
+      return row;
+    }).filter(r => !col(r, "error"));
+  }
+
+  function col(row, name) {
+    const i = COLS[name];
+    return i !== undefined ? (row[i] || "") : "";
+  }
+
+  function price(row) {
+    return parseFloat(col(row, "price")) || 0;
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function fmt$(v) {
+    return v > 0 ? "$" + Number(v).toFixed(2) : "—";
+  }
+
+  // ── Render all sections ───────────────────────────────────────────────
+  function renderAll() {
+    if (!DATA.length) return;
+    renderOverview();
+    renderProducts();
+    renderSellers();
+    renderKeywords();
+    renderPrices();
+  }
+
+  // ── OVERVIEW ──────────────────────────────────────────────────────────
+  function renderOverview() {
+    const prices = DATA.map(price).filter(p => p > 0);
+    const sellers = [...new Set(DATA.map(r => col(r, "seller")).filter(Boolean))];
+
+    const avg = prices.length ? prices.reduce((a,b)=>a+b,0)/prices.length : 0;
+    const newCount  = DATA.filter(r => col(r,"condition").toUpperCase().includes("NEW")).length;
+    const usedCount = DATA.filter(r => col(r,"condition").toUpperCase().includes("USED")).length;
+    const freeShip  = DATA.filter(r => col(r,"shipping_cost") === "0" || col(r,"shipping_cost") === "0.0").length;
+
+    set("kpi-total",   DATA.length);
+    set("kpi-avg",     fmt$(avg));
+    set("kpi-min",     fmt$(Math.min(...prices)));
+    set("kpi-max",     fmt$(Math.max(...prices)));
+    set("kpi-sellers", sellers.length);
+    set("kpi-new",     newCount);
+    set("kpi-used",    usedCount);
+    set("kpi-free-ship", freeShip);
+
+    // Top sellers bar
+    const sellerCount = countBy(DATA, r => col(r,"seller"));
+    renderBarChart("topSellersBar", topN(sellerCount, 8), "var(--blue-b)");
+
+    // Price histogram
+    renderHistogram("priceHistogram", prices, 8, "var(--green)");
+
+    // Condition bar
+    const condCount = countBy(DATA, r => {
+      const c = col(r,"condition").toUpperCase();
+      return c.includes("NEW") ? "New" : c.includes("USED") ? "Used" : c || "Unknown";
+    });
+    renderBarChart("conditionBar", Object.entries(condCount).sort((a,b)=>b[1]-a[1]), "var(--amber)");
+
+    // Category bar
+    const catCount = countBy(DATA, r => col(r,"category") || "—");
+    renderBarChart("categoryBar", topN(catCount, 7), "var(--cyan)");
+  }
+
+  // ── PRODUCTS ──────────────────────────────────────────────────────────
+  function renderProducts() {
+    let rows = [...DATA];
+    const search = document.getElementById("searchInput")?.value.toLowerCase() || "";
+    const sort   = document.getElementById("sortSelect")?.value || "price_asc";
+    const cond   = document.getElementById("condFilter")?.value || "";
+
+    if (search) rows = rows.filter(r => col(r,"title").toLowerCase().includes(search));
+    if (cond)   rows = rows.filter(r => col(r,"condition").toUpperCase().includes(cond));
+
+    rows.sort((a,b) => {
+      if (sort === "price_asc")    return price(a) - price(b);
+      if (sort === "price_desc")   return price(b) - price(a);
+      if (sort === "seller_score") return (parseFloat(col(b,"seller_feedback_score"))||0) - (parseFloat(col(a,"seller_feedback_score"))||0);
+      if (sort === "title")        return col(a,"title").localeCompare(col(b,"title"));
+      return 0;
     });
 
-    const hIdx = name => headers.indexOf(name);
-    const tsIdx = hIdx("timestamp");
-    
-    if (tsIdx === -1) {
-      log("Ошибка: Неверный формат заголовков CSV файла.", "err");
-      return;
-    }
+    set("productsCount", `${rows.length} товаров`);
 
-    const timestamps = [...new Set(allRows.map(r => r[tsIdx]))].sort();
-    const latestTs = timestamps[timestamps.length - 1];
-    const prevTs = timestamps[timestamps.length - 2];
+    document.getElementById("productsBody").innerHTML = rows.map(r => {
+      const ship = col(r,"shipping_cost");
+      const shipLabel = ship === "0" || ship === "0.0" ? '<span style="color:var(--green)">Бесплатно</span>' : ship ? `$${ship}` : "—";
+      const cond = col(r,"condition").toUpperCase();
+      const condBadge = cond.includes("NEW") ? '<span class="badge badge-new">New</span>'
+        : cond.includes("USED") ? '<span class="badge badge-used">Used</span>'
+        : `<span class="badge badge-other">${esc(col(r,"condition")||"—")}</span>`;
+      const fb = col(r,"seller_feedback_pct");
+      return `<tr>
+        <td class="td-title" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td>
+        <td class="td-price">${fmt$(price(r))}</td>
+        <td class="td-seller">${esc(col(r,"seller"))}</td>
+        <td class="td-fb">${fb ? fb+"%" : "—"}</td>
+        <td>${condBadge}</td>
+        <td style="font-family:var(--mono);font-size:11px">${shipLabel}</td>
+        <td class="td-link"><a href="${esc(col(r,"url"))}" target="_blank">→ открыть</a></td>
+      </tr>`;
+    }).join("") || '<tr><td colspan="7" style="text-align:center;color:var(--text);padding:32px">Нет товаров</td></tr>';
+  }
 
-    const currentRows = allRows.filter(r => r[tsIdx] === latestTs && r[hIdx("error")] === "");
-    if (!currentRows.length) {
-      document.getElementById("analyticsBody").innerHTML = `<div class="empty-state">Нет валидных данных в последнем срезе.</div>`;
-      return;
-    }
-
-    log(`Успешно отрисовано строк текущего среза: ${currentRows.length}`, "ok");
-    document.getElementById("analyticsBody").style.display = "none";
-
-    const avgPrice = parseFloat(currentRows[0][hIdx("avg_price")]) || 0;
-    const medianPrice = parseFloat(currentRows[0][hIdx("median_price")]) || 0;
-    const totalResults = currentRows[0][hIdx("total_results")] || "0";
-
-    let trendHtml = '<span class="badge-trend badge-flat">⚖️ СТАБИЛЬНО</span>';
-    if (prevTs) {
-      const prevRows = allRows.filter(r => r[tsIdx] === prevTs);
-      if (prevRows.length) {
-        const prevAvg = parseFloat(prevRows[0][hIdx("avg_price")]) || 0;
-        if (avgPrice > prevAvg && prevAvg > 0) trendHtml = `<span class="badge-trend badge-up">▲ РОСТ (+${((avgPrice-prevAvg)/prevAvg*100).toFixed(1)}%)</span>`;
-        if (avgPrice < prevAvg && avgPrice > 0) trendHtml = `<span class="badge-trend badge-down">▼ ПАДЕНИЕ (-${((prevAvg-avgPrice)/prevAvg*100).toFixed(1)}%)</span>`;
-      }
-    }
-
-    document.getElementById("statsRow").style.display = "flex";
-    document.getElementById("statRows").textContent = currentRows.length;
-    document.getElementById("statTotal").textContent = parseInt(totalResults).toLocaleString();
-    document.getElementById("statAvg").textContent = `$${avgPrice.toFixed(2)}`;
-    document.getElementById("statMedian").textContent = `$${medianPrice.toFixed(2)}`;
-    document.getElementById("statTrend").innerHTML = trendHtml;
-
-    // Группировка конкурентов
-    const sellerIdx = hIdx("seller");
-    const fbIdx = hIdx("feedback");
-    const competitorMap = {};
-
-    currentRows.forEach(r => {
-      const name = r[sellerIdx];
-      if (!name) return;
-      if (!competitorMap[name]) competitorMap[name] = { count: 0, feedback: r[fbIdx] };
-      competitorMap[name].count++;
+  // ── SELLERS ───────────────────────────────────────────────────────────
+  function renderSellers() {
+    const map = {};
+    DATA.forEach(r => {
+      const s = col(r,"seller"); if (!s) return;
+      if (!map[s]) map[s] = { name: s, items: [], fb_pct: col(r,"seller_feedback_pct"), fb_score: col(r,"seller_feedback_score") };
+      map[s].items.push(price(r));
     });
 
-    const sortedCompetitors = Object.entries(competitorMap).sort((a,b) => b[1].count - a[1].count).slice(0, 8);
-    document.getElementById("competitorsBody").innerHTML = sortedCompetitors.map(([name, stat]) => `
-      <div class="comp-card">
-        <div style="color:var(--accent); font-weight:700">👤 ${name}</div>
-        <div style="font-size:11px; margin-top:4px">Листингов в ТОП: <b>${stat.count}</b></div>
-        <div style="font-size:11px; color:var(--text-muted)">Фидбек-скор: ${stat.feedback || '—'}</div>
+    const sellers = Object.values(map).sort((a,b) => b.items.length - a.items.length);
+
+    // Seller cards
+    document.getElementById("sellerGrid").innerHTML = sellers.slice(0,8).map((s,i) => {
+      const avg = s.items.filter(p=>p>0).reduce((a,b)=>a+b,0) / (s.items.filter(p=>p>0).length||1);
+      return `<div class="seller-row">
+        <div class="seller-rank">${i+1}</div>
+        <div class="seller-name">${esc(s.name)}</div>
+        <div class="seller-meta">
+          <div class="seller-stat"><div class="seller-stat-val">${s.items.length}</div><div class="seller-stat-lbl">товаров</div></div>
+          <div class="seller-stat"><div class="seller-stat-val">${fmt$(avg)}</div><div class="seller-stat-lbl">ср. цена</div></div>
+          <div class="seller-stat"><div class="seller-stat-val">${s.fb_pct ? s.fb_pct+"%" : "—"}</div><div class="seller-stat-lbl">feedback</div></div>
+        </div>
+      </div>`;
+    }).join("");
+
+    // FB bar
+    const fbData = sellers.filter(s=>s.fb_pct).slice(0,10).map(s=>[s.name, parseFloat(s.fb_pct)||0]).sort((a,b)=>b[1]-a[1]);
+    renderBarChart("sellerFbBar", fbData, "var(--green)", 100);
+
+    // Seller table
+    document.getElementById("sellersBody").innerHTML = sellers.map(s => {
+      const prices = s.items.filter(p=>p>0);
+      const avg = prices.length ? prices.reduce((a,b)=>a+b,0)/prices.length : 0;
+      return `<tr>
+        <td class="td-seller">${esc(s.name)}</td>
+        <td style="font-family:var(--mono)">${s.items.length}</td>
+        <td class="td-price">${fmt$(avg)}</td>
+        <td style="font-family:var(--mono)">${fmt$(Math.min(...prices)||0)}</td>
+        <td style="font-family:var(--mono)">${fmt$(Math.max(...prices)||0)}</td>
+        <td style="font-family:var(--mono);color:var(--green)">${s.fb_pct ? s.fb_pct+"%" : "—"}</td>
+        <td style="font-family:var(--mono)">${s.fb_score || "—"}</td>
+      </tr>`;
+    }).join("");
+
+    // Seller price bar
+    const spData = sellers.filter(s=>s.items.filter(p=>p>0).length).slice(0,10).map(s=>{
+      const p = s.items.filter(x=>x>0);
+      return [s.name, Math.round(p.reduce((a,b)=>a+b,0)/p.length)];
+    }).sort((a,b)=>b[1]-a[1]);
+    renderBarChart("sellerPriceBar", spData, "var(--amber)");
+  }
+
+  // ── KEYWORDS ─────────────────────────────────────────────────────────
+  function renderKeywords() {
+    const stopWords = new Set([
+      "the","a","an","in","of","for","and","or","with","to","on","at","by","as","is",
+      "from","new","used","lot","set","vintage","1","2","3","4","5","x","free"
+    ]);
+
+    const wordPrices = {};
+    DATA.forEach(r => {
+      const title = col(r,"title").toLowerCase();
+      const p = price(r);
+      title.split(/\W+/).forEach(w => {
+        if (w.length < 3 || stopWords.has(w)) return;
+        if (!wordPrices[w]) wordPrices[w] = [];
+        wordPrices[w].push(p);
+      });
+    });
+
+    const wordCount = Object.entries(wordPrices)
+      .map(([w, prices]) => [w, prices.length])
+      .sort((a,b) => b[1]-a[1]);
+
+    const top30 = wordCount.slice(0, 30);
+
+    // Cloud
+    const maxCount = top30[0]?.[1] || 1;
+    document.getElementById("kwCloud").innerHTML = top30.map(([w, cnt]) => {
+      const size = 9 + Math.round((cnt / maxCount) * 8);
+      return `<div class="kw-tag" style="font-size:${size}px">
+        ${esc(w)}<span class="kw-count">${cnt}</span>
+      </div>`;
+    }).join("");
+
+    // Frequency bar
+    renderBarChart("kwBar", top30.slice(0,12), "var(--blue-b)");
+
+    // Words with above-avg price
+    const globalAvg = DATA.map(price).filter(p=>p>0).reduce((a,b)=>a+b,0) / (DATA.filter(r=>price(r)>0).length||1);
+    const kwPriceData = Object.entries(wordPrices)
+      .filter(([,prices]) => prices.filter(p=>p>0).length >= 2)
+      .map(([w, prices]) => {
+        const avg = prices.filter(p=>p>0).reduce((a,b)=>a+b,0) / prices.filter(p=>p>0).length;
+        return [w, Math.round(avg)];
+      })
+      .filter(([,avg]) => avg > globalAvg)
+      .sort((a,b) => b[1]-a[1])
+      .slice(0,10);
+
+    renderBarChart("kwPriceBar", kwPriceData, "var(--cyan)");
+  }
+
+  // ── PRICES ───────────────────────────────────────────────────────────
+  function renderPrices() {
+    const prices = DATA.map(price).filter(p=>p>0).sort((a,b)=>a-b);
+    if (!prices.length) return;
+
+    const avg    = prices.reduce((a,b)=>a+b,0)/prices.length;
+    const median = prices[Math.floor(prices.length/2)];
+    const min    = prices[0];
+    const max    = prices[prices.length-1];
+    const spread = max - min;
+
+    set("p-avg",    fmt$(avg));
+    set("p-median", fmt$(median));
+    set("p-min",    fmt$(min));
+    set("p-max",    fmt$(max));
+    set("p-spread", fmt$(spread));
+
+    // Full histogram
+    renderHistogram("priceHistFull", prices, 16, "var(--blue-b)");
+
+    // Hist labels
+    const bucketSize = spread / 16;
+    const labels = [];
+    for (let i = 0; i <= 16; i += 4) {
+      labels.push(`$${(min + i*bucketSize).toFixed(0)}`);
+    }
+    document.getElementById("histLabels").innerHTML = labels.map(l=>`<span>${l}</span>`).join("");
+
+    // Seller price bar (already done in sellers, reuse here)
+    const map = {};
+    DATA.forEach(r => {
+      const s = col(r,"seller"); if(!s) return;
+      if(!map[s]) map[s] = [];
+      const p = price(r); if(p>0) map[s].push(p);
+    });
+    const spData = Object.entries(map)
+      .filter(([,ps])=>ps.length)
+      .map(([s,ps])=>[s, Math.round(ps.reduce((a,b)=>a+b,0)/ps.length)])
+      .sort((a,b)=>b[1]-a[1]).slice(0,10);
+    renderBarChart("sellerPriceBar", spData, "var(--amber)");
+
+    // Price table
+    const sorted = [...DATA].sort((a,b)=>price(a)-price(b));
+    document.getElementById("priceTableBody").innerHTML = sorted.map(r => {
+      const ship = col(r,"shipping_cost");
+      const shipLabel = ship==="0"||ship==="0.0" ? '<span style="color:var(--green)">Бесплатно</span>' : ship ? `$${ship}` : "—";
+      return `<tr>
+        <td class="td-title" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td>
+        <td class="td-price">${fmt$(price(r))}</td>
+        <td class="td-seller">${esc(col(r,"seller"))}</td>
+        <td style="font-family:var(--mono);font-size:11px">${esc(col(r,"condition")||"—")}</td>
+        <td style="font-family:var(--mono);font-size:11px">${shipLabel}</td>
+        <td class="td-link"><a href="${esc(col(r,"url"))}" target="_blank">→ открыть</a></td>
+      </tr>`;
+    }).join("");
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function set(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  function countBy(arr, fn) {
+    const out = {};
+    arr.forEach(x => { const k = fn(x); out[k] = (out[k]||0)+1; });
+    return out;
+  }
+
+  function topN(obj, n) {
+    return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  }
+
+  function renderBarChart(id, data, color, maxVal) {
+    const el = document.getElementById(id);
+    if (!el || !data.length) return;
+    const max = maxVal || Math.max(...data.map(d=>d[1]));
+    el.innerHTML = data.map(([label, val]) => `
+      <div class="bar-row">
+        <div class="bar-label" title="${esc(label)}">${esc(label)}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(val/max*100).toFixed(1)}%;background:${color}"></div></div>
+        <div class="bar-val">${typeof val === "number" && val > 10 ? val.toLocaleString() : val}</div>
       </div>
     `).join("");
-
-    // Отрисовка таблицы
-    const titleIdx = hIdx("title");
-    const urlIdx = hIdx("url");
-    const priceIdx = hIdx("price");
-    const watchIdx = hIdx("watchers");
-
-    let tableHtml = `
-      <div class="results-wrap">
-        <table>
-          <thead>
-            <tr><th>Товар</th><th>Ссылка</th><th>Цена</th><th>Наблюдают</th><th>Продавец</th></tr>
-          </thead>
-          <tbody>
-    `;
-
-    currentRows.forEach(r => {
-      tableHtml += `
-        <tr>
-          <td class="td-title" title="${r[titleIdx]}">${r[titleIdx]}</td>
-          <td class="td-url"><a href="${r[urlIdx]}" target="_blank">🔗 Открыть</a></td>
-          <td class="td-price">$${parseFloat(r[priceIdx]).toFixed(2)}</td>
-          <td>👁️ ${r[watchIdx] || 0}</td>
-          <td>${r[sellerIdx]} <span style="color:var(--text-muted)">(${r[fbIdx]})</span></td>
-        </tr>
-      `;
-    });
-
-    tableHtml += "</tbody></table></div>";
-    document.getElementById("resultsBody").innerHTML = tableHtml;
   }
+
+  function renderHistogram(id, prices, buckets, color) {
+    const el = document.getElementById(id);
+    if (!el || !prices.length) return;
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const bSize = (max - min) / buckets || 1;
+    const counts = new Array(buckets).fill(0);
+    prices.forEach(p => {
+      const i = Math.min(Math.floor((p-min)/bSize), buckets-1);
+      counts[i]++;
+    });
+    const maxCount = Math.max(...counts);
+    el.innerHTML = counts.map((c, i) => `
+      <div class="hist-col">
+        <div class="hist-bar" style="height:${maxCount?Math.round(c/maxCount*100):0}%;background:${color};opacity:${0.4+0.6*c/maxCount}"></div>
+      </div>
+    `).join("");
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  loadData();
 </script>
 </body>
 </html>
