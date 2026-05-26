@@ -5,13 +5,19 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from sources.watchcount import fetch_watchcount_data
+from sources.watchcount import fetch_ebay_data
 
-# Расширенный заголовок для полноценного конкурентного анализа
 CSV_HEADER = [
-    "timestamp", "source", "keyword", "title", "url",
-    "price", "currency", "watchers", "avg_price", "median_price", 
-    "total_results", "seller", "feedback", "trend", "sold", "error"
+    "timestamp", "keyword",
+    "item_id", "title", "url", "image",
+    "price", "currency",
+    "seller", "seller_feedback_score", "seller_feedback_pct",
+    "condition", "category", "buying_option",
+    "quantity_available",
+    "shipping_cost", "shipping_type",
+    "listing_end",
+    "watchers",
+    "error"
 ]
 
 
@@ -23,88 +29,67 @@ def load_keywords():
         return []
 
 
-def calc_stats(items: list) -> tuple:
-    """Возвращает (avg_price, median_price) для списка товаров."""
-    prices = [float(i["price"]) for i in items if i.get("price")]
-    if not prices:
-        return "", ""
-    
-    prices.sort()
-    avg_price = str(round(sum(prices) / len(prices), 2))
-    
-    # Расчет медианы для защиты от ценовых выбросов
-    n = len(prices)
-    if n % 2 == 1:
-        median_price = str(round(prices[n // 2], 2))
-    else:
-        median_price = str(round((prices[n // 2 - 1] + prices[n // 2]) / 2, 2))
-        
-    return avg_price, median_price
-
-
 def collect(keyword: str) -> list:
     print(f"\n  Сбор данных для «{keyword}»")
     ts = datetime.datetime.utcnow().isoformat()
-    rows = []
 
     try:
-        # Увеличиваем лимит до 50 для репрезентативной выборки рынка
-        result_data = fetch_watchcount_data(keyword, limit=50)
-        items = result_data.get("items", [])
-        total_results = str(result_data.get("total_results", "0"))
+        items = fetch_ebay_data(keyword, limit=50)
     except Exception as e:
-        print(f"  WatchCount ошибка: {e}")
+        print(f"  Ошибка: {e}")
         items = []
-        total_results = "0"
 
-    avg_price, median_price = calc_stats(items)
-
-    if items:
-        for item in items:
-            rows.append({
-                "timestamp":      ts,
-                "source":         "watchcount",
-                "keyword":        keyword,
-                "title":          item.get("title", ""),
-                "url":            item.get("url", ""),
-                "price":          item.get("price", ""),
-                "currency":       item.get("currency", "USD"),
-                "watchers":       item.get("watchers", ""),
-                "avg_price":      avg_price,
-                "median_price":   median_price,
-                "total_results":  total_results,
-                "seller":         item.get("seller", ""),
-                "feedback":       item.get("feedback", ""),
-                "trend":          "",
-                "sold":           item.get("sold", ""),
-                "error":          ""
-            })
-    else:
-        rows.append({
-            "timestamp": ts, "source": "watchcount",
-            "keyword": keyword, "title": "", "url": "",
-            "price": "", "currency": "", "watchers": "",
-            "avg_price": "", "median_price": "", "total_results": total_results,
-            "seller": "", "feedback": "", "trend": "", "sold": "",
+    if not items:
+        return [{
+            "timestamp": ts, "keyword": keyword,
+            "item_id": "", "title": "", "url": "", "image": "",
+            "price": "", "currency": "",
+            "seller": "", "seller_feedback_score": "", "seller_feedback_pct": "",
+            "condition": "", "category": "", "buying_option": "",
+            "quantity_available": "",
+            "shipping_cost": "", "shipping_type": "",
+            "listing_end": "", "watchers": "",
             "error": "no results"
+        }]
+
+    rows = []
+    for item in items:
+        rows.append({
+            "timestamp":              ts,
+            "keyword":                keyword,
+            "item_id":                item.get("item_id", ""),
+            "title":                  item.get("title", ""),
+            "url":                    item.get("url", ""),
+            "image":                  item.get("image", ""),
+            "price":                  item.get("price", ""),
+            "currency":               item.get("currency", "USD"),
+            "seller":                 item.get("seller", ""),
+            "seller_feedback_score":  item.get("seller_feedback_score", ""),
+            "seller_feedback_pct":    item.get("seller_feedback_pct", ""),
+            "condition":              item.get("condition", ""),
+            "category":               item.get("category", ""),
+            "buying_option":          item.get("buying_option", ""),
+            "quantity_available":     item.get("quantity_available", ""),
+            "shipping_cost":          item.get("shipping_cost", ""),
+            "shipping_type":          item.get("shipping_type", ""),
+            "listing_end":            item.get("listing_end", ""),
+            "watchers":               item.get("watchers", ""),
+            "error":                  ""
         })
 
+    print(f"  Собрано строк: {len(rows)}")
     return rows
 
 
 def save_to_csv(rows: list):
-    """Дозаписывает данные в конец файла (Append), сохраняя историю трендов."""
     os.makedirs("data", exist_ok=True)
     path = "data/raw_data.csv"
-    file_exists = os.path.isfile(path)
-    
-    with open(path, "a", newline="", encoding="utf-8") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=CSV_HEADER)
-        if not file_exists:
-            writer.writeheader()
+        writer.writeheader()
         for row in rows:
             writer.writerow(row)
-    print(f"\n  Добавлено {len(rows)} строк → {path}")
+    print(f"\n  Сохранено {len(rows)} строк → {path}")
 
 
 def main():
