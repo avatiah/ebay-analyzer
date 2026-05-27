@@ -4,20 +4,19 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
-
 from sources.watchcount import fetch_ebay_data
 
 CSV_HEADER = [
     "timestamp", "keyword",
-    "item_id", "title", "url", "image",
+    "item_id", "title", "url", "image", "thumbnail",
     "price", "currency",
-    "seller", "seller_feedback_score", "seller_feedback_pct",
-    "condition", "category", "buying_option",
-    "quantity_available",
-    "shipping_cost", "shipping_type",
-    "listing_end",
-    "watchers",
-    "error"
+    "seller", "seller_feedback_score", "seller_feedback_pct", "top_rated_seller",
+    "condition", "condition_id",
+    "category", "category_id",
+    "buying_option",
+    "quantity_available", "quantity_sold",
+    "shipping_cost", "shipping_type", "free_shipping",
+    "listing_end", "item_location", "watchers",
 ]
 
 
@@ -30,58 +29,31 @@ def load_keywords():
 
 
 def collect(keyword: str) -> list:
-    print(f"\n  Сбор данных для «{keyword}»")
+    print(f"\n  [{keyword}] Сбор данных...")
     ts = datetime.datetime.utcnow().isoformat()
 
     try:
-        items = fetch_ebay_data(keyword, limit=50)
+        items = fetch_ebay_data(keyword, limit=200)
     except Exception as e:
         print(f"  Ошибка: {e}")
         items = []
 
     if not items:
-        return [{
-            "timestamp": ts, "keyword": keyword,
-            "item_id": "", "title": "", "url": "", "image": "",
-            "price": "", "currency": "",
-            "seller": "", "seller_feedback_score": "", "seller_feedback_pct": "",
-            "condition": "", "category": "", "buying_option": "",
-            "quantity_available": "",
-            "shipping_cost": "", "shipping_type": "",
-            "listing_end": "", "watchers": "",
-            "error": "no results"
-        }]
+        return [{"timestamp": ts, "keyword": keyword, **{k: "" for k in CSV_HEADER if k not in ("timestamp","keyword")}}]
 
     rows = []
     for item in items:
-        rows.append({
-            "timestamp":              ts,
-            "keyword":                keyword,
-            "item_id":                item.get("item_id", ""),
-            "title":                  item.get("title", ""),
-            "url":                    item.get("url", ""),
-            "image":                  item.get("image", ""),
-            "price":                  item.get("price", ""),
-            "currency":               item.get("currency", "USD"),
-            "seller":                 item.get("seller", ""),
-            "seller_feedback_score":  item.get("seller_feedback_score", ""),
-            "seller_feedback_pct":    item.get("seller_feedback_pct", ""),
-            "condition":              item.get("condition", ""),
-            "category":               item.get("category", ""),
-            "buying_option":          item.get("buying_option", ""),
-            "quantity_available":     item.get("quantity_available", ""),
-            "shipping_cost":          item.get("shipping_cost", ""),
-            "shipping_type":          item.get("shipping_type", ""),
-            "listing_end":            item.get("listing_end", ""),
-            "watchers":               item.get("watchers", ""),
-            "error":                  ""
-        })
+        row = {"timestamp": ts, "keyword": keyword}
+        for key in CSV_HEADER:
+            if key not in ("timestamp", "keyword"):
+                row[key] = item.get(key, "")
+        rows.append(row)
 
-    print(f"  Собрано строк: {len(rows)}")
+    print(f"  [{keyword}] Собрано: {len(rows)} товаров")
     return rows
 
 
-def save_to_csv(rows: list):
+def save_csv(rows: list):
     os.makedirs("data", exist_ok=True)
     path = "data/raw_data.csv"
     with open(path, "w", newline="", encoding="utf-8") as f:
@@ -95,8 +67,7 @@ def save_to_csv(rows: list):
 def main():
     keywords = load_keywords()
     if not keywords:
-        print("Нет ключевых слов")
-        return
+        print("Нет ключевых слов"); return
 
     print(f"Ключевые слова: {keywords}")
     all_rows = []
@@ -104,7 +75,7 @@ def main():
         all_rows.extend(collect(kw))
 
     if all_rows:
-        save_to_csv(all_rows)
+        save_csv(all_rows)
         print("Готово!")
 
 
