@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>eBay Market Analyzer</title>
+<title>eBay Market Analyzer — Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -165,12 +165,19 @@ tr:hover td{background:rgba(37,99,235,.03)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .fade{animation:fadeUp .3s ease both}
-.tbl-wrap td img{width:48px;height:48px;object-fit:cover;border-radius:6px;background:var(--panel2);vertical-align:middle}
+/* Pie chart styles */
+.pie-container{display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:center}
+.pie-chart{position:relative;width:160px;height:160px;border-radius:50%;background:var(--panel2);flex-shrink:0}
+.pie-legend{flex:1;min-width:150px}
+.pie-legend-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-family:var(--mono);font-size:9px}
+.pie-color{width:12px;height:12px;border-radius:2px;flex-shrink:0}
+.pie-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pie-value{color:var(--bright);font-weight:700}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <div class="logo"><div class="logo-hex">⬡</div><div class="logo-text">eBay <span>Analyzer</span></div></div>
+  <div class="logo"><div class="logo-hex">⬡</div><div class="logo-text">eBay <span>Analyzer Pro</span></div></div>
   <div class="topbar-kw"><input type="text" id="topKw" placeholder="Ключевое слово..." onkeydown="if(event.key==='Enter')quickRun()"></div>
   <div class="topbar-actions">
     <button class="btn btn-primary" id="quickRunBtn" onclick="quickRun()"><span class="spinner"></span><span class="lbl">▶ Запустить</span></button>
@@ -222,11 +229,21 @@ tr:hover td{background:rgba(37,99,235,.03)}
     <button class="tab" onclick="sw('keywords')">🔍 Слова</button>
     <button class="tab" onclick="sw('prices')">💰 Цены</button>
   </div>
-  <!-- NICHE TAB -->
+  
+  <!-- NICHE TAB (УЛУЧШЕННЫЙ) -->
   <div class="section active fade" id="tab-niche">
+    <div class="kpi-grid">
+      <div class="kpi" style="--c:var(--blue-b)"><div class="kpi-val" id="k-total2">—</div><div class="kpi-lbl">Товаров</div></div>
+      <div class="kpi" style="--c:var(--green)"><div class="kpi-val" id="k-avg2">—</div><div class="kpi-lbl">Ср. цена</div></div>
+      <div class="kpi" style="--c:var(--cyan)"><div class="kpi-val" id="k-sellers2">—</div><div class="kpi-lbl">Продавцов</div></div>
+      <div class="kpi" style="--c:var(--amber)"><div class="kpi-val" id="k-market">—</div><div class="kpi-lbl">Оценка рынка</div></div>
+      <div class="kpi" style="--c:var(--purple)"><div class="kpi-val" id="k-comp2">—</div><div class="kpi-lbl">Конкуренция</div></div>
+      <div class="kpi" style="--c:var(--green)"><div class="kpi-val" id="k-free2">—</div><div class="kpi-lbl">Бесп. доставка</div></div>
+    </div>
+    
     <div class="two">
       <div class="panel">
-        <div class="ph"><div class="pt">🎯 Opportunity Score</div><span id="opp-grade-badge"></span></div>
+        <div class="ph"><div class="pt">🎯 Улучшенный Opportunity Score</div><span id="opp-grade-badge"></span></div>
         <div class="opp-score">
           <div style="text-align:center">
             <div class="score-ring">
@@ -235,59 +252,59 @@ tr:hover td{background:rgba(37,99,235,.03)}
             </div>
           </div>
           <div class="opp-details">
-            <div class="opp-row"><span class="opp-key">Конкуренция</span><span class="opp-val" id="opp-comp">—</span></div>
-            <div class="opp-row"><span class="opp-key">Ср. цена</span><span class="opp-val" id="opp-price">—</span></div>
-            <div class="opp-row"><span class="opp-key">Бесплатная доставка</span><span class="opp-val" id="opp-ship">—</span></div>
-            <div class="opp-row"><span class="opp-key">Top Rated Sellers</span><span class="opp-val" id="opp-trs">—</span></div>
-            <div class="opp-row"><span class="opp-key">Sweet Spot</span><span class="opp-val" id="opp-sweet">—</span></div>
+            <div class="opp-row"><span class="opp-key">🎯 Общая оценка</span><span class="opp-val" id="opp-total">—</span></div>
+            <div class="opp-row"><span class="opp-key">📊 Конкуренция (низкая = лучше)</span><span class="opp-val" id="opp-comp-det">—</span></div>
+            <div class="opp-row"><span class="opp-key">💰 Ценовой потенциал</span><span class="opp-val" id="opp-price-pot">—</span></div>
+            <div class="opp-row"><span class="opp-key">🚚 Бесплатная доставка</span><span class="opp-val" id="opp-ship-det">—</span></div>
+            <div class="opp-row"><span class="opp-key">⭐ Качество продавцов</span><span class="opp-val" id="opp-quality">—</span></div>
+            <div class="opp-row"><span class="opp-key">💎 Sweet Spot</span><span class="opp-val" id="opp-sweet">—</span></div>
           </div>
         </div>
       </div>
       <div class="panel">
-        <div class="ph"><div class="pt">💡 Insights</div></div>
+        <div class="ph"><div class="pt">💡 Инсайты & Рекомендации</div></div>
         <div class="pb" id="insightsEl"><div class="empty">Загрузите данные</div></div>
       </div>
     </div>
-    <div class="panel">
-      <div class="ph"><div class="pt">💰 Price Sweet Spots</div></div>
-      <div class="pb">
-        <div class="tier-row" id="tierRow"></div>
-        <div id="tierDetail"></div>
-      </div>
-    </div>
+    
     <div class="two">
       <div class="panel">
-        <div class="ph"><div class="pt">🏆 Winning Title Words</div><span style="font-family:var(--mono);font-size:8px;color:var(--green)">топ-продавцы</span></div>
+        <div class="ph"><div class="pt">🥧 Доля продавцов на рынке</div></div>
+        <div class="pb" id="pieChartContainer"><div class="empty">Нет данных</div></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="pt">💰 Price Sweet Spots</div></div>
+        <div class="pb">
+          <div class="tier-row" id="tierRow"></div>
+          <div id="tierDetail"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="two">
+      <div class="panel">
+        <div class="ph"><div class="pt">🏆 Winning Title Words (топ-продавцы)</div></div>
         <div class="pb"><div class="kw-cloud" id="winWords"></div></div>
       </div>
       <div class="panel">
-        <div class="ph"><div class="pt">📝 Title Builder</div></div>
+        <div class="ph"><div class="pt">📝 Title Builder (кликай на слова)</div></div>
         <div class="pb">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--text);margin-bottom:8px">Кликай на слова → строй заголовок:</div>
-          <div id="builtTitle" style="font-family:var(--mono);font-size:11px;color:var(--bright);min-height:28px;word-break:break-word;padding:8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px"></div>
-          <div style="display:flex;gap:7px;margin-top:8px">
+          <div id="builtTitle" style="font-family:var(--mono);font-size:11px;color:var(--bright);min-height:28px;word-break:break-word;padding:8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;margin-bottom:8px"></div>
+          <div style="display:flex;gap:7px">
             <button class="btn btn-ghost" style="font-size:9px;padding:5px 10px" onclick="clearTitle()">Очистить</button>
             <button class="btn btn-ghost" style="font-size:9px;padding:5px 10px" onclick="copyTitle()">📋 Скопировать</button>
           </div>
         </div>
       </div>
     </div>
+    
     <div class="panel">
-      <div class="ph"><div class="pt">🔬 Топ продавцов ниши</div><span style="font-family:var(--mono);font-size:8px;color:var(--text)">кликни для деталей</span></div>
+      <div class="ph"><div class="pt">🔬 Топ продавцов ниши</div></div>
       <div class="pb" id="nicheSellerGrid"></div>
     </div>
     <div class="panel" id="sellerDetailPanel" style="display:none">
-      <div class="ph">
-        <div class="pt" id="sellerDetailTitle">Детали продавца</div>
-        <button class="btn btn-ghost" style="font-size:9px;padding:4px 9px" onclick="closeDetail()">✕</button>
-      </div>
-      <div class="pb">
-        <div class="two" style="margin-bottom:10px">
-          <div id="sellerDetailKpi"></div>
-          <div id="sellerDetailChart"></div>
-        </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Фото</th><th>Товар</th><th>Цена</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th>  </thead><tbody id="sellerDetailBody"></tbody></table></div>
-      </div>
+      <div class="ph"><div class="pt" id="sellerDetailTitle">Детали продавца</div><button class="btn btn-ghost" style="font-size:9px;padding:4px 9px" onclick="closeDetail()">✕</button></div>
+      <div class="pb"><div id="sellerDetailKpi"></div><div class="tbl-wrap"><table><thead><tr><th>Товар</th><th>Цена</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th></tr></thead><tbody id="sellerDetailBody"></tbody></table></div></div>
     </div>
   </div>
 
@@ -304,11 +321,11 @@ tr:hover td{background:rgba(37,99,235,.03)}
       <div class="kpi" style="--c:var(--cyan)"><div class="kpi-val" id="k-free">—</div><div class="kpi-lbl">Бесп.доставка</div></div>
     </div>
     <div class="two">
-      <div class="panel"><div class="ph"><div class="pt">Топ продавцов</div></div><div class="pb"><div class="bar-chart" id="bc-sellers"></div></div></div>
+      <div class="panel"><div class="ph"><div class="pt">Топ продавцов по товарам</div></div><div class="pb"><div class="bar-chart" id="bc-sellers"></div></div></div>
       <div class="panel"><div class="ph"><div class="pt">Распределение цен</div></div><div class="pb"><div class="histo" id="h-main" style="height:70px"></div><div class="histo-labels" id="h-main-lbl"></div></div></div>
     </div>
     <div class="two">
-      <div class="panel"><div class="ph"><div class="pt">Состояние</div></div><div class="pb"><div class="bar-chart" id="bc-cond"></div></div></div>
+      <div class="panel"><div class="ph"><div class="pt">Состояние товаров</div></div><div class="pb"><div class="bar-chart" id="bc-cond"></div></div></div>
       <div class="panel"><div class="ph"><div class="pt">Категории</div></div><div class="pb"><div class="bar-chart" id="bc-cats"></div></div></div>
     </div>
   </div>
@@ -317,26 +334,14 @@ tr:hover td{background:rgba(37,99,235,.03)}
   <div class="section fade" id="tab-products">
     <div class="flt">
       <input type="text" id="srch" placeholder="🔍 Поиск..." oninput="renderProducts()">
-      <select id="psrt" onchange="renderProducts()">
-        <option value="price_a">Цена ↑</option><option value="price_d">Цена ↓</option>
-        <option value="fb_d">Feedback ↓</option><option value="title">Название</option>
-      </select>
-      <select id="pcond" onchange="renderProducts()">
-        <option value="">Все</option><option value="NEW">Новый</option><option value="USED">Б/у</option>
-      </select>
-      <select id="pship" onchange="renderProducts()">
-        <option value="">Любая доставка</option><option value="free">Бесплатная</option>
-      </select>
-      <select id="ptrs" onchange="renderProducts()">
-        <option value="">Все продавцы</option><option value="1">Top Rated</option>
-      </select>
+      <select id="psrt" onchange="renderProducts()"><option value="price_a">Цена ↑</option><option value="price_d">Цена ↓</option><option value="fb_d">Feedback ↓</option><option value="title">Название</option></select>
+      <select id="pcond" onchange="renderProducts()"><option value="">Все</option><option value="NEW">Новый</option><option value="USED">Б/у</option></select>
+      <select id="pship" onchange="renderProducts()"><option value="">Любая доставка</option><option value="free">Бесплатная</option></select>
+      <select id="ptrs" onchange="renderProducts()"><option value="">Все продавцы</option><option value="1">Top Rated</option></select>
     </div>
     <div class="panel">
-      <div class="ph"><div class="pt">Товары</div><span id="pCnt" class="tmono" style="color:var(--text)"></span></div>
-      <div class="tbl-wrap"><table><thead><tr>
-        <th>Фото</th><th>Товар</th><th onclick="sp('price')">Цена ↕</th><th>Продавец</th>
-        <th>FB%</th><th>Score</th><th>Состояние</th><th>Доставка</th><th>Локация</th><th>Ссылка</th>
-        </thead><tbody id="prodBody"></tbody></table></div>
+      <div class="ph"><div class="pt">📦 Товары</div><span id="pCnt" class="tmono" style="color:var(--text)"></span></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Товар</th><th onclick="sp('price')">Цена ↕</th><th>Продавец</th><th>FB%</th><th>Score</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th></thead><tbody id="prodBody"></tbody></table></div>
     </div>
   </div>
 
@@ -348,11 +353,8 @@ tr:hover td{background:rgba(37,99,235,.03)}
       <div class="panel"><div class="ph"><div class="pt">Ср. цена</div></div><div class="pb"><div class="bar-chart" id="bc-sp"></div></div></div>
     </div>
     <div class="panel">
-      <div class="ph"><div class="pt">Сводная таблица</div></div>
-      <div class="tbl-wrap"></table><thead><tr>
-        <th>Продавец</th><th>Товаров</th><th>Ср.цена</th><th>Мин</th><th>Макс</th>
-        <th>FB%</th><th>Score</th><th>Top Rated</th><th>Бесп.дост.</th>
-        </thead><tbody id="sellersBody"></tbody></table></div>
+      <div class="ph"><div class="pt">Сводная таблица продавцов</div></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Продавец</th><th>Товаров</th><th>Ср.цена</th><th>Мин</th><th>Макс</th><th>FB%</th><th>Score</th><th>Top Rated</th><th>Бесп.дост.</th></thead><tbody id="sellersBody"></tbody></table></div>
     </div>
   </div>
 
@@ -375,30 +377,24 @@ tr:hover td{background:rgba(37,99,235,.03)}
       <div class="kpi" style="--c:var(--cyan)"><div class="kpi-val" id="pp-med">—</div><div class="kpi-lbl">Медиана</div></div>
       <div class="kpi" style="--c:var(--blue-b)"><div class="kpi-val" id="pp-min">—</div><div class="kpi-lbl">Минимум</div></div>
       <div class="kpi" style="--c:var(--amber)"><div class="kpi-val" id="pp-max">—</div><div class="kpi-lbl">Максимум</div></div>
-      <div class="kpi" style="--c:var(--red)"><div class="kpi-val" id="pp-spr">—</div><div class="kpi-lbl">Разброс</div></div>
       <div class="kpi" style="--c:var(--purple)"><div class="kpi-val" id="pp-free">—</div><div class="kpi-lbl">Бесп.доставка</div></div>
     </div>
     <div class="two">
       <div class="panel"><div class="ph"><div class="pt">Гистограмма цен</div></div><div class="pb"><div class="histo" id="h-full" style="height:90px"></div><div class="histo-labels" id="h-full-lbl"></div></div></div>
       <div class="panel"><div class="ph"><div class="pt">Новые vs Б/у</div></div><div class="pb"><div class="bar-chart" id="bc-condp"></div></div></div>
     </div>
-    <div class="panel"><div class="ph"><div class="pt">Все товары по цене</div></div>
-      <div class="tbl-wrap"><table><thead><tr><th>Фото</th><th>Товар</th><th>Цена</th><th>Продавец</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th>  </thead><tbody id="priceBody"></tbody></table></div>
-    </div>
+    <div class="panel"><div class="ph"><div class="pt">Все товары по цене</div></div><div class="tbl-wrap"><table><thead><tr><th>Товар</th><th>Цена</th><th>Продавец</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th></thead><tbody id="priceBody"></tbody></table></div></div>
   </div>
-
 </div></div>
+
 <script>
 const GH_USER="avatiah",GH_REPO="ebay-analyzer";
 let DATA=[],COLS={},pollTimer=null,runId=null,builtWords=[];
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}};
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const f$=(v,d=2)=>v>0?"$"+Number(v).toFixed(d):"—";
-const S=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
-const countBy=(arr,fn)=>{const o={};arr.forEach(x=>{const k=fn(x);o[k]=(o[k]||0)+1});return o};
-const topN=(obj,n)=>Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);
+const S=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
 
-// Гибкая функция получения значения по любому из возможных имён колонок
 function getValue(row, possibleNames){
   if(typeof possibleNames==="string") possibleNames=[possibleNames];
   for(const name of possibleNames){
@@ -408,12 +404,7 @@ function getValue(row, possibleNames){
   return "";
 }
 function col(row,name){return getValue(row,name);}
-function pr(row){const p=parseFloat(getValue(row,["price","Price","PRICE","current_price","Current_Price"])); return isNaN(p)?0:p;}
-function getImageUrl(url){
-  if(!url) return "";
-  let itemId=url.match(/\/itm\/[^\/]+\/(\d+)/)?.[1]||url.match(/itm\/(\d+)/)?.[1]||url.match(/\/itm\/\d+/)?.[0]?.replace("/itm/","")||"";
-  return itemId?`https://i.ebayimg.com/thumbs/${itemId}/l/225.jpg`:"";
-}
+function pr(row){const p=parseFloat(getValue(row,["price","Price","PRICE","current_price"])); return isNaN(p)?0:p;}
 
 function log(msg,type="plain"){
   const el=document.getElementById("log");
@@ -424,64 +415,64 @@ function log(msg,type="plain"){
   d.innerHTML=`<span class="lt">${new Date().toLocaleTimeString("ru-RU")}</span><span class="lm ${type}">${esc(msg)}</span>`;
   el.appendChild(d);el.scrollTop=el.scrollHeight;
 }
-function clearLog(){const el=document.getElementById("log");if(el)el.innerHTML='<span class="log-empty">Лог очищен.</span>'}
-function setS(id,msg,t="info"){const e=document.getElementById(id);if(e)e.innerHTML=msg?`<span class="status ${t}">${esc(msg)}</span>`:""}
-function setBL(btn,v){if(btn){btn.disabled=v;btn.classList.toggle("loading",v)}}
+function clearLog(){const el=document.getElementById("log");if(el)el.innerHTML='<span class="log-empty">Лог очищен.</span>';}
+function setS(id,msg,t="info"){const e=document.getElementById(id);if(e)e.innerHTML=msg?`<span class="status ${t}">${esc(msg)}</span>`:"";}
+function setBL(btn,v){if(btn){btn.disabled=v;btn.classList.toggle("loading",v);}}
 function sw(id){
   const ids=["niche","overview","products","sellers","keywords","prices"];
   document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("active",ids[i]===id));
   document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id==="tab-"+id));
 }
-function toggleSidebar(){const sb=document.getElementById("sidebar");if(sb)sb.style.display=sb.style.display==="none"?"":"none"}
-function toggleEye(){const i=document.getElementById("tokInp");if(i)i.type=i.type==="password"?"text":"password"}
+function toggleSidebar(){const sb=document.getElementById("sidebar");if(sb)sb.style.display=sb.style.display==="none"?"":"none";}
+function toggleEye(){const i=document.getElementById("tokInp");if(i)i.type=i.type==="password"?"text":"password";}
 function saveToken(){
   const v=document.getElementById("tokInp")?.value.trim();
-  if(!v){setS("tokSt","Введите токен","err");return}
+  if(!v){setS("tokSt","Введите токен","err");return;}
   store.set("GH_TOKEN",v);setS("tokSt","✓ Сохранён","ok");log("Токен сохранён","ok");
 }
 window.addEventListener("DOMContentLoaded",()=>{
-  const t=store.get("GH_TOKEN");if(t){const inp=document.getElementById("tokInp");if(inp)inp.value=t;setS("tokSt","✓ Загружен","ok")}
+  const t=store.get("GH_TOKEN");if(t){const inp=document.getElementById("tokInp");if(inp)inp.value=t;setS("tokSt","✓ Загружен","ok");}
   loadData();
 });
 async function ghFetch(path,opts={}){
   const token=store.get("GH_TOKEN");
   const res=await fetch(`https://api.github.com${path}`,{...opts,headers:{"Accept":"application/vnd.github+json","Content-Type":"application/json",...(token?{"Authorization":`Bearer ${token}`}:{})}});
-  return{status:res.status,ok:res.ok,body:await res.json().catch(()=>({}))}
+  return{status:res.status,ok:res.ok,body:await res.json().catch(()=>({}))};
 }
 async function sendDispatch(evType,payload={}){
-  const token=store.get("GH_TOKEN");if(!token){log("Токен не найден","err");return false}
+  const token=store.get("GH_TOKEN");if(!token){log("Токен не найден","err");return false;}
   const res=await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/dispatches`,{method:"POST",
     headers:{"Authorization":`Bearer ${token}`,"Accept":"application/vnd.github+json","Content-Type":"application/json"},
     body:JSON.stringify({event_type:evType,client_payload:payload})});
-  if(res.status===204){log(`Dispatch «${evType}» принят`,"ok");return true}
-  let d="";try{const b=await res.json();d=b.message?` — ${b.message}`:""}catch{}
+  if(res.status===204){log(`Dispatch «${evType}» принят`,"ok");return true;}
+  let d="";try{const b=await res.json();d=b.message?` — ${b.message}`:"";}catch(e){}
   log(`Error: HTTP ${res.status}${d}`,"err");return false;
 }
 async function saveKeyword(){
-  const kw=document.getElementById("kwInp")?.value.trim();if(!kw){setS("kwSt","Введите слово","err");return}
+  const kw=document.getElementById("kwInp")?.value.trim();if(!kw){setS("kwSt","Введите слово","err");return;}
   const ok=await sendDispatch("update-keywords",{keyword:kw});setS("kwSt",ok?`«${kw}» отправлено`:"Ошибка",ok?"ok":"err");
 }
-function quickRun(){const kw=document.getElementById("topKw")?.value.trim();if(kw){const inp=document.getElementById("kwInp");if(inp)inp.value=kw}runScraper()}
+function quickRun(){const kw=document.getElementById("topKw")?.value.trim();if(kw){const inp=document.getElementById("kwInp");if(inp)inp.value=kw;}runScraper();}
 async function runScraper(){
   const btn=document.getElementById("runBtn");
   const kw=document.getElementById("kwInp")?.value.trim()||document.getElementById("topKw")?.value.trim();
-  if(!store.get("GH_TOKEN")){setS("runSt","Нужен токен","err");return}
-  if(!kw){setS("runSt","Введите слово","err");return}
+  if(!store.get("GH_TOKEN")){setS("runSt","Нужен токен","err");return;}
+  if(!kw){setS("runSt","Введите слово","err");return;}
   setS("runSt","");if(btn)setBL(btn,true);log(`Запуск для «${kw}»...`,"info");
   try{
     const ok=await sendDispatch("run-scraper",{keyword:kw});
-    if(ok){setS("runSt",`Запущен «${kw}»`,"ok");startPolling()}
-    else{setS("runSt","Ошибка","err");if(btn)setBL(btn,false)}
-  }catch(e){setS("runSt","Ошибка: "+e.message,"err");if(btn)setBL(btn,false)}
+    if(ok){setS("runSt",`Запущен «${kw}»`,"ok");startPolling();}
+    else{setS("runSt","Ошибка","err");if(btn)setBL(btn,false);}
+  }catch(e){setS("runSt","Ошибка: "+e.message,"err");if(btn)setBL(btn,false);}
 }
 function startPolling(){
   const pollRow=document.getElementById("pollRow");if(pollRow)pollRow.style.display="flex";
   const stepsWrap=document.getElementById("stepsWrap");if(stepsWrap)stepsWrap.style.display="none";
   runId=null;let att=0;clearInterval(pollTimer);
   pollTimer=setInterval(async()=>{att++;const pm=document.getElementById("pollMsg");if(pm)pm.textContent=`Ожидание... ${att*4}с`;
-    if(att>45){stopPolling("Таймаут");return}await pollRun()},4000);
+    if(att>45){stopPolling("Таймаут");return;}await pollRun();},4000);
 }
-function stopPolling(msg){clearInterval(pollTimer);const pollRow=document.getElementById("pollRow");if(pollRow)pollRow.style.display="none";const btn=document.getElementById("runBtn");if(btn)setBL(btn,false);if(msg)log(msg,"warn")}
+function stopPolling(msg){clearInterval(pollTimer);const pollRow=document.getElementById("pollRow");if(pollRow)pollRow.style.display="none";const btn=document.getElementById("runBtn");if(btn)setBL(btn,false);if(msg)log(msg,"warn");}
 const SICO={queued:"⏳",in_progress:"🔄",completed_success:"✅",completed_failure:"❌",completed_skipped:"⏭"};
 async function pollRun(){
   try{
@@ -502,15 +493,15 @@ async function pollRun(){
     }).join("");
     const pollMsg=document.getElementById("pollMsg");if(pollMsg)pollMsg.textContent=`${job.status} — ${job.name}`;
     if(job.status==="completed"){stopPolling();
-      if(job.conclusion==="success"){log("✅ Готово!","ok");setS("runSt","Готово!","ok");setTimeout(loadData,3000)}
-      else{log(`❌ ${job.conclusion}`,"err");setS("runSt","Ошибка workflow","err")}}
-  }catch(e){log("Poll error: "+e.message,"warn")}
+      if(job.conclusion==="success"){log("✅ Готово!","ok");setS("runSt","Готово!","ok");setTimeout(loadData,3000);}
+      else{log(`❌ ${job.conclusion}`,"err");setS("runSt","Ошибка workflow","err");}}
+  }catch(e){log("Poll error: "+e.message,"warn");}
 }
 async function loadData(){
   S("lastUpd","загрузка...");log("Загрузка...","info");
   try{
     const{ok,body}=await ghFetch(`/repos/${GH_USER}/${GH_REPO}/contents/data/raw_data.csv`);
-    if(!ok){log("CSV не найден","warn");S("lastUpd","нет данных");return}
+    if(!ok){log("CSV не найден","warn");S("lastUpd","нет данных");return;}
     const csvText=atob(body.content.replace(/\n/g,""));
     parseCSV(csvText);
     renderAll();
@@ -518,198 +509,232 @@ async function loadData(){
     const{body:cb}=await ghFetch(`/repos/${GH_USER}/${GH_REPO}/commits?path=data/raw_data.csv&per_page=1`);
     const d=cb[0]?.commit?.author?.date?new Date(cb[0].commit.author.date).toLocaleString("ru-RU"):"—";
     S("lastUpd",`обновлено ${d}`);
-  }catch(e){log("Ошибка: "+e.message,"err");S("lastUpd","ошибка")}
+  }catch(e){log("Ошибка: "+e.message,"err");S("lastUpd","ошибка");}
 }
 function parseCSV(text){
   COLS={};
   const lines=text.replace(/\r/g,"").trim().split("\n").filter(l=>l.trim());
   if(lines.length<2){DATA=[];return;}
-  
-  // Парсим заголовки
   const headers=lines[0].split(",").map(h=>h.replace(/^"|"$/g,'').trim());
   headers.forEach((h,i)=>{COLS[h]=i;});
   log(`📋 Найдены колонки: ${headers.join(", ")}`,"info");
-  
-  // Проверяем наличие обязательных колонок и ищем альтернативы
-  const requiredChecks={
-    title: ["title","Title","name","product_title","listing_title","item_title"],
-    price: ["price","Price","current_price","Current_Price","selling_price","amount"],
-    seller: ["seller","Seller","seller_name","vendor","store","username"],
-    url: ["url","URL","link","product_url","listing_url","item_url"]
-  };
-  
-  for(const [field, aliases] of Object.entries(requiredChecks)){
-    let found=false;
-    for(const alias of aliases){
-      if(COLS[alias]!==undefined){
-        COLS[field]=COLS[alias];
-        found=true;
-        break;
-      }
-    }
-    if(!found) log(`⚠️ Не найдена колонка для "${field}"`,"warn");
+  const aliases={title:["title","Title","name","product_title"],price:["price","Price","current_price"],seller:["seller","Seller","seller_name"],url:["url","URL","link"],condition:["condition","Condition"],shipping:["shipping_cost","shipping"],free_shipping:["free_shipping","free shipping"],fb_pct:["seller_feedback_pct","feedback_percent"],fb_score:["seller_feedback_score","feedback_score"],top_rated:["top_rated_seller","top_rated"],location:["item_location","location"],category:["category","Category"]};
+  for(const [field, names] of Object.entries(aliases)){
+    for(const name of names){if(COLS[name]!==undefined){COLS[field]=COLS[name];break;}}
   }
-  
-  // Парсим данные
   DATA=lines.slice(1).map(line=>{
     let cur="",inQ=false,row=[];
     for(let i=0;i<line.length;i++){
       const ch=line[i];
-      if(ch==='"'){
-        inQ=!inQ;
-      }else if(ch===","&&!inQ){
-        row.push(cur);
-        cur="";
-      }else{
-        cur+=ch;
-      }
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===","&&!inQ){row.push(cur);cur="";}
+      else{cur+=ch;}
     }
     row.push(cur);
     return row.map(cell=>cell.replace(/^"|"$/g,'').trim());
   }).filter(r=>r.length>2);
-  
-  log(`📊 Загружено ${DATA.length} строк данных`,"ok");
-  if(DATA.length>0){
-    log(`Пример: цена=${pr(DATA[0])}, продавец=${col(DATA[0],"seller")}, заголовок=${col(DATA[0],"title").substring(0,50)}`,"info");
-  }
+  log(`📊 Загружено ${DATA.length} строк`,"ok");
 }
+
 function renderAll(){
-  if(!DATA.length){log("Нет данных для отображения","warn");return;}
-  renderNiche();
+  if(!DATA.length){log("Нет данных","warn");return;}
+  renderNicheImproved();
   renderOverview();
   renderProducts();
   renderSellers();
   renderKeywords();
   renderPrices();
-  log("✅ Все вкладки обновлены","ok");
 }
 
-// ── NICHE ────────────────────────────────────────────────────────────
-function renderNiche(){
+// ========== УЛУЧШЕННЫЙ NICHE TAB С PIE CHART ==========
+function renderNicheImproved(){
   if(!DATA.length)return;
   const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);
   if(!prices.length)return;
-  const sellers=[...new Set(DATA.map(r=>col(r,"seller")).filter(Boolean))];
-  const avg=prices.reduce((a,b)=>a+b,0)/prices.length;
-  const freeC=DATA.filter(r=>{
+  const sellersMap=new Map();
+  DATA.forEach(r=>{
+    const s=col(r,"seller");
+    if(s)sellersMap.set(s,(sellersMap.get(s)||0)+1);
+  });
+  const sellers=Array.from(sellersMap.keys());
+  const totalItems=DATA.length;
+  const avgPrice=prices.reduce((a,b)=>a+b,0)/prices.length;
+  const freeShipping=DATA.filter(r=>{
     const fs=col(r,"free_shipping");
     const sc=col(r,"shipping_cost");
-    return fs==="1"||fs==="true"||fs==="Yes"||sc==="0"||sc==="0.0";
+    return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";
   }).length;
-  const freePct=Math.round(freeC/DATA.length*100);
-  const trsC=DATA.filter(r=>{
-    const tr=col(r,"top_rated_seller");
-    return tr==="1"||tr==="true"||tr==="Yes";
-  }).length;
-  const trsPct=Math.round(trsC/DATA.length*100);
-  const itemsPerSeller=DATA.length/(sellers.length||1);
-  const compScore=Math.max(0,Math.min(35,Math.round(35-itemsPerSeller*1.5)));
-  const priceScore=avg>=50?30:avg>=20?20:avg>=10?10:5;
-  const shipScore=Math.round(freePct*0.2);
-  const trsScore=Math.round(trsPct*0.1);
-  const score=Math.min(100,compScore+priceScore+shipScore+trsScore);
+  const freePct=Math.round(freeShipping/totalItems*100);
+  const topRated=DATA.filter(r=>col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true").length;
+  const trsPct=Math.round(topRated/totalItems*100);
+  const itemsPerSeller=totalItems/sellers.length;
+  
+  // Улучшенная формула Opportunity Score
+  let compScore=0;
+  if(itemsPerSeller<=2)compScore=35;
+  else if(itemsPerSeller<=5)compScore=28;
+  else if(itemsPerSeller<=10)compScore=20;
+  else if(itemsPerSeller<=20)compScore=12;
+  else compScore=5;
+  
+  let priceScore=0;
+  if(avgPrice>=100)priceScore=30;
+  else if(avgPrice>=50)priceScore=25;
+  else if(avgPrice>=25)priceScore=18;
+  else if(avgPrice>=15)priceScore=10;
+  else priceScore=5;
+  
+  let shipScore=Math.min(20,Math.round(freePct*0.25));
+  let qualityScore=Math.min(15,Math.round(trsPct*0.15));
+  const score=Math.min(100,compScore+priceScore+shipScore+qualityScore);
+  
   S("scoreVal",score);
   const arc=document.getElementById("scoreArc");
   if(arc){arc.style.strokeDashoffset=175.9*(1-score/100);arc.style.stroke=score>=70?"var(--green)":score>=40?"var(--amber)":"var(--red)";}
-  const grade=score>=70?"A":score>=50?"B":score>=30?"C":"D";
+  
+  const grade=score>=80?"A+":score>=70?"A":score>=60?"B+":score>=50?"B":score>=40?"C":score>=30?"D":"F";
+  const gradeColor=score>=70?"var(--green)":score>=50?"var(--cyan)":score>=30?"var(--amber)":"var(--red)";
   const gb=document.getElementById("opp-grade-badge");
-  if(gb)gb.innerHTML=`<span class="badge" style="background:${grade==="A"?"var(--green-dim)":grade==="B"?"var(--cyan-dim)":grade==="C"?"var(--amber-dim)":"var(--red-dim)"};color:${grade==="A"?"var(--green)":grade==="B"?"var(--cyan)":grade==="C"?"var(--amber)":"var(--red)"};font-size:11px;padding:3px 9px">Grade ${grade}</span>`;
-  S("opp-comp",`${sellers.length} продавцов`);S("opp-price",f$(avg));S("opp-ship",freePct+"%");S("opp-trs",trsPct+"%");
-  const mn=prices[0]||0,mx=prices[prices.length-1]||100,bSz=(mx-mn)/5||1;
-  const bkts=new Array(5).fill(0);prices.forEach(p=>{const i=Math.min(Math.floor((p-mn)/bSz),4);bkts[i]++;});
+  if(gb)gb.innerHTML=`<span class="badge" style="background:${gradeColor}20;color:${gradeColor};font-size:11px;padding:3px 9px">Grade ${grade}</span>`;
+  
+  S("opp-total",`${score}/100`);
+  S("opp-comp-det",itemsPerSeller<=5?"🟢 Низкая":itemsPerSeller<=15?"🟡 Средняя":"🔴 Высокая");
+  S("opp-price-pot",avgPrice>=50?"🟢 Высокий":avgPrice>=25?"🟡 Средний":"🔴 Низкий");
+  S("opp-ship-det",freePct>=70?"🟢 Отлично":freePct>=40?"🟡 Норма":"🔴 Проблема");
+  S("opp-quality",trsPct>=50?"🟢 Отлично":trsPct>=20?"🟡 Средне":"🔴 Низко");
+  
+  const mn=prices[0],mx=prices[prices.length-1],bSz=(mx-mn)/5||1;
+  const bkts=new Array(5).fill(0);
+  prices.forEach(p=>{const i=Math.min(Math.floor((p-mn)/bSz),4);bkts[i]++;});
   const mb=bkts.indexOf(Math.max(...bkts));
   S("opp-sweet",`$${(mn+mb*bSz).toFixed(0)}–$${(mn+(mb+1)*bSz).toFixed(0)}`);
-
-  const insights=[];
-  if(avg<15)insights.push({i:"⚠️",t:"Низкая цена",tx:`Ср. $${avg.toFixed(0)} — сложная маржа. Ищи позиции выше $${Math.round(avg*2)}.`,v:f$(avg),c:"var(--amber)"});
-  else if(avg>100)insights.push({i:"💎",t:"Премиум ниша",tx:`Ср. $${avg.toFixed(0)} — высокий чек, меньше покупателей но больше маржа.`,v:f$(avg),c:"var(--cyan)"});
-  else insights.push({i:"✅",t:"Хорошая цена",tx:`Ср. $${avg.toFixed(0)} — оптимальный диапазон для продаж.`,v:f$(avg),c:"var(--green)"});
-  if(sellers.length<10)insights.push({i:"🎯",t:"Низкая конкуренция",tx:`${sellers.length} продавцов — отличная возможность для входа.`,v:sellers.length+" прод.",c:"var(--green)"});
-  else if(sellers.length>50)insights.push({i:"🔥",t:"Высокая конкуренция",tx:`${sellers.length} продавцов — нужен лучший заголовок и цена.`,v:sellers.length+" прод.",c:"var(--red)"});
-  else insights.push({i:"📊",t:"Умеренная конкуренция",tx:`${sellers.length} продавцов — можно войти с хорошим листингом.`,v:sellers.length+" прод.",c:"var(--amber)"});
   
+  // KPI для ниши
+  S("k-total2",totalItems);
+  S("k-avg2",f$(avgPrice));
+  S("k-sellers2",sellers.length);
+  S("k-market",f$(avgPrice*totalItems,0));
+  S("k-comp2",itemsPerSeller<=5?"🟢 Низкая":itemsPerSeller<=15?"🟡 Средняя":"🔴 Высокая");
+  S("k-free2",freePct+"%");
+  
+  // PIE CHART - доли продавцов
+  const topSellersPie=Array.from(sellersMap.entries()).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const otherCount=topSellersPie.reduce((s,[,c])=>s+c,0);
+  const otherTotal=totalItems-otherCount;
+  const pieData=[...topSellersPie];
+  if(otherTotal>0)pieData.push(["Другие ("+(sellers.length-8)+" прод.)",otherTotal]);
+  
+  const pieColors=["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6","#06b6d4","#ec4899","#14b8a6","#64748b"];
+  const pieContainer=document.getElementById("pieChartContainer");
+  if(pieContainer){
+    const total=pieData.reduce((s,[,c])=>s+c,0);
+    let cumulative=0;
+    const segments=pieData.map(([name,count],i)=>{
+      const percent=count/total*100;
+      const start=cumulative;
+      cumulative+=percent;
+      const end=cumulative;
+      const largeArc=percent>50?1:0;
+      const startRad=(start/100)*2*Math.PI-Math.PI/2;
+      const endRad=(end/100)*2*Math.PI-Math.PI/2;
+      const x1=80+70*Math.cos(startRad);
+      const y1=80+70*Math.sin(startRad);
+      const x2=80+70*Math.cos(endRad);
+      const y2=80+70*Math.sin(endRad);
+      const path=`M 80 80 L ${x1} ${y1} A 70 70 0 ${largeArc} 1 ${x2} ${y2} Z`;
+      return `<path d="${path}" fill="${pieColors[i%pieColors.length]}" stroke="var(--bg2)" stroke-width="2" title="${name}: ${count} товаров (${percent.toFixed(1)}%)"/>`;
+    }).join("");
+    pieContainer.innerHTML=`<div class="pie-container"><div class="pie-chart"><svg viewBox="0 0 160 160" width="160" height="160">${segments}</svg></div><div class="pie-legend">${pieData.map(([name,count],i)=>`<div class="pie-legend-item"><div class="pie-color" style="background:${pieColors[i%pieColors.length]}"></div><div class="pie-label">${esc(name.length>20?name.slice(0,20)+"...":name)}</div><div class="pie-value">${count}</div></div>`).join("")}</div></div>`;
+  }
+  
+  // Инсайты
+  const insights=[];
+  if(score>=70)insights.push({i:"🏆",t:"Отличная ниша!",tx:"Высокий потенциал для входа. Рекомендуется действовать быстро.",c:"var(--green)"});
+  else if(score>=50)insights.push({i:"📈",t:"Хороший потенциал",tx:"Ниша перспективная, но есть конкуренция. Сфокусируйтесь на уникальном УТП.",c:"var(--cyan)"});
+  else insights.push({i:"⚠️",t:"Высокий риск",tx:"Высокая конкуренция или низкая маржа. Поищите поднишу или уникальное предложение.",c:"var(--amber)"});
+  if(freePct>70)insights.push({i:"🚚",t:"Бесплатная доставка — стандарт",tx:`${freePct}% листингов с бесплатной доставкой. Обязательно включите её.`,c:"var(--blue-b)"});
+  else if(freePct<30)insights.push({i:"💡",t:"Возможность",tx:`Только ${freePct}% предлагают бесплатную доставку. Вы можете выделиться!`,c:"var(--green)"});
+  if(trsPct>50)insights.push({i:"⭐",t:"Высокий стандарт",tx:`${trsPct}% листингов от Top Rated. Нужно стремиться к высокому качеству.`,c:"var(--purple)"});
+  if(itemsPerSeller<=3)insights.push({i:"🎯",t:"Низкая конкуренция",tx:`${sellers.length} продавцов на ${totalItems} товаров. Отличная возможность!`,c:"var(--green)"});
+  if(avgPrice<20)insights.push({i:"💰",t:"Низкая цена",tx:`Средняя цена $${avgPrice.toFixed(0)}. Ищите товары с добавленной стоимостью.`,c:"var(--amber)"});
   const insightsEl=document.getElementById("insightsEl");
-  if(insightsEl)insightsEl.innerHTML=insights.map(x=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:17px;flex-shrink:0">${x.i}</div><div style="flex:1"><div style="font-family:var(--cond);font-size:12px;font-weight:700;color:var(--bright);margin-bottom:2px">${x.t}</div><div style="font-size:11px;color:var(--text2);line-height:1.5">${x.tx}</div></div><div style="font-family:var(--cond);font-size:13px;font-weight:700;color:${x.c};flex-shrink:0;text-align:right">${x.v}</div></div>`).join("");
-
-  // Winning Title Words (слова топ-продавцов)
-  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item","this","that","all","not","are","was","be","have","it","do","&","each","per","two","one","i","s"]);
+  if(insightsEl)insightsEl.innerHTML=insights.map(x=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:20px">${x.i}</div><div><div style="font-family:var(--cond);font-size:12px;font-weight:700;color:var(--bright)">${x.t}</div><div style="font-size:11px;color:${x.c}">${x.tx}</div></div></div>`).join("");
+  
+  // Tier Row
+  const tierDefs=[{l:"$0–15",mn:0,mx:15},{l:"$15–30",mn:15,mx:30},{l:"$30–60",mn:30,mx:60},{l:"$60–100",mn:60,mx:100},{l:"$100+",mn:100,mx:Infinity}];
+  const tierRow=document.getElementById("tierRow");
+  if(tierRow)tierRow.innerHTML=tierDefs.map((t,i)=>{
+    const items=DATA.filter(r=>{const p=pr(r);return p>=t.mn&&p<t.mx;});
+    const pct=Math.round(items.length/DATA.length*100);
+    return`<div class="tier" onclick="showTier(${t.mn},${t.mx},'${t.l}',this)"><div class="tier-range">${t.l}</div><div class="tier-pct" style="color:${["#06b6d4","#10b981","#3b82f6","#f59e0b","#ef4444"][i]}">${pct}%</div><div class="tier-count">${items.length} тов.</div></div>`;
+  }).join("");
+  
+  // Winning Words
+  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item"]);
   const fbScores=DATA.map(r=>parseFloat(col(r,"seller_feedback_score"))||0).filter(s=>s>0).sort((a,b)=>b-a);
   const thr=fbScores[Math.floor(fbScores.length*0.25)]||0;
   const topRows=DATA.filter(r=>(parseFloat(col(r,"seller_feedback_score"))||0)>=thr&&thr>0);
   const allWF={},topWF={};
-  DATA.forEach(r=>{
-    const title=col(r,"title");
-    if(title) title.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))allWF[w]=(allWF[w]||0)+1;});
-  });
-  topRows.forEach(r=>{
-    const title=col(r,"title");
-    if(title) title.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))topWF[w]=(topWF[w]||0)+1;});
-  });
+  DATA.forEach(r=>{const t=col(r,"title");if(t)t.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))allWF[w]=(allWF[w]||0)+1;});});
+  topRows.forEach(r=>{const t=col(r,"title");if(t)t.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))topWF[w]=(topWF[w]||0)+1;});});
   const winners=Object.entries(topWF).map(([w,cnt])=>({w,cnt,ratio:cnt/(allWF[w]||1)})).sort((a,b)=>b.ratio*b.cnt-a.ratio*a.cnt).slice(0,36);
   const maxWC=winners[0]?.cnt||1;
   const winWords=document.getElementById("winWords");
-  if(winWords)winWords.innerHTML=winners.length?winners.map(({w,cnt,ratio})=>{
-    const sz=9+Math.round((cnt/maxWC)*8);
-    return`<div class="kw-tag ${ratio>1.3?"kw-winner":""}" style="font-size:${sz}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}')">${esc(w)}<span class="kw-cnt">${cnt}</span></div>`;
-  }).join(""):'<div class="empty">Нет данных (загрузите товары)</div>';
-
-  // Топ продавцов ниши
+  if(winWords)winWords.innerHTML=winners.length?winners.map(({w,cnt,ratio})=>`<div class="kw-tag ${ratio>1.3?"kw-winner":""}" style="font-size:${9+Math.round(cnt/maxWC*8)}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}')">${esc(w)}<span class="kw-cnt">${cnt}</span></div>`).join(""):'<div class="empty">Нет данных</div>';
+  
+  // Топ продавцов
   const sm={};
   DATA.forEach(r=>{
     const s=col(r,"seller");
-    if(!s) return;
-    if(!sm[s]) sm[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true",freeC:0};
+    if(!s)return;
+    if(!sm[s])sm[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true",freeC:0};
     sm[s].items.push(r);
-    const fs=col(r,"free_shipping");
-    const sc=col(r,"shipping_cost");
-    if(fs==="1"||fs==="true"||sc==="0"||sc==="0.0") sm[s].freeC++;
+    const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost");
+    if(fs==="1"||fs==="true"||sc==="0"||sc==="0.0")sm[s].freeC++;
   });
   const sortedS=Object.values(sm).sort((a,b)=>b.fbScore-a.fbScore||b.items.length-a.items.length).slice(0,10);
-  const nicheSellerGrid=document.getElementById("nicheSellerGrid");
-  if(nicheSellerGrid)nicheSellerGrid.innerHTML=sortedS.length?sortedS.map((s,i)=>{
-    const pp=s.items.map(pr).filter(p=>p>0);
-    const avgPrice=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
-    return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}')">
-      <div class="sc-rank">${i+1}</div>
-      <div class="sc-info"><div class="sc-name">${esc(s.name)}${s.trs?' <span class="badge b-top" style="font-size:7px">TOP</span>':''}</div>
-      <div class="sc-sub">Score:${s.fbScore.toLocaleString()} · FB:${s.fbPct?s.fbPct+"%":"—"} · Free:${Math.round(s.freeC/s.items.length*100)}%</div></div>
-      <div class="sc-stats"><div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div>
-      <div class="sc-s"><div class="sc-sv">${f$(avgPrice,0)}</div><div class="sc-sl">ср.ц.</div></div></div></div>`;
+  const nsg=document.getElementById("nicheSellerGrid");
+  if(nsg)nsg.innerHTML=sortedS.length?sortedS.map((s,i)=>{
+    const pp=s.items.map(pr).filter(p=>p>0),avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+    return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}')"><div class="sc-rank">${i+1}</div><div class="sc-info"><div class="sc-name">${esc(s.name)}${s.trs?' <span class="badge b-top">TOP</span>':''}</div><div class="sc-sub">Score:${s.fbScore.toLocaleString()} · FB:${s.fbPct?s.fbPct+"%":"—"} · Free:${Math.round(s.freeC/s.items.length*100)}%</div></div><div class="sc-stats"><div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div><div class="sc-s"><div class="sc-sv">${f$(avg,0)}</div><div class="sc-sl">ср.ц.</div></div></div></div>`;
   }).join(""):'<div class="empty">Нет продавцов</div>';
+}
+
+function showTier(mn,mx,label,el){
+  document.querySelectorAll(".tier").forEach(t=>t.classList.remove("active"));el.classList.add("active");
+  const items=DATA.filter(r=>{const p=pr(r);return p>=mn&&p<mx;});
+  const td=document.getElementById("tierDetail");
+  if(!td)return;
+  if(!items.length){td.innerHTML='<div class="empty">Нет товаров</div>';return;}
+  const pp=items.map(pr).filter(p=>p>0),avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+  const sellers=[...new Set(items.map(r=>col(r,"seller")).filter(Boolean))];
+  const freeC=items.filter(r=>{const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost");return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";}).length;
+  td.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px">${[["Товаров",items.length],["Продавцов",sellers.length],["Ср.цена",f$(avg)],["Бесп.дост.",Math.round(freeC/items.length*100)+"%"]].map(([l,v])=>`<div style="background:var(--panel2);border-radius:6px;padding:9px"><div style="font-family:var(--cond);font-size:17px;font-weight:700">${v}</div><div style="font-family:var(--mono);font-size:8px">${l}</div></div>`).join("")}</div><div class="tbl-wrap"> <table><thead><tr><th>Товар</th><th>Цена</th><th>Продавец</th><th>Доставка</th><th>Ссылка</th></tr></thead><tbody>${items.slice(0,15).map(r=>{const ship=col(r,"shipping_cost"),sl=ship==="0"||ship==="0.0"?"Бесп.":ship?`$${ship}`:"—";return`<tr><td class="tit">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller">${esc(col(r,"seller"))}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;}).join("")}</tbody></table></div>`;
 }
 
 function showSellerDetail(name){
   const items=DATA.filter(r=>col(r,"seller")===name);
   if(!items.length)return;
-  const pp=items.map(pr).filter(p=>p>0);
-  const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
-  const freeC=items.filter(r=>{
-    const fs=col(r,"free_shipping");
-    const sc=col(r,"shipping_cost");
-    return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";
-  }).length;
+  const pp=items.map(pr).filter(p=>p>0),avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+  const freeC=items.filter(r=>{const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost");return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";}).length;
   const panel=document.getElementById("sellerDetailPanel");
   if(!panel)return;
   document.getElementById("sellerDetailTitle").textContent=`Продавец: ${name}`;
-  const stats=[["Товаров",items.length,"var(--blue-b)"],["Ср. цена",f$(avg),"var(--green)"],["Feedback %",col(items[0],"seller_feedback_pct")?col(items[0],"seller_feedback_pct")+"%":"—","var(--cyan)"],["Score",Number(col(items[0],"seller_feedback_score")).toLocaleString()||"—","var(--amber)"],["Бесп.дост.",Math.round(freeC/items.length*100)+"%","var(--purple)"]];
   const sellerDetailKpi=document.getElementById("sellerDetailKpi");
-  if(sellerDetailKpi)sellerDetailKpi.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">${stats.map(([l,v,c])=>`<div style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:8px 10px"><div style="font-family:var(--cond);font-size:14px;font-weight:700;color:${c}">${v}</div><div style="font-family:var(--mono);font-size:8px;color:var(--text)">${l}</div></div>`).join("")}</div>`;
+  if(sellerDetailKpi)sellerDetailKpi.innerHTML=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:10px">${[["Товаров",items.length],["Ср.цена",f$(avg)],["FB%",col(items[0],"seller_feedback_pct")||"—"],["Score",Number(col(items[0],"seller_feedback_score")).toLocaleString()||"—"],["Бесп.дост.",Math.round(freeC/items.length*100)+"%"]].map(([l,v])=>`<div style="background:var(--panel2);border-radius:6px;padding:9px"><div style="font-family:var(--cond);font-size:14px;font-weight:700">${v}</div><div style="font-family:var(--mono);font-size:7px">${l}</div></div>`).join("")}</div>`;
   const sellerDetailBody=document.getElementById("sellerDetailBody");
   if(sellerDetailBody)sellerDetailBody.innerHTML=items.sort((a,b)=>pr(b)-pr(a)).map(r=>{
-    const ship=col(r,"shipping_cost");
-    const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
-    const cd=col(r,"condition").toUpperCase();
-    const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
-    return`<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
+    const ship=col(r,"shipping_cost"),sl=ship==="0"||ship==="0.0"?"Бесп.":ship?`$${ship}`:"—";
+    const cd=col(r,"condition").toUpperCase(),cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
+    return`<tr><td class="tit">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td>${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
   }).join("");
   panel.style.display="block";
 }
-function closeDetail(){const panel=document.getElementById("sellerDetailPanel");if(panel)panel.style.display="none";}
+function closeDetail(){const p=document.getElementById("sellerDetailPanel");if(p)p.style.display="none";}
 function addTitleWord(w){if(!builtWords.includes(w))builtWords.push(w);const bt=document.getElementById("builtTitle");if(bt)bt.textContent=builtWords.join(" ");}
 function clearTitle(){builtWords=[];const bt=document.getElementById("builtTitle");if(bt)bt.textContent="";}
 function copyTitle(){navigator.clipboard?.writeText(builtWords.join(" "));log("Заголовок скопирован","ok");}
 
-// ── OVERVIEW ────────────────────────────────────────────────────────
 function renderOverview(){
   if(!DATA.length)return;
   const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);
@@ -718,25 +743,21 @@ function renderOverview(){
   const med=prices[Math.floor(prices.length/2)]||0;
   const sellers=[...new Set(DATA.map(r=>col(r,"seller")).filter(Boolean))];
   const newC=DATA.filter(r=>col(r,"condition").toUpperCase().includes("NEW")).length;
-  const freeC=DATA.filter(r=>{
-    const fs=col(r,"free_shipping");
-    const sc=col(r,"shipping_cost");
-    return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";
-  }).length;
+  const freeC=DATA.filter(r=>{const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost");return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";}).length;
   S("k-total",DATA.length);S("k-avg",f$(avg));S("k-med",f$(med));
   S("k-min",f$(prices[0]||0));S("k-max",f$(prices[prices.length-1]||0));
   S("k-sellers",sellers.length);S("k-new",newC);S("k-free",freeC);
-  barChart("bc-sellers",topN(countBy(DATA,r=>col(r,"seller")),8),"var(--blue-b)");
+  const sellerCounts={};DATA.forEach(r=>{const s=col(r,"seller");if(s)sellerCounts[s]=(sellerCounts[s]||0)+1;});
+  barChart("bc-sellers",Object.entries(sellerCounts).sort((a,b)=>b[1]-a[1]).slice(0,8),"var(--blue-b)");
   histogram("h-main","h-main-lbl",prices,10,"var(--green)");
-  const cond=countBy(DATA,r=>{const c=col(r,"condition").toUpperCase();return c.includes("NEW")?"New":c.includes("USED")?"Used":col(r,"condition")||"Other";});
+  const cond={};DATA.forEach(r=>{const c=col(r,"condition").toUpperCase();const key=c.includes("NEW")?"New":c.includes("USED")?"Used":col(r,"condition")||"Other";cond[key]=(cond[key]||0)+1;});
   barChart("bc-cond",Object.entries(cond).sort((a,b)=>b[1]-a[1]),"var(--amber)");
-  barChart("bc-cats",topN(countBy(DATA,r=>col(r,"category")||"—"),7),"var(--cyan)");
+  const cats={};DATA.forEach(r=>{const c=col(r,"category")||"—";cats[c]=(cats[c]||0)+1;});
+  barChart("bc-cats",Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,7),"var(--cyan)");
 }
 
-// ── PRODUCTS ────────────────────────────────────────────────────────
-function sp(c){const sel=document.getElementById("psrt");if(sel)sel.value=c==="price"?"price_a":"title";renderProducts();}
 function renderProducts(){
-  if(!DATA.length){const pb=document.getElementById("prodBody");if(pb)pb.innerHTML='<tr><td colspan="10" class="empty">Нет данных</td></tr>';return;}
+  if(!DATA.length){const pb=document.getElementById("prodBody");if(pb)pb.innerHTML='<tr><td colspan="8" class="empty">Нет данных</td></tr>';return;}
   let rows=[...DATA];
   const srch=document.getElementById("srch")?.value.toLowerCase()||"";
   const srt=document.getElementById("psrt")?.value||"price_a";
@@ -745,107 +766,99 @@ function renderProducts(){
   const trs=document.getElementById("ptrs")?.value||"";
   if(srch)rows=rows.filter(r=>col(r,"title").toLowerCase().includes(srch));
   if(cond)rows=rows.filter(r=>col(r,"condition").toUpperCase().includes(cond));
-  if(ship==="free")rows=rows.filter(r=>{
-    const fs=col(r,"free_shipping");
-    const sc=col(r,"shipping_cost");
-    return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";
-  });
+  if(ship==="free")rows=rows.filter(r=>{const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost");return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";});
   if(trs==="1")rows=rows.filter(r=>col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true");
   rows.sort((a,b)=>srt==="price_a"?pr(a)-pr(b):srt==="price_d"?pr(b)-pr(a):srt==="fb_d"?(parseFloat(col(b,"seller_feedback_pct"))||0)-(parseFloat(col(a,"seller_feedback_pct"))||0):col(a,"title").localeCompare(col(b,"title")));
   const pCnt=document.getElementById("pCnt");if(pCnt)pCnt.textContent=rows.length+" товаров";
   const prodBody=document.getElementById("prodBody");
   if(!prodBody)return;
-  if(rows.length===0){prodBody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text);padding:24px">Нет товаров</td></tr>';return;}
+  if(rows.length===0){prodBody.innerHTML='<tr><td colspan="8" class="empty">Нет товаров</td></tr>';return;}
   prodBody.innerHTML=rows.map(r=>{
-    const shipCost=col(r,"shipping_cost");
-    const sl=shipCost==="0"||shipCost==="0.0"?'<span style="color:var(--green)">Бесп.</span>':shipCost?`$${shipCost}`:"—";
-    const cd=col(r,"condition").toUpperCase();
-    const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
+    const shipCost=col(r,"shipping_cost"),sl=shipCost==="0"||shipCost==="0.0"?'<span style="color:var(--green)">Бесп.</span>':shipCost?`$${shipCost}`:"—";
+    const cd=col(r,"condition").toUpperCase(),cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
     const trs2=col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true"?'<span class="badge b-top">TOP</span>':"";
-    return`<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller">${esc(col(r,"seller"))} ${trs2}</td><td class="tmono">${col(r,"seller_feedback_pct")?col(r,"seller_feedback_pct")+"%":"—"}</td><td class="tmono">${col(r,"seller_feedback_score")||"—"}</td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tmono">${col(r,"item_location")||"—"}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
+    return`<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller">${esc(col(r,"seller"))} ${trs2}</td><td class="tmono">${col(r,"seller_feedback_pct")?col(r,"seller_feedback_pct")+"%":"—"}</td><td class="tmono">${col(r,"seller_feedback_score")||"—"}</td><td>${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
   }).join("");
 }
+function sp(c){const sel=document.getElementById("psrt");if(sel)sel.value=c==="price"?"price_a":"title";renderProducts();}
 
-// ── SELLERS ─────────────────────────────────────────────────────────
 function renderSellers(){
   if(!DATA.length)return;
   const map={};
   DATA.forEach(r=>{
     const s=col(r,"seller");
     if(!s)return;
-    if(!map[s]) map[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true",freeC:0};
+    if(!map[s])map[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true",freeC:0};
     map[s].items.push(pr(r));
-    const fs=col(r,"free_shipping");
-    const sc=col(r,"shipping_cost");
-    if(fs==="1"||fs==="true"||sc==="0"||sc==="0.0") map[s].freeC++;
+    const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost");
+    if(fs==="1"||fs==="true"||sc==="0"||sc==="0.0")map[s].freeC++;
   });
   const sellers=Object.values(map).sort((a,b)=>b.items.length-a.items.length);
   const sgTop=document.getElementById("sg-top");
   if(sgTop)sgTop.innerHTML=sellers.slice(0,6).map((s,i)=>{
-    const pp=s.items.filter(p=>p>0);
-    const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+    const pp=s.items.filter(p=>p>0),avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
     return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}');sw('niche')"><div class="sc-rank">${i+1}</div><div class="sc-info"><div class="sc-name">${esc(s.name)}</div><div class="sc-sub">FB:${s.fbPct?s.fbPct+"%":"—"} Score:${s.fbScore.toLocaleString()}</div></div><div class="sc-stats"><div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div><div class="sc-s"><div class="sc-sv">${f$(avg,0)}</div><div class="sc-sl">ср.ц.</div></div></div></div>`;
   }).join("");
+  const fbData=sellers.filter(s=>s.fbPct).slice(0,8).map(s=>[s.name,s.fbPct]).sort((a,b)=>b[1]-a[1]);
+  barChart("bc-fb",fbData,"var(--green)",100);
+  const spData=sellers.filter(s=>s.items.filter(p=>p>0).length).slice(0,8).map(s=>{const pp=s.items.filter(p=>p>0);return[s.name,Math.round(pp.reduce((a,b)=>a+b,0)/pp.length)];}).sort((a,b)=>b[1]-a[1]);
+  barChart("bc-sp",spData,"var(--amber)");
   const sellersBody=document.getElementById("sellersBody");
   if(sellersBody)sellersBody.innerHTML=sellers.map(s=>{
-    const pp=s.items.filter(p=>p>0);
-    const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
-    return`<tr><td class="tseller">${esc(s.name)}</td><td class="tmono">${s.items.length}</td><td class="tprice">${f$(avg)}</td><td class="tmono">${f$(Math.min(...pp)||0)}</td><td class="tmono">${f$(Math.max(...pp)||0)}</td><td class="tmono" style="color:var(--green)">${s.fbPct?s.fbPct+"%":"—"}</td><td class="tmono">${s.fbScore.toLocaleString()||"—"}</td><td class="tmono">${s.trs?'<span class="badge b-top">TOP</span>':"—"}</td><td class="tmono">${Math.round(s.freeC/s.items.length*100)}%</td></tr>`;
+    const pp=s.items.filter(p=>p>0),avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+    return`<tr><td class="tseller">${esc(s.name)}</td><td>${s.items.length}</td><td class="tprice">${f$(avg)}</td><td>${f$(Math.min(...pp)||0)}</td><td>${f$(Math.max(...pp)||0)}</td><td class="tmono" style="color:var(--green)">${s.fbPct?s.fbPct+"%":"—"}</td><td>${s.fbScore.toLocaleString()||"—"}</td><td>${s.trs?'<span class="badge b-top">TOP</span>':"—"}</td><td>${Math.round(s.freeC/s.items.length*100)}%</td></tr>`;
   }).join("");
 }
 
-// ── KEYWORDS ────────────────────────────────────────────────────────
 function renderKeywords(){
   if(!DATA.length)return;
   const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item"]);
   const wp={};
-  DATA.forEach(r=>{
-    const p2=pr(r);
-    const title=col(r,"title");
-    if(title) title.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w)){if(!wp[w])wp[w]=[];wp[w].push(p2);}});
-  });
+  DATA.forEach(r=>{const p2=pr(r),t=col(r,"title");if(t)t.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w)){if(!wp[w])wp[w]=[];wp[w].push(p2);}});});
   const wc=Object.entries(wp).map(([w,ps])=>[w,ps.length]).sort((a,b)=>b[1]-a[1]);
-  const top40=wc.slice(0,40);
-  const maxC=top40[0]?.[1]||1;
+  const top40=wc.slice(0,40),maxC=top40[0]?.[1]||1;
   const kwCloud=document.getElementById("kwCloud");
-  if(kwCloud)kwCloud.innerHTML=top40.length?top40.map(([w,cnt])=>{const sz=9+Math.round((cnt/maxC)*9);return`<div class="kw-tag" style="font-size:${sz}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}');sw('niche')">${esc(w)}<span class="kw-cnt">${cnt}</span></div>`;}).join(""):'<div class="empty">Нет данных</div>';
+  if(kwCloud)kwCloud.innerHTML=top40.length?top40.map(([w,cnt])=>`<div class="kw-tag" style="font-size:${9+Math.round(cnt/maxC*9)}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}');sw('niche')">${esc(w)}<span class="kw-cnt">${cnt}</span></div>`).join(""):'<div class="empty">Нет данных</div>';
   barChart("bc-kw",top40.slice(0,14),"var(--blue-b)");
   const gAvg=DATA.map(pr).filter(p=>p>0).reduce((a,b)=>a+b,0)/(DATA.filter(r=>pr(r)>0).length||1);
   const kwp=Object.entries(wp).filter(([,ps])=>ps.filter(p=>p>0).length>=2).map(([w,ps])=>{const pp=ps.filter(p=>p>0);return[w,Math.round(pp.reduce((a,b)=>a+b,0)/pp.length)];}).filter(([,avg])=>avg>gAvg).sort((a,b)=>b[1]-a[1]).slice(0,12);
   barChart("bc-kwp",kwp,"var(--cyan)");
+  const fbScores=DATA.map(r=>parseFloat(col(r,"seller_feedback_score"))||0).filter(s=>s>0).sort((a,b)=>b-a);
+  const thr=fbScores[Math.floor(fbScores.length*0.2)]||0;
+  const twf={};
+  DATA.filter(r=>(parseFloat(col(r,"seller_feedback_score"))||0)>=thr&&thr>0).forEach(r=>{const t=col(r,"title");if(t)t.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))twf[w]=(twf[w]||0)+1;});});
+  barChart("bc-kwt",Object.entries(twf).sort((a,b)=>b[1]-a[1]).slice(0,12),"var(--green)");
 }
 
-// ── PRICES ──────────────────────────────────────────────────────────
 function renderPrices(){
   if(!DATA.length)return;
   const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);
   if(!prices.length)return;
   const avg=prices.reduce((a,b)=>a+b,0)/prices.length;
   const med=prices[Math.floor(prices.length/2)];
-  const mn=prices[0],mx=prices[prices.length-1],sp=mx-mn;
-  const freeC=DATA.filter(r=>{
-    const fs=col(r,"free_shipping");
-    const sc=col(r,"shipping_cost");
-    return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";
-  }).length;
-  S("pp-avg",f$(avg));S("pp-med",f$(med));S("pp-min",f$(mn));S("pp-max",f$(mx));S("pp-spr",f$(sp));S("pp-free",Math.round(freeC/DATA.length*100)+"%");
+  const mn=prices[0],mx=prices[prices.length-1];
+  const freeC=DATA.filter(r=>{const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost");return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";}).length;
+  S("pp-avg",f$(avg));S("pp-med",f$(med));S("pp-min",f$(mn));S("pp-max",f$(mx));S("pp-free",Math.round(freeC/DATA.length*100)+"%");
   histogram("h-full","h-full-lbl",prices,16,"var(--blue-b)");
+  const newP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("NEW")).map(pr).filter(p=>p>0);
+  const usedP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("USED")).map(pr).filter(p=>p>0);
+  const condPData=[];
+  if(newP.length)condPData.push(["New",Math.round(newP.reduce((a,b)=>a+b,0)/newP.length)]);
+  if(usedP.length)condPData.push(["Used",Math.round(usedP.reduce((a,b)=>a+b,0)/usedP.length)]);
+  barChart("bc-condp",condPData,"var(--green)");
   const priceBody=document.getElementById("priceBody");
   if(priceBody)priceBody.innerHTML=[...DATA].sort((a,b)=>pr(a)-pr(b)).map(r=>{
-    const ship=col(r,"shipping_cost");
-    const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
-    const cd=col(r,"condition").toUpperCase();
-    const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
-    return`<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller">${esc(col(r,"seller"))}</td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></tr>`;
+    const ship=col(r,"shipping_cost"),sl=ship==="0"||ship==="0.0"?"Бесп.":ship?`$${ship}`:"—";
+    const cd=col(r,"condition").toUpperCase(),cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
+    return`<tr><td class="tit">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller">${esc(col(r,"seller"))}</td><td>${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
   }).join("");
 }
 
-// ── CHART UTILS ──────────────────────────────────────────────────────
 function barChart(id,data,color,maxVal){
   const el=document.getElementById(id);if(!el)return;
   if(!data.length){el.innerHTML='<div class="empty">Нет данных</div>';return;}
   const mx=maxVal||Math.max(...data.map(d=>d[1]));
-  el.innerHTML=data.map(([lbl,val])=>`<div class="br"><div class="bl" title="${esc(String(lbl))}">${esc(String(lbl))}</div><div class="bt"><div class="bf" style="width:${Math.min(100,(val/mx*100)).toFixed(1)}%;background:${color}"></div></div><div class="bv">${typeof val==="number"&&val>999?val.toLocaleString():val}</div></div>`).join("");
+  el.innerHTML=data.map(([lbl,val])=>`<div class="br"><div class="bl" title="${esc(String(lbl))}">${esc(String(lbl))}</div><div class="bt"><div class="bf" style="width:${Math.min(100,val/mx*100)}%;background:${color}"></div></div><div class="bv">${typeof val==="number"&&val>999?val.toLocaleString():val}</div></div>`).join("");
 }
 function histogram(id,lblId,prices,buckets,color){
   const el=document.getElementById(id);if(!el||!prices.length)return;
@@ -857,35 +870,24 @@ function histogram(id,lblId,prices,buckets,color){
   const lblEl=document.getElementById(lblId);
   if(lblEl){const step=Math.max(1,Math.ceil(buckets/5));const lbls=[];for(let i=0;i<=buckets;i+=step)lbls.push(`$${(mn+i*bSz).toFixed(0)}`);lblEl.innerHTML=lbls.map(l=>`<span>${l}</span>`).join("");}
 }
-
-// ── EXPORT EXCEL ────────────────────────────────────────────────────
-function exportToExcel() {
-  if(!DATA.length){log("Нет данных для экспорта","warn");return;}
+function exportToExcel(){
+  if(!DATA.length){log("Нет данных","warn");return;}
   const headers=["title","price","seller","seller_feedback_pct","seller_feedback_score","top_rated_seller","condition","free_shipping","shipping_cost","item_location","category","url"];
-  const rows=DATA.map(row=>{
-    const fs=col(row,"free_shipping");
-    const sc=col(row,"shipping_cost");
-    return {
-      title:col(row,"title"),price:pr(row),seller:col(row,"seller"),
-      seller_feedback_pct:col(row,"seller_feedback_pct"),seller_feedback_score:col(row,"seller_feedback_score"),
-      top_rated_seller:col(row,"top_rated_seller")==="1"||col(row,"top_rated_seller")==="true"?"Yes":"No",
-      condition:col(row,"condition"),free_shipping:fs==="1"||fs==="true"||sc==="0"||sc==="0.0"?"Yes":"No",
-      shipping_cost:col(row,"shipping_cost"),item_location:col(row,"item_location"),category:col(row,"category"),url:col(row,"url")
-    };
-  });
+  const rows=DATA.map(r=>({
+    title:col(r,"title"),price:pr(r),seller:col(r,"seller"),
+    seller_feedback_pct:col(r,"seller_feedback_pct"),seller_feedback_score:col(r,"seller_feedback_score"),
+    top_rated_seller:col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true"?"Yes":"No",
+    condition:col(r,"condition"),
+    free_shipping: (()=>{const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost");return fs==="1"||fs==="true"||sc==="0"||sc==="0.0"?"Yes":"No";})(),
+    shipping_cost:col(r,"shipping_cost"),item_location:col(r,"item_location"),category:col(r,"category"),url:col(r,"url")
+  }));
   const csvRows=[headers.join(",")];
-  for(const row of rows){
-    const values=headers.map(h=>{const val=row[h];const escaped=String(val!==undefined&&val!==null?val:"").replace(/"/g,'""');return`"${escaped}"`;});
-    csvRows.push(values.join(","));
-  }
+  for(const row of rows){const values=headers.map(h=>`"${String(row[h]||"").replace(/"/g,'""')}"`);csvRows.push(values.join(","));}
   const blob=new Blob(["\uFEFF"+csvRows.join("\n")],{type:"text/csv;charset=utf-8;"});
-  const link=document.createElement("a");
-  const url=URL.createObjectURL(blob);
-  link.href=url;
+  const link=document.createElement("a");link.href=URL.createObjectURL(blob);
   link.download=`ebay_export_${new Date().toISOString().slice(0,19).replace(/:/g,"-")}.csv`;
   document.body.appendChild(link);link.click();document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  log(`✅ Экспортировано ${DATA.length} товаров в CSV`,"ok");
+  log(`✅ Экспортировано ${DATA.length} товаров`,"ok");
 }
 </script>
 </body>
