@@ -286,7 +286,7 @@ tr:hover td{background:rgba(37,99,235,.03)}
           <div id="sellerDetailKpi"></div>
           <div id="sellerDetailChart"></div>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Фото</th><th>Товар</th><th>Цена</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th> </tr></thead><tbody id="sellerDetailBody"></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Фото</th><th>Товар</th><th>Цена</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th>  </thead><tbody id="sellerDetailBody"></tbody></table></div>
       </div>
     </div>
   </div>
@@ -349,7 +349,7 @@ tr:hover td{background:rgba(37,99,235,.03)}
     </div>
     <div class="panel">
       <div class="ph"><div class="pt">Сводная таблица</div></div>
-      <div class="tbl-wrap"><table><thead><tr>
+      <div class="tbl-wrap"></table><thead><tr>
         <th>Продавец</th><th>Товаров</th><th>Ср.цена</th><th>Мин</th><th>Макс</th>
         <th>FB%</th><th>Score</th><th>Top Rated</th><th>Бесп.дост.</th>
         </thead><tbody id="sellersBody"></tbody></table></div>
@@ -397,8 +397,18 @@ const f$=(v,d=2)=>v>0?"$"+Number(v).toFixed(d):"—";
 const S=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
 const countBy=(arr,fn)=>{const o={};arr.forEach(x=>{const k=fn(x);o[k]=(o[k]||0)+1});return o};
 const topN=(obj,n)=>Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);
-function col(row,name){const i=COLS[name];return i!==undefined?(row[i]||""):""}
-function pr(row){return parseFloat(col(row,"price"))||0}
+
+// Гибкая функция получения значения по любому из возможных имён колонок
+function getValue(row, possibleNames){
+  if(typeof possibleNames==="string") possibleNames=[possibleNames];
+  for(const name of possibleNames){
+    const idx=COLS[name];
+    if(idx!==undefined && row[idx]!==undefined && row[idx]!=="") return row[idx];
+  }
+  return "";
+}
+function col(row,name){return getValue(row,name);}
+function pr(row){const p=parseFloat(getValue(row,["price","Price","PRICE","current_price","Current_Price"])); return isNaN(p)?0:p;}
 function getImageUrl(url){
   if(!url) return "";
   let itemId=url.match(/\/itm\/[^\/]+\/(\d+)/)?.[1]||url.match(/itm\/(\d+)/)?.[1]||url.match(/\/itm\/\d+/)?.[0]?.replace("/itm/","")||"";
@@ -504,7 +514,7 @@ async function loadData(){
     const csvText=atob(body.content.replace(/\n/g,""));
     parseCSV(csvText);
     renderAll();
-    log(`✅ Загружено ${DATA.length} строк, колонки: ${Object.keys(COLS).join(", ")}`,"ok");
+    log(`✅ Загружено ${DATA.length} товаров`,"ok");
     const{body:cb}=await ghFetch(`/repos/${GH_USER}/${GH_REPO}/commits?path=data/raw_data.csv&per_page=1`);
     const d=cb[0]?.commit?.author?.date?new Date(cb[0].commit.author.date).toLocaleString("ru-RU"):"—";
     S("lastUpd",`обновлено ${d}`);
@@ -513,36 +523,34 @@ async function loadData(){
 function parseCSV(text){
   COLS={};
   const lines=text.replace(/\r/g,"").trim().split("\n").filter(l=>l.trim());
-  if(lines.length<2){DATA=[];return}
+  if(lines.length<2){DATA=[];return;}
   
-  // Парсим заголовки (удаляем кавычки и пробелы)
+  // Парсим заголовки
   const headers=lines[0].split(",").map(h=>h.replace(/^"|"$/g,'').trim());
-  headers.forEach((h,i)=>{COLS[h]=i});
-  log(`Найдены колонки: ${headers.join(", ")}`,"info");
+  headers.forEach((h,i)=>{COLS[h]=i;});
+  log(`📋 Найдены колонки: ${headers.join(", ")}`,"info");
   
-  // Проверяем обязательные колонки
-  const required=["title","price","seller"];
-  const missing=required.filter(r=>COLS[r]===undefined);
-  if(missing.length){
-    log(`⚠️ Внимание: не найдены колонки: ${missing.join(", ")}. Поиск аналогов...`,"warn");
-    // Ищем альтернативные названия
-    for(const h of headers){
-      const hl=h.toLowerCase();
-      if(hl.includes("title")||hl.includes("name")) COLS["title"]=COLS[h];
-      if(hl.includes("price")) COLS["price"]=COLS[h];
-      if(hl.includes("seller")||hl.includes("vendor")) COLS["seller"]=COLS[h];
-      if(hl.includes("url")||hl.includes("link")) COLS["url"]=COLS[h];
-      if(hl.includes("condition")) COLS["condition"]=COLS[h];
-      if(hl.includes("shipping")) COLS["shipping_cost"]=COLS[h];
-      if(hl.includes("free")) COLS["free_shipping"]=COLS[h];
-      if(hl.includes("feedback")&&hl.includes("pct")) COLS["seller_feedback_pct"]=COLS[h];
-      if(hl.includes("feedback")&&hl.includes("score")) COLS["seller_feedback_score"]=COLS[h];
-      if(hl.includes("top")&&hl.includes("rated")) COLS["top_rated_seller"]=COLS[h];
-      if(hl.includes("location")) COLS["item_location"]=COLS[h];
-      if(hl.includes("category")) COLS["category"]=COLS[h];
+  // Проверяем наличие обязательных колонок и ищем альтернативы
+  const requiredChecks={
+    title: ["title","Title","name","product_title","listing_title","item_title"],
+    price: ["price","Price","current_price","Current_Price","selling_price","amount"],
+    seller: ["seller","Seller","seller_name","vendor","store","username"],
+    url: ["url","URL","link","product_url","listing_url","item_url"]
+  };
+  
+  for(const [field, aliases] of Object.entries(requiredChecks)){
+    let found=false;
+    for(const alias of aliases){
+      if(COLS[alias]!==undefined){
+        COLS[field]=COLS[alias];
+        found=true;
+        break;
+      }
     }
+    if(!found) log(`⚠️ Не найдена колонка для "${field}"`,"warn");
   }
   
+  // Парсим данные
   DATA=lines.slice(1).map(line=>{
     let cur="",inQ=false,row=[];
     for(let i=0;i<line.length;i++){
@@ -560,12 +568,21 @@ function parseCSV(text){
     return row.map(cell=>cell.replace(/^"|"$/g,'').trim());
   }).filter(r=>r.length>2);
   
-  log(`Обработано ${DATA.length} строк данных`,"info");
+  log(`📊 Загружено ${DATA.length} строк данных`,"ok");
   if(DATA.length>0){
-    log(`Пример цены: ${pr(DATA[0])}, продавец: ${col(DATA[0],"seller")}`,"info");
+    log(`Пример: цена=${pr(DATA[0])}, продавец=${col(DATA[0],"seller")}, заголовок=${col(DATA[0],"title").substring(0,50)}`,"info");
   }
 }
-function renderAll(){if(!DATA.length){log("Нет данных для отображения","warn");return}renderNiche();renderOverview();renderProducts();renderSellers();renderKeywords();renderPrices()}
+function renderAll(){
+  if(!DATA.length){log("Нет данных для отображения","warn");return;}
+  renderNiche();
+  renderOverview();
+  renderProducts();
+  renderSellers();
+  renderKeywords();
+  renderPrices();
+  log("✅ Все вкладки обновлены","ok");
+}
 
 // ── NICHE ────────────────────────────────────────────────────────────
 function renderNiche(){
@@ -574,9 +591,16 @@ function renderNiche(){
   if(!prices.length)return;
   const sellers=[...new Set(DATA.map(r=>col(r,"seller")).filter(Boolean))];
   const avg=prices.reduce((a,b)=>a+b,0)/prices.length;
-  const freeC=DATA.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
+  const freeC=DATA.filter(r=>{
+    const fs=col(r,"free_shipping");
+    const sc=col(r,"shipping_cost");
+    return fs==="1"||fs==="true"||fs==="Yes"||sc==="0"||sc==="0.0";
+  }).length;
   const freePct=Math.round(freeC/DATA.length*100);
-  const trsC=DATA.filter(r=>col(r,"top_rated_seller")==="1").length;
+  const trsC=DATA.filter(r=>{
+    const tr=col(r,"top_rated_seller");
+    return tr==="1"||tr==="true"||tr==="Yes";
+  }).length;
   const trsPct=Math.round(trsC/DATA.length*100);
   const itemsPerSeller=DATA.length/(sellers.length||1);
   const compScore=Math.max(0,Math.min(35,Math.round(35-itemsPerSeller*1.5)));
@@ -586,13 +610,13 @@ function renderNiche(){
   const score=Math.min(100,compScore+priceScore+shipScore+trsScore);
   S("scoreVal",score);
   const arc=document.getElementById("scoreArc");
-  if(arc){arc.style.strokeDashoffset=175.9*(1-score/100);arc.style.stroke=score>=70?"var(--green)":score>=40?"var(--amber)":"var(--red)"}
+  if(arc){arc.style.strokeDashoffset=175.9*(1-score/100);arc.style.stroke=score>=70?"var(--green)":score>=40?"var(--amber)":"var(--red)";}
   const grade=score>=70?"A":score>=50?"B":score>=30?"C":"D";
   const gb=document.getElementById("opp-grade-badge");
   if(gb)gb.innerHTML=`<span class="badge" style="background:${grade==="A"?"var(--green-dim)":grade==="B"?"var(--cyan-dim)":grade==="C"?"var(--amber-dim)":"var(--red-dim)"};color:${grade==="A"?"var(--green)":grade==="B"?"var(--cyan)":grade==="C"?"var(--amber)":"var(--red)"};font-size:11px;padding:3px 9px">Grade ${grade}</span>`;
   S("opp-comp",`${sellers.length} продавцов`);S("opp-price",f$(avg));S("opp-ship",freePct+"%");S("opp-trs",trsPct+"%");
   const mn=prices[0]||0,mx=prices[prices.length-1]||100,bSz=(mx-mn)/5||1;
-  const bkts=new Array(5).fill(0);prices.forEach(p=>{const i=Math.min(Math.floor((p-mn)/bSz),4);bkts[i]++});
+  const bkts=new Array(5).fill(0);prices.forEach(p=>{const i=Math.min(Math.floor((p-mn)/bSz),4);bkts[i]++;});
   const mb=bkts.indexOf(Math.max(...bkts));
   S("opp-sweet",`$${(mn+mb*bSz).toFixed(0)}–$${(mn+(mb+1)*bSz).toFixed(0)}`);
 
@@ -603,74 +627,87 @@ function renderNiche(){
   if(sellers.length<10)insights.push({i:"🎯",t:"Низкая конкуренция",tx:`${sellers.length} продавцов — отличная возможность для входа.`,v:sellers.length+" прод.",c:"var(--green)"});
   else if(sellers.length>50)insights.push({i:"🔥",t:"Высокая конкуренция",tx:`${sellers.length} продавцов — нужен лучший заголовок и цена.`,v:sellers.length+" прод.",c:"var(--red)"});
   else insights.push({i:"📊",t:"Умеренная конкуренция",tx:`${sellers.length} продавцов — можно войти с хорошим листингом.`,v:sellers.length+" прод.",c:"var(--amber)"});
-  if(freePct>60)insights.push({i:"🚚",t:"Free shipping — норма",tx:`${freePct}% листингов с бесплатной доставкой. Без неё сложно конкурировать.`,v:freePct+"%",c:"var(--blue-b)"});
   
   const insightsEl=document.getElementById("insightsEl");
-  if(insightsEl)insightsEl.innerHTML=insights.length?insights.map(x=>`
-    <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:17px;flex-shrink:0">${x.i}</div>
-      <div style="flex:1"><div style="font-family:var(--cond);font-size:12px;font-weight:700;color:var(--bright);margin-bottom:2px">${x.t}</div>
-      <div style="font-size:11px;color:var(--text2);line-height:1.5">${x.tx}</div></div>
-      <div style="font-family:var(--cond);font-size:13px;font-weight:700;color:${x.c};flex-shrink:0;text-align:right">${x.v}</div>
-    </div>`).join(""):'<div class="empty">Нет данных для анализа</div>';
+  if(insightsEl)insightsEl.innerHTML=insights.map(x=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:17px;flex-shrink:0">${x.i}</div><div style="flex:1"><div style="font-family:var(--cond);font-size:12px;font-weight:700;color:var(--bright);margin-bottom:2px">${x.t}</div><div style="font-size:11px;color:var(--text2);line-height:1.5">${x.tx}</div></div><div style="font-family:var(--cond);font-size:13px;font-weight:700;color:${x.c};flex-shrink:0;text-align:right">${x.v}</div></div>`).join("");
 
-  const tierDefs=[{l:"$0–15",mn:0,mx:15},{l:"$15–30",mn:15,mx:30},{l:"$30–60",mn:30,mx:60},{l:"$60–100",mn:60,mx:100},{l:"$100+",mn:100,mx:Infinity}];
-  const tc=["var(--cyan)","var(--green)","var(--blue-b)","var(--amber)","var(--red)"];
-  const tierRow=document.getElementById("tierRow");
-  if(tierRow)tierRow.innerHTML=tierDefs.map((t,i)=>{
-    const items=DATA.filter(r=>{const p=pr(r);return p>=t.mn&&p<t.mx});
-    const pct=Math.round(items.length/DATA.length*100);
-    return`<div class="tier" onclick="showTier(${t.mn},${t.mx},'${t.l}',this)">
-      <div class="tier-range">${t.l}</div>
-      <div class="tier-pct" style="color:${tc[i]}">${pct}%</div>
-      <div class="tier-count">${items.length} тов.</div></div>`;
-  }).join("");
-}
+  // Winning Title Words (слова топ-продавцов)
+  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item","this","that","all","not","are","was","be","have","it","do","&","each","per","two","one","i","s"]);
+  const fbScores=DATA.map(r=>parseFloat(col(r,"seller_feedback_score"))||0).filter(s=>s>0).sort((a,b)=>b-a);
+  const thr=fbScores[Math.floor(fbScores.length*0.25)]||0;
+  const topRows=DATA.filter(r=>(parseFloat(col(r,"seller_feedback_score"))||0)>=thr&&thr>0);
+  const allWF={},topWF={};
+  DATA.forEach(r=>{
+    const title=col(r,"title");
+    if(title) title.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))allWF[w]=(allWF[w]||0)+1;});
+  });
+  topRows.forEach(r=>{
+    const title=col(r,"title");
+    if(title) title.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))topWF[w]=(topWF[w]||0)+1;});
+  });
+  const winners=Object.entries(topWF).map(([w,cnt])=>({w,cnt,ratio:cnt/(allWF[w]||1)})).sort((a,b)=>b.ratio*b.cnt-a.ratio*a.cnt).slice(0,36);
+  const maxWC=winners[0]?.cnt||1;
+  const winWords=document.getElementById("winWords");
+  if(winWords)winWords.innerHTML=winners.length?winners.map(({w,cnt,ratio})=>{
+    const sz=9+Math.round((cnt/maxWC)*8);
+    return`<div class="kw-tag ${ratio>1.3?"kw-winner":""}" style="font-size:${sz}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}')">${esc(w)}<span class="kw-cnt">${cnt}</span></div>`;
+  }).join(""):'<div class="empty">Нет данных (загрузите товары)</div>';
 
-function showTier(mn,mx,label,el){
-  document.querySelectorAll(".tier").forEach(t=>t.classList.remove("active"));el.classList.add("active");
-  const items=DATA.filter(r=>{const p=pr(r);return p>=mn&&p<mx});
-  const tierDetail=document.getElementById("tierDetail");
-  if(!tierDetail)return;
-  if(!items.length){tierDetail.innerHTML='<div style="color:var(--text);font-family:var(--mono);font-size:10px;padding:8px">Нет товаров в этом диапазоне</div>';return}
-  const pp=items.map(pr).filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
-  const sellers=[...new Set(items.map(r=>col(r,"seller")).filter(Boolean))];
-  const freeC=items.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
-  tierDetail.innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;margin-top:10px">
-      ${[["Товаров",items.length,"var(--blue-b)"],["Продавцов",sellers.length,"var(--cyan)"],["Ср. цена",f$(avg),"var(--green)"],["Бесп.дост.",Math.round(freeC/items.length*100)+"%","var(--amber)"]].map(([l,v,c])=>
-        `<div style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:9px 11px"><div style="font-family:var(--cond);font-size:17px;font-weight:700;color:${c}">${v}</div><div style="font-family:var(--mono);font-size:8px;color:var(--text)">${l}</div></div>`).join("")}
-    </div>
-    <div style="margin-top:10px;overflow-x:auto"> <table><thead><tr><th>Фото</th><th>Товар</th><th>Цена</th><th>Продавец</th><th>FB%</th><th>Доставка</th><th>Ссылка</th>  </thead><tbody>
-    ${items.slice(0,15).map(r=>{const ship=col(r,"shipping_cost");const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
-      return`<tr><td><img src="${getImageUrl(col(r,"url"))}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;" onerror="this.style.display='none'"></td>
-      <td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(col(r,"seller"))}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(col(r,"seller"))} ↗</a></td><td class="tmono">${col(r,"seller_feedback_pct")?col(r,"seller_feedback_pct")+"%":"—"}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;}).join("")}
-    </tbody></table></div>`;
+  // Топ продавцов ниши
+  const sm={};
+  DATA.forEach(r=>{
+    const s=col(r,"seller");
+    if(!s) return;
+    if(!sm[s]) sm[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true",freeC:0};
+    sm[s].items.push(r);
+    const fs=col(r,"free_shipping");
+    const sc=col(r,"shipping_cost");
+    if(fs==="1"||fs==="true"||sc==="0"||sc==="0.0") sm[s].freeC++;
+  });
+  const sortedS=Object.values(sm).sort((a,b)=>b.fbScore-a.fbScore||b.items.length-a.items.length).slice(0,10);
+  const nicheSellerGrid=document.getElementById("nicheSellerGrid");
+  if(nicheSellerGrid)nicheSellerGrid.innerHTML=sortedS.length?sortedS.map((s,i)=>{
+    const pp=s.items.map(pr).filter(p=>p>0);
+    const avgPrice=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+    return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}')">
+      <div class="sc-rank">${i+1}</div>
+      <div class="sc-info"><div class="sc-name">${esc(s.name)}${s.trs?' <span class="badge b-top" style="font-size:7px">TOP</span>':''}</div>
+      <div class="sc-sub">Score:${s.fbScore.toLocaleString()} · FB:${s.fbPct?s.fbPct+"%":"—"} · Free:${Math.round(s.freeC/s.items.length*100)}%</div></div>
+      <div class="sc-stats"><div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div>
+      <div class="sc-s"><div class="sc-sv">${f$(avgPrice,0)}</div><div class="sc-sl">ср.ц.</div></div></div></div>`;
+  }).join(""):'<div class="empty">Нет продавцов</div>';
 }
 
 function showSellerDetail(name){
   const items=DATA.filter(r=>col(r,"seller")===name);
   if(!items.length)return;
-  const pp=items.map(pr).filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
-  const freeC=items.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
+  const pp=items.map(pr).filter(p=>p>0);
+  const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+  const freeC=items.filter(r=>{
+    const fs=col(r,"free_shipping");
+    const sc=col(r,"shipping_cost");
+    return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";
+  }).length;
   const panel=document.getElementById("sellerDetailPanel");
   if(!panel)return;
   document.getElementById("sellerDetailTitle").textContent=`Продавец: ${name}`;
-  const stats=[["Товаров",items.length,"var(--blue-b)"],["Ср. цена",f$(avg),"var(--green)"],["Feedback %",col(items[0],"seller_feedback_pct")?col(items[0],"seller_feedback_pct")+"%":"—","var(--cyan)"],["Score",Number(col(items[0],"seller_feedback_score")).toLocaleString()||"—","var(--amber)"],["Бесп.дост.",Math.round(freeC/items.length*100)+"%","var(--purple)"],["Диапазон",`${f$(Math.min(...pp)||0,0)}–${f$(Math.max(...pp)||0,0)}`,"var(--text2)"]];
+  const stats=[["Товаров",items.length,"var(--blue-b)"],["Ср. цена",f$(avg),"var(--green)"],["Feedback %",col(items[0],"seller_feedback_pct")?col(items[0],"seller_feedback_pct")+"%":"—","var(--cyan)"],["Score",Number(col(items[0],"seller_feedback_score")).toLocaleString()||"—","var(--amber)"],["Бесп.дост.",Math.round(freeC/items.length*100)+"%","var(--purple)"]];
   const sellerDetailKpi=document.getElementById("sellerDetailKpi");
   if(sellerDetailKpi)sellerDetailKpi.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">${stats.map(([l,v,c])=>`<div style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:8px 10px"><div style="font-family:var(--cond);font-size:14px;font-weight:700;color:${c}">${v}</div><div style="font-family:var(--mono);font-size:8px;color:var(--text)">${l}</div></div>`).join("")}</div>`;
   const sellerDetailBody=document.getElementById("sellerDetailBody");
   if(sellerDetailBody)sellerDetailBody.innerHTML=items.sort((a,b)=>pr(b)-pr(a)).map(r=>{
-    const ship=col(r,"shipping_cost");const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
-    const cd=col(r,"condition").toUpperCase();const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
-    return`<tr><td><img src="${getImageUrl(col(r,"url"))}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;" onerror="this.style.display='none'"></td><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→ открыть</a></td></tr>`;
+    const ship=col(r,"shipping_cost");
+    const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
+    const cd=col(r,"condition").toUpperCase();
+    const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
+    return`<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
   }).join("");
-  panel.style.display="block";panel.scrollIntoView({behavior:"smooth",block:"start"});
+  panel.style.display="block";
 }
-function closeDetail(){const panel=document.getElementById("sellerDetailPanel");if(panel)panel.style.display="none"}
-function addTitleWord(w){if(!builtWords.includes(w))builtWords.push(w);const bt=document.getElementById("builtTitle");if(bt)bt.textContent=builtWords.join(" ")}
-function clearTitle(){builtWords=[];const bt=document.getElementById("builtTitle");if(bt)bt.textContent=""}
-function copyTitle(){navigator.clipboard?.writeText(builtWords.join(" "));log("Заголовок скопирован","ok")}
+function closeDetail(){const panel=document.getElementById("sellerDetailPanel");if(panel)panel.style.display="none";}
+function addTitleWord(w){if(!builtWords.includes(w))builtWords.push(w);const bt=document.getElementById("builtTitle");if(bt)bt.textContent=builtWords.join(" ");}
+function clearTitle(){builtWords=[];const bt=document.getElementById("builtTitle");if(bt)bt.textContent="";}
+function copyTitle(){navigator.clipboard?.writeText(builtWords.join(" "));log("Заголовок скопирован","ok");}
 
 // ── OVERVIEW ────────────────────────────────────────────────────────
 function renderOverview(){
@@ -681,19 +718,23 @@ function renderOverview(){
   const med=prices[Math.floor(prices.length/2)]||0;
   const sellers=[...new Set(DATA.map(r=>col(r,"seller")).filter(Boolean))];
   const newC=DATA.filter(r=>col(r,"condition").toUpperCase().includes("NEW")).length;
-  const freeC=DATA.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
+  const freeC=DATA.filter(r=>{
+    const fs=col(r,"free_shipping");
+    const sc=col(r,"shipping_cost");
+    return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";
+  }).length;
   S("k-total",DATA.length);S("k-avg",f$(avg));S("k-med",f$(med));
   S("k-min",f$(prices[0]||0));S("k-max",f$(prices[prices.length-1]||0));
   S("k-sellers",sellers.length);S("k-new",newC);S("k-free",freeC);
   barChart("bc-sellers",topN(countBy(DATA,r=>col(r,"seller")),8),"var(--blue-b)");
   histogram("h-main","h-main-lbl",prices,10,"var(--green)");
-  const cond=countBy(DATA,r=>{const c=col(r,"condition").toUpperCase();return c.includes("NEW")?"New":c.includes("USED")?"Used":col(r,"condition")||"Other"});
+  const cond=countBy(DATA,r=>{const c=col(r,"condition").toUpperCase();return c.includes("NEW")?"New":c.includes("USED")?"Used":col(r,"condition")||"Other";});
   barChart("bc-cond",Object.entries(cond).sort((a,b)=>b[1]-a[1]),"var(--amber)");
   barChart("bc-cats",topN(countBy(DATA,r=>col(r,"category")||"—"),7),"var(--cyan)");
 }
 
 // ── PRODUCTS ────────────────────────────────────────────────────────
-function sp(c){const sel=document.getElementById("psrt");if(sel)sel.value=c==="price"?"price_a":"title";renderProducts()}
+function sp(c){const sel=document.getElementById("psrt");if(sel)sel.value=c==="price"?"price_a":"title";renderProducts();}
 function renderProducts(){
   if(!DATA.length){const pb=document.getElementById("prodBody");if(pb)pb.innerHTML='<tr><td colspan="10" class="empty">Нет данных</td></tr>';return;}
   let rows=[...DATA];
@@ -704,30 +745,24 @@ function renderProducts(){
   const trs=document.getElementById("ptrs")?.value||"";
   if(srch)rows=rows.filter(r=>col(r,"title").toLowerCase().includes(srch));
   if(cond)rows=rows.filter(r=>col(r,"condition").toUpperCase().includes(cond));
-  if(ship==="free")rows=rows.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0");
-  if(trs==="1")rows=rows.filter(r=>col(r,"top_rated_seller")==="1");
+  if(ship==="free")rows=rows.filter(r=>{
+    const fs=col(r,"free_shipping");
+    const sc=col(r,"shipping_cost");
+    return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";
+  });
+  if(trs==="1")rows=rows.filter(r=>col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true");
   rows.sort((a,b)=>srt==="price_a"?pr(a)-pr(b):srt==="price_d"?pr(b)-pr(a):srt==="fb_d"?(parseFloat(col(b,"seller_feedback_pct"))||0)-(parseFloat(col(a,"seller_feedback_pct"))||0):col(a,"title").localeCompare(col(b,"title")));
   const pCnt=document.getElementById("pCnt");if(pCnt)pCnt.textContent=rows.length+" товаров";
   const prodBody=document.getElementById("prodBody");
   if(!prodBody)return;
-  if(rows.length===0){prodBody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text);padding:24px">Нет товаров по заданным фильтрам</td></tr>';return;}
+  if(rows.length===0){prodBody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text);padding:24px">Нет товаров</td></tr>';return;}
   prodBody.innerHTML=rows.map(r=>{
-    const shipCost=col(r,"shipping_cost");const sl=shipCost==="0"||shipCost==="0.0"?'<span style="color:var(--green)">Бесп.</span>':shipCost?`$${shipCost}`:"—";
-    const cd=col(r,"condition").toUpperCase();const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
-    const trs2=col(r,"top_rated_seller")==="1"?'<span class="badge b-top">TOP</span>':"";
-    const imgUrl=getImageUrl(col(r,"url"));
-    return`<tr>
-      <td>${imgUrl?`<img src="${imgUrl}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none'">`:'—'}</td>
-      <td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td>
-      <td class="tprice">${f$(pr(r))}</td>
-      <td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(col(r,"seller"))}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(col(r,"seller"))} ↗</a></td>
-      <td class="tmono">${col(r,"seller_feedback_pct")?col(r,"seller_feedback_pct")+"%":"—"}</td>
-      <td class="tmono">${col(r,"seller_feedback_score")||"—"} ${trs2}</td>
-      <td class="tmono">${cb}</td>
-      <td class="tmono">${sl}</td>
-      <td class="tmono">${col(r,"item_location")||"—"}</td>
-      <td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td>
-    </tr>`;
+    const shipCost=col(r,"shipping_cost");
+    const sl=shipCost==="0"||shipCost==="0.0"?'<span style="color:var(--green)">Бесп.</span>':shipCost?`$${shipCost}`:"—";
+    const cd=col(r,"condition").toUpperCase();
+    const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
+    const trs2=col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true"?'<span class="badge b-top">TOP</span>':"";
+    return`<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller">${esc(col(r,"seller"))} ${trs2}</td><td class="tmono">${col(r,"seller_feedback_pct")?col(r,"seller_feedback_pct")+"%":"—"}</td><td class="tmono">${col(r,"seller_feedback_score")||"—"}</td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tmono">${col(r,"item_location")||"—"}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
   }).join("");
 }
 
@@ -735,132 +770,122 @@ function renderProducts(){
 function renderSellers(){
   if(!DATA.length)return;
   const map={};
-  DATA.forEach(r=>{const s=col(r,"seller");if(!s)return;
-    if(!map[s])map[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1",freeC:0};
-    map[s].items.push(pr(r));if(col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0")map[s].freeC++;
+  DATA.forEach(r=>{
+    const s=col(r,"seller");
+    if(!s)return;
+    if(!map[s]) map[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true",freeC:0};
+    map[s].items.push(pr(r));
+    const fs=col(r,"free_shipping");
+    const sc=col(r,"shipping_cost");
+    if(fs==="1"||fs==="true"||sc==="0"||sc==="0.0") map[s].freeC++;
   });
   const sellers=Object.values(map).sort((a,b)=>b.items.length-a.items.length);
   const sgTop=document.getElementById("sg-top");
   if(sgTop)sgTop.innerHTML=sellers.slice(0,6).map((s,i)=>{
-    const pp=s.items.filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
-    return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}');sw('niche')">
-      <div class="sc-rank">${i+1}</div><div class="sc-info"><div class="sc-name"><a href="https://www.ebay.com/usr/${encodeURIComponent(s.name)}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(s.name)} ↗</a></div><div class="sc-sub">FB:${s.fbPct?s.fbPct+"%":"—"} Score:${s.fbScore.toLocaleString()}</div></div>
-      <div class="sc-stats"><div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div><div class="sc-s"><div class="sc-sv">${f$(avg,0)}</div><div class="sc-sl">ср.ц.</div></div></div>
-    </div>`;
+    const pp=s.items.filter(p=>p>0);
+    const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+    return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}');sw('niche')"><div class="sc-rank">${i+1}</div><div class="sc-info"><div class="sc-name">${esc(s.name)}</div><div class="sc-sub">FB:${s.fbPct?s.fbPct+"%":"—"} Score:${s.fbScore.toLocaleString()}</div></div><div class="sc-stats"><div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div><div class="sc-s"><div class="sc-sv">${f$(avg,0)}</div><div class="sc-sl">ср.ц.</div></div></div></div>`;
   }).join("");
-  const fbData=sellers.filter(s=>s.fbPct).slice(0,8).map(s=>[s.name,s.fbPct]).sort((a,b)=>b[1]-a[1]);
-  barChart("bc-fb",fbData,"var(--green)",100);
-  const spData=sellers.filter(s=>s.items.filter(p=>p>0).length).slice(0,8).map(s=>{const pp=s.items.filter(p=>p>0);return[s.name,Math.round(pp.reduce((a,b)=>a+b,0)/pp.length)]}).sort((a,b)=>b[1]-a[1]);
-  barChart("bc-sp",spData,"var(--amber)");
   const sellersBody=document.getElementById("sellersBody");
   if(sellersBody)sellersBody.innerHTML=sellers.map(s=>{
-    const pp=s.items.filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
-    return`<tr><td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(s.name)}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(s.name)} ↗</a></td><td class="tmono">${s.items.length}</td><td class="tprice">${f$(avg)}</td><td class="tmono">${f$(Math.min(...pp)||0)}</td><td class="tmono">${f$(Math.max(...pp)||0)}</td><td class="tmono" style="color:var(--green)">${s.fbPct?s.fbPct+"%":"—"}</td><td class="tmono">${s.fbScore.toLocaleString()||"—"}</td><td class="tmono">${s.trs?'<span class="badge b-top">TOP</span>':"—"}</td><td class="tmono">${Math.round(s.freeC/s.items.length*100)}%</td></tr>`;
+    const pp=s.items.filter(p=>p>0);
+    const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+    return`<tr><td class="tseller">${esc(s.name)}</td><td class="tmono">${s.items.length}</td><td class="tprice">${f$(avg)}</td><td class="tmono">${f$(Math.min(...pp)||0)}</td><td class="tmono">${f$(Math.max(...pp)||0)}</td><td class="tmono" style="color:var(--green)">${s.fbPct?s.fbPct+"%":"—"}</td><td class="tmono">${s.fbScore.toLocaleString()||"—"}</td><td class="tmono">${s.trs?'<span class="badge b-top">TOP</span>':"—"}</td><td class="tmono">${Math.round(s.freeC/s.items.length*100)}%</td></tr>`;
   }).join("");
 }
 
 // ── KEYWORDS ────────────────────────────────────────────────────────
 function renderKeywords(){
   if(!DATA.length)return;
-  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item","this","that","all","not","are","was","be","have","it","do","&","each","per","two","one","i","s"]);
-  const wp={};DATA.forEach(r=>{const p2=pr(r);col(r,"title").toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w)){if(!wp[w])wp[w]=[];wp[w].push(p2)}})});
+  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item"]);
+  const wp={};
+  DATA.forEach(r=>{
+    const p2=pr(r);
+    const title=col(r,"title");
+    if(title) title.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w)){if(!wp[w])wp[w]=[];wp[w].push(p2);}});
+  });
   const wc=Object.entries(wp).map(([w,ps])=>[w,ps.length]).sort((a,b)=>b[1]-a[1]);
-  const top40=wc.slice(0,40);const maxC=top40[0]?.[1]||1;
+  const top40=wc.slice(0,40);
+  const maxC=top40[0]?.[1]||1;
   const kwCloud=document.getElementById("kwCloud");
-  if(kwCloud)kwCloud.innerHTML=top40.length?top40.map(([w,cnt])=>{const sz=9+Math.round((cnt/maxC)*9);return`<div class="kw-tag" style="font-size:${sz}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}');sw('niche')">${esc(w)}<span class="kw-cnt">${cnt}</span></div>`}).join(""):'<div class="empty">Нет данных</div>';
+  if(kwCloud)kwCloud.innerHTML=top40.length?top40.map(([w,cnt])=>{const sz=9+Math.round((cnt/maxC)*9);return`<div class="kw-tag" style="font-size:${sz}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}');sw('niche')">${esc(w)}<span class="kw-cnt">${cnt}</span></div>`;}).join(""):'<div class="empty">Нет данных</div>';
   barChart("bc-kw",top40.slice(0,14),"var(--blue-b)");
   const gAvg=DATA.map(pr).filter(p=>p>0).reduce((a,b)=>a+b,0)/(DATA.filter(r=>pr(r)>0).length||1);
-  const kwp=Object.entries(wp).filter(([,ps])=>ps.filter(p=>p>0).length>=2).map(([w,ps])=>{const pp=ps.filter(p=>p>0);return[w,Math.round(pp.reduce((a,b)=>a+b,0)/pp.length)]}).filter(([,avg])=>avg>gAvg).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const kwp=Object.entries(wp).filter(([,ps])=>ps.filter(p=>p>0).length>=2).map(([w,ps])=>{const pp=ps.filter(p=>p>0);return[w,Math.round(pp.reduce((a,b)=>a+b,0)/pp.length)];}).filter(([,avg])=>avg>gAvg).sort((a,b)=>b[1]-a[1]).slice(0,12);
   barChart("bc-kwp",kwp,"var(--cyan)");
-  const fbScores=DATA.map(r=>parseFloat(col(r,"seller_feedback_score"))||0).filter(s=>s>0).sort((a,b)=>b-a);
-  const thr=fbScores[Math.floor(fbScores.length*0.2)]||0;
-  const twf={};DATA.filter(r=>(parseFloat(col(r,"seller_feedback_score"))||0)>=thr&&thr>0).forEach(r=>col(r,"title").toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))twf[w]=(twf[w]||0)+1}));
-  barChart("bc-kwt",Object.entries(twf).sort((a,b)=>b[1]-a[1]).slice(0,12),"var(--green)");
 }
 
 // ── PRICES ──────────────────────────────────────────────────────────
 function renderPrices(){
   if(!DATA.length)return;
-  const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);if(!prices.length)return;
-  const avg=prices.reduce((a,b)=>a+b,0)/prices.length;const med=prices[Math.floor(prices.length/2)];
+  const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);
+  if(!prices.length)return;
+  const avg=prices.reduce((a,b)=>a+b,0)/prices.length;
+  const med=prices[Math.floor(prices.length/2)];
   const mn=prices[0],mx=prices[prices.length-1],sp=mx-mn;
-  const freeC=DATA.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
+  const freeC=DATA.filter(r=>{
+    const fs=col(r,"free_shipping");
+    const sc=col(r,"shipping_cost");
+    return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";
+  }).length;
   S("pp-avg",f$(avg));S("pp-med",f$(med));S("pp-min",f$(mn));S("pp-max",f$(mx));S("pp-spr",f$(sp));S("pp-free",Math.round(freeC/DATA.length*100)+"%");
   histogram("h-full","h-full-lbl",prices,16,"var(--blue-b)");
-  const newP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("NEW")).map(pr).filter(p=>p>0);
-  const usedP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("USED")).map(pr).filter(p=>p>0);
-  const condPData=[];
-  if(newP.length)condPData.push(["New ср.",Math.round(newP.reduce((a,b)=>a+b,0)/newP.length)]);
-  if(usedP.length)condPData.push(["Used ср.",Math.round(usedP.reduce((a,b)=>a+b,0)/usedP.length)]);
-  barChart("bc-condp",condPData,"var(--green)");
   const priceBody=document.getElementById("priceBody");
   if(priceBody)priceBody.innerHTML=[...DATA].sort((a,b)=>pr(a)-pr(b)).map(r=>{
-    const ship=col(r,"shipping_cost");const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
-    const cd=col(r,"condition").toUpperCase();const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
-    const imgUrl=getImageUrl(col(r,"url"));
-    return`<tr><td>${imgUrl?`<img src="${imgUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;" onerror="this.style.display='none'">`:'—'}</td><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(col(r,"seller"))}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(col(r,"seller"))} ↗</a></td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
+    const ship=col(r,"shipping_cost");
+    const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
+    const cd=col(r,"condition").toUpperCase();
+    const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
+    return`<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller">${esc(col(r,"seller"))}</td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></tr>`;
   }).join("");
 }
 
 // ── CHART UTILS ──────────────────────────────────────────────────────
 function barChart(id,data,color,maxVal){
   const el=document.getElementById(id);if(!el)return;
-  if(!data.length){el.innerHTML='<div style="color:var(--text);font-family:var(--mono);font-size:9px">Нет данных</div>';return}
+  if(!data.length){el.innerHTML='<div class="empty">Нет данных</div>';return;}
   const mx=maxVal||Math.max(...data.map(d=>d[1]));
   el.innerHTML=data.map(([lbl,val])=>`<div class="br"><div class="bl" title="${esc(String(lbl))}">${esc(String(lbl))}</div><div class="bt"><div class="bf" style="width:${Math.min(100,(val/mx*100)).toFixed(1)}%;background:${color}"></div></div><div class="bv">${typeof val==="number"&&val>999?val.toLocaleString():val}</div></div>`).join("");
 }
 function histogram(id,lblId,prices,buckets,color){
   const el=document.getElementById(id);if(!el||!prices.length)return;
   const mn=prices[0],mx=prices[prices.length-1],bSz=(mx-mn)/buckets||1;
-  const cnt=new Array(buckets).fill(0);prices.forEach(p=>{const i=Math.min(Math.floor((p-mn)/bSz),buckets-1);cnt[i]++});
+  const cnt=new Array(buckets).fill(0);
+  prices.forEach(p=>{const i=Math.min(Math.floor((p-mn)/bSz),buckets-1);cnt[i]++;});
   const mxC=Math.max(...cnt);
   el.innerHTML=cnt.map((c,i)=>`<div class="hb" style="height:${mxC?Math.max(2,Math.round(c/mxC*100)):2}%;background:${color};opacity:${0.3+0.7*(c/mxC||0)}" title="${c} тов. $${(mn+i*bSz).toFixed(0)}–$${(mn+(i+1)*bSz).toFixed(0)}"></div>`).join("");
   const lblEl=document.getElementById(lblId);
-  if(lblEl){const step=Math.max(1,Math.ceil(buckets/5));const lbls=[];for(let i=0;i<=buckets;i+=step)lbls.push(`$${(mn+i*bSz).toFixed(0)}`);lblEl.innerHTML=lbls.map(l=>`<span>${l}</span>`).join("")}
+  if(lblEl){const step=Math.max(1,Math.ceil(buckets/5));const lbls=[];for(let i=0;i<=buckets;i+=step)lbls.push(`$${(mn+i*bSz).toFixed(0)}`);lblEl.innerHTML=lbls.map(l=>`<span>${l}</span>`).join("");}
 }
 
 // ── EXPORT EXCEL ────────────────────────────────────────────────────
 function exportToExcel() {
-  if(!DATA.length) { log("Нет данных для экспорта", "warn"); return; }
-  const headers = ["title", "price", "seller", "seller_feedback_pct", "seller_feedback_score", "top_rated_seller", "condition", "free_shipping", "shipping_cost", "item_location", "category", "url", "image_link", "seller_link"];
-  const rows = DATA.map(row => {
-    const url = col(row, "url");
+  if(!DATA.length){log("Нет данных для экспорта","warn");return;}
+  const headers=["title","price","seller","seller_feedback_pct","seller_feedback_score","top_rated_seller","condition","free_shipping","shipping_cost","item_location","category","url"];
+  const rows=DATA.map(row=>{
+    const fs=col(row,"free_shipping");
+    const sc=col(row,"shipping_cost");
     return {
-      title: col(row, "title"),
-      price: pr(row),
-      seller: col(row, "seller"),
-      seller_feedback_pct: col(row, "seller_feedback_pct"),
-      seller_feedback_score: col(row, "seller_feedback_score"),
-      top_rated_seller: col(row, "top_rated_seller") === "1" ? "Yes" : "No",
-      condition: col(row, "condition"),
-      free_shipping: col(row, "free_shipping") === "1" ? "Yes" : "No",
-      shipping_cost: col(row, "shipping_cost"),
-      item_location: col(row, "item_location"),
-      category: col(row, "category"),
-      url: url,
-      image_link: getImageUrl(url),
-      seller_link: `https://www.ebay.com/usr/${encodeURIComponent(col(row, "seller"))}`
+      title:col(row,"title"),price:pr(row),seller:col(row,"seller"),
+      seller_feedback_pct:col(row,"seller_feedback_pct"),seller_feedback_score:col(row,"seller_feedback_score"),
+      top_rated_seller:col(row,"top_rated_seller")==="1"||col(row,"top_rated_seller")==="true"?"Yes":"No",
+      condition:col(row,"condition"),free_shipping:fs==="1"||fs==="true"||sc==="0"||sc==="0.0"?"Yes":"No",
+      shipping_cost:col(row,"shipping_cost"),item_location:col(row,"item_location"),category:col(row,"category"),url:col(row,"url")
     };
   });
-  const csvRows = [headers.join(",")];
-  for (const row of rows) {
-    const values = headers.map(header => {
-      const val = row[header];
-      const escaped = String(val !== undefined && val !== null ? val : "").replace(/"/g, '""');
-      return `"${escaped}"`;
-    });
+  const csvRows=[headers.join(",")];
+  for(const row of rows){
+    const values=headers.map(h=>{const val=row[h];const escaped=String(val!==undefined&&val!==null?val:"").replace(/"/g,'""');return`"${escaped}"`;});
     csvRows.push(values.join(","));
   }
-  const blob = new Blob(["\uFEFF" + csvRows.join("\n")], {type: "text/csv;charset=utf-8;"});
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  link.href = url;
-  link.download = `ebay_export_${new Date().toISOString().slice(0,19).replace(/:/g, "-")}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const blob=new Blob(["\uFEFF"+csvRows.join("\n")],{type:"text/csv;charset=utf-8;"});
+  const link=document.createElement("a");
+  const url=URL.createObjectURL(blob);
+  link.href=url;
+  link.download=`ebay_export_${new Date().toISOString().slice(0,19).replace(/:/g,"-")}.csv`;
+  document.body.appendChild(link);link.click();document.body.removeChild(link);
   URL.revokeObjectURL(url);
-  log(`✅ Экспортировано ${DATA.length} товаров в CSV`, "ok");
+  log(`✅ Экспортировано ${DATA.length} товаров в CSV`,"ok");
 }
 </script>
 </body>
