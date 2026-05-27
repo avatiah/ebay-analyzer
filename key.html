@@ -3,269 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>eBay Keyword Sniper Pro – Анализ ключевых слов</title>
+    <title>eBay Keyword Sniper – Автономная версия</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* Header */
-        .header {
-            background: white;
-            border-radius: 20px;
-            padding: 20px 30px;
-            margin-bottom: 25px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #e2e8f0;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: #2563eb;
-            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-
-        .logo-text {
-            font-size: 22px;
-            font-weight: 800;
-            letter-spacing: -0.3px;
-        }
-
-        .logo-text span {
-            color: #2563eb;
-        }
-
-        .sub {
-            color: #475569;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        /* Controls */
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: flex-end;
-            margin-top: 15px;
-        }
-
-        .input-group {
-            flex: 2;
-            min-width: 200px;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
-            margin-bottom: 5px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
-            font-size: 14px;
-            font-family: 'Space Mono', monospace;
-            background: white;
-            transition: 0.2s;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
-        }
-
-        button {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        button:hover {
-            background: #1d4ed8;
-            transform: translateY(-1px);
-        }
-
-        button.secondary {
-            background: #f1f5f9;
-            color: #1e293b;
-            border: 1px solid #e2e8f0;
-        }
-
-        button.secondary:hover {
-            background: #e2e8f0;
-            transform: none;
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .status {
-            margin-top: 15px;
-            padding: 10px 15px;
-            background: #f1f5f9;
-            border-radius: 12px;
-            font-family: 'Space Mono', monospace;
-            font-size: 13px;
-            color: #475569;
-        }
-
-        /* Filters */
-        .filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            background: white;
-            border: 1px solid #e2e8f0;
-            color: #1e293b;
-            padding: 8px 16px;
-            font-size: 13px;
-        }
-
-        .filter-btn.active {
-            background: #2563eb;
-            border-color: #2563eb;
-            color: white;
-        }
-
-        /* Table */
-        .table-wrapper {
-            background: white;
-            border-radius: 20px;
-            border: 1px solid #e2e8f0;
-            overflow-x: auto;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        th {
-            text-align: left;
-            padding: 15px 15px;
-            background: #f8fafc;
-            font-weight: 700;
-            color: #475569;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eef2ff;
-            vertical-align: middle;
-        }
-
-        tr:hover td {
-            background: #f8fafc;
-        }
-
-        .difficulty {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 30px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .difficulty.extreme {
-            background: #dcfce7;
-            color: #15803d;
-        }
-
-        .difficulty.easy {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .difficulty.medium {
-            background: #fed7aa;
-            color: #b45309;
-        }
-
-        .difficulty.hard {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .badge {
-            font-family: 'Space Mono', monospace;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .export-btn {
-            background: #10b981;
-            margin-left: 10px;
-        }
-
-        .export-btn:hover {
-            background: #059669;
-        }
-
-        footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 12px;
-            color: #94a3b8;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: white; border-radius: 20px; padding: 20px 30px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .logo-icon { width: 40px; height: 40px; background: #2563eb; clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        .logo-text { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+        .logo-text span { color: #2563eb; }
+        .sub { color: #475569; font-size: 14px; margin-top: 5px; }
+        .controls { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin-top: 15px; }
+        .input-group { flex: 2; min-width: 200px; }
+        .input-group label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; font-family: 'Space Mono', monospace; background: white; transition: 0.2s; }
+        .input-group input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        button { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; }
+        button:hover { background: #1d4ed8; transform: translateY(-1px); }
+        button.secondary { background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; }
+        button.secondary:hover { background: #e2e8f0; transform: none; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .status { margin-top: 15px; padding: 10px 15px; background: #f1f5f9; border-radius: 12px; font-family: 'Space Mono', monospace; font-size: 13px; color: #475569; }
+        .filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-btn { background: white; border: 1px solid #e2e8f0; color: #1e293b; padding: 8px 16px; font-size: 13px; }
+        .filter-btn.active { background: #2563eb; border-color: #2563eb; color: white; }
+        .table-wrapper { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; padding: 15px 15px; background: #f8fafc; font-weight: 700; color: #475569; border-bottom: 1px solid #e2e8f0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 12px 15px; border-bottom: 1px solid #eef2ff; vertical-align: middle; }
+        tr:hover td { background: #f8fafc; }
+        .difficulty { display: inline-block; padding: 4px 10px; border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .difficulty.extreme { background: #dcfce7; color: #15803d; }
+        .difficulty.easy { background: #dbeafe; color: #1d4ed8; }
+        .difficulty.medium { background: #fed7aa; color: #b45309; }
+        .difficulty.hard { background: #fee2e2; color: #b91c1c; }
+        .check-link { color: #2563eb; text-decoration: none; font-size: 12px; font-family: 'Space Mono', monospace; }
+        .check-link:hover { text-decoration: underline; }
+        .badge { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; }
+        .export-btn { background: #10b981; margin-left: 10px; }
+        .export-btn:hover { background: #059669; }
+        footer { margin-top: 30px; text-align: center; font-size: 12px; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -273,15 +52,11 @@
     <div class="header">
         <div class="logo">
             <div class="logo-icon">⬡</div>
-            <div class="logo-text">eBay <span>Keyword Sniper Pro</span></div>
+            <div class="logo-text">eBay <span>Keyword Sniper</span></div>
         </div>
-        <div class="sub">Найдите низкоконкурентные ключевые слова через автодополнение eBay и анализ конкуренции</div>
+        <div class="sub">Автономный сбор ключевых слов через автодополнение eBay + быстрая проверка конкуренции</div>
 
         <div class="controls">
-            <div class="input-group">
-                <label>eBay App ID (Client ID) *</label>
-                <input type="text" id="appId" placeholder="Ваш eBay App ID (получить на developer.ebay.com)" autocomplete="off">
-            </div>
             <div class="input-group">
                 <label>Seed keyword (базовое слово)</label>
                 <input type="text" id="seedKeyword" placeholder="например: flash drive" value="flash drive">
@@ -289,7 +64,7 @@
             <button id="startBtn">🔍 Собрать ключевые слова</button>
             <button id="exportBtn" class="export-btn" style="display:none">📎 Экспорт CSV</button>
         </div>
-        <div class="status" id="status">Готов к работе. Введите App ID и Seed keyword.</div>
+        <div class="status" id="status">Готов к работе. Введите seed keyword и нажмите «Собрать».</div>
     </div>
 
     <div class="filters" id="filtersBar" style="display:none;">
@@ -305,17 +80,17 @@
             <thead>
                 <tr>
                     <th>Ключевое слово</th>
-                    <th>Broad Match (товаров)</th>
-                    <th>Competitors (продавцов)</th>
-                    <th>Уровень сложности</th>
+                    <th>Примерная конкуренция</th>
+                    <th>Проверить на eBay</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
     <footer>
-        ⚡ Использует eBay Autosuggest API (публичный) и eBay Finding API (требуется App ID).<br>
-        Классификация сложности: Extremely Easy – очень низкая конкуренция, Easy – низкая, Medium – средняя, Too Difficult – высокая.
+        ⚡ Используется публичный eBay Autosuggest API (без ключа).<br>
+        Конкуренция оценивается эвристически: Extremely Easy – длинные фразы (4+ слов), Easy – 3 слова, Medium – 2 слова, Too Difficult – короткие (1 слово).<br>
+        Для точной оценки нажмите «Проверить на eBay» – откроется страница поиска с фильтром по вашему ключевому слову.
     </footer>
 </div>
 
@@ -323,12 +98,10 @@
     // ------------------------------
     // Глобальные переменные
     // ------------------------------
-    let collectedKeywords = [];    // массив { keyword, totalItems, totalSellers, difficulty }
+    let collectedKeywords = [];    // массив { keyword, difficulty }
     let currentDifficultyFilter = "all";
     let isRunning = false;
 
-    // DOM элементы
-    const appIdInput = document.getElementById('appId');
     const seedInput = document.getElementById('seedKeyword');
     const startBtn = document.getElementById('startBtn');
     const exportBtn = document.getElementById('exportBtn');
@@ -337,30 +110,19 @@
     const tableWrapper = document.getElementById('tableWrapper');
     const tableBody = document.getElementById('tableBody');
 
-    // Загрузка сохранённого App ID
-    const savedAppId = localStorage.getItem('ebay_app_id');
-    if (savedAppId) appIdInput.value = savedAppId;
-
-    // Сохранение App ID при изменении
-    appIdInput.addEventListener('change', () => {
-        localStorage.setItem('ebay_app_id', appIdInput.value);
-    });
-
     // ------------------------------
-    // 1. Получение автодополнений eBay (публичный API)
+    // 1. Получение автодополнений eBay (публичный API, без ключа)
     // ------------------------------
     async function fetchSuggestions(prefix) {
-        // eBay autosuggest endpoint (не требует ключа)
         const url = `https://autosuggest.ebay.com/autosuggest?q=${encodeURIComponent(prefix)}&limit=15&s=COMPLETION`;
         try {
             const response = await fetch(url);
             if (!response.ok) return [];
             const data = await response.json();
-            // структура: data.res[0].suggestions[].value
             const suggestions = data.res?.[0]?.suggestions || [];
             return suggestions.map(s => s.value);
         } catch (err) {
-            console.warn(`Ошибка автодополнения для ${prefix}:`, err);
+            console.warn(`Ошибка для ${prefix}:`, err);
             return [];
         }
     }
@@ -370,20 +132,28 @@
         const letters = 'abcdefghijklmnopqrstuvwxyz';
         const digits = '0123456789';
         const extra = [' ', '-', '_'];
-        let prefixes = [];
-        // Добавляем сам seed (без суффикса) – он тоже может дать фразы
-        prefixes.push(seed);
-        // seed + пробел + буква/цифра
-        for (let ch of letters) prefixes.push(seed + ' ' + ch);
-        for (let ch of digits) prefixes.push(seed + ' ' + ch);
-        for (let ch of extra) prefixes.push(seed + ch);
-        // seed + буква/цифра (без пробела)
-        for (let ch of letters) prefixes.push(seed + ch);
-        for (let ch of digits) prefixes.push(seed + ch);
-        return [...new Set(prefixes)]; // уникальные
+        let prefixes = new Set();
+        prefixes.add(seed);
+        for (let ch of letters) prefixes.add(seed + ' ' + ch);
+        for (let ch of digits) prefixes.add(seed + ' ' + ch);
+        for (let ch of extra) prefixes.add(seed + ch);
+        for (let ch of letters) prefixes.add(seed + ch);
+        for (let ch of digits) prefixes.add(seed + ch);
+        return Array.from(prefixes);
     }
 
-    // Сбор уникальных ключевых слов из всех автодополнений
+    // Простая эвристика для оценки конкуренции (без API)
+    function estimateDifficulty(keyword) {
+        const words = keyword.trim().split(/\s+/);
+        const wordCount = words.length;
+        // Длинные фразы (4+ слов) – почти всегда low competition
+        if (wordCount >= 4) return "extremely easy";
+        if (wordCount === 3) return "easy";
+        if (wordCount === 2) return "medium";
+        return "too difficult";
+    }
+
+    // Сбор уникальных ключевых слов
     async function collectAllKeywords(seed) {
         const prefixes = generatePrefixes(seed);
         statusDiv.innerText = `🔍 Генерация префиксов: ${prefixes.length} вариантов...`;
@@ -395,134 +165,53 @@
             processed++;
             if (processed % 10 === 0) {
                 statusDiv.innerText = `📡 Получено уникальных фраз: ${allKeywords.size} (${processed}/${prefixes.length})`;
-                await new Promise(r => setTimeout(r, 50)); // небольшая задержка
+                await new Promise(r => setTimeout(r, 30));
             }
         }
-        // Также добавляем сам seed (если не появился)
         allKeywords.add(seed);
-        statusDiv.innerText = `✅ Собрано уникальных фраз: ${allKeywords.size}. Теперь анализируем конкуренцию...`;
+        statusDiv.innerText = `✅ Собрано уникальных фраз: ${allKeywords.size}. Оцениваем конкуренцию...`;
         return Array.from(allKeywords);
     }
 
     // ------------------------------
-    // 2. Анализ конкуренции через eBay Finding API
-    // ------------------------------
-    async function fetchCompetition(keyword, appId) {
-        // Используем eBay Finding API для получения количества товаров и уникальных продавцов
-        // Документация: https://developer.ebay.com/api-docs/buy/browse/resources/item_summary/methods/search
-        // Но для простоты и надёжности используем старый Finding API (поиск по ключевым словам)
-        const url = `https://svcs.ebay.com/services/search/FindingService/v1?OPERATION-NAME=findItemsByKeywords&SERVICE-VERSION=1.0.0&SECURITY-APPNAME=${appId}&RESPONSE-DATA-FORMAT=JSON&REST-PAYLOAD&keywords=${encodeURIComponent(keyword)}&paginationInput.entriesPerPage=1`;
-        try {
-            const response = await fetch(url);
-            if (!response.ok) return { totalItems: 0, totalSellers: 0 };
-            const data = await response.json();
-            const searchResult = data.findItemsByKeywordsResponse?.[0]?.searchResult?.[0];
-            const totalItems = parseInt(searchResult?.['@count'] || 0);
-            // Для получения уникальных продавцов пришлось бы делать дополнительный запрос с pagination,
-            // но это затратно. Вместо этого используем эвристику: количество уникальных продавцов ≈ totalItems / 3 (грубо)
-            // В реальном приложении лучше сделать второй запрос с entriesPerPage=100 и подсчитать уникальных seller.username.
-            // Однако для демонстрации концепции используем приблизительное значение.
-            // Чтобы не усложнять, я сделаю запрос с 50 товарами и посчитаю уникальных продавцов.
-            const detailUrl = `https://svcs.ebay.com/services/search/FindingService/v1?OPERATION-NAME=findItemsByKeywords&SERVICE-VERSION=1.0.0&SECURITY-APPNAME=${appId}&RESPONSE-DATA-FORMAT=JSON&REST-PAYLOAD&keywords=${encodeURIComponent(keyword)}&paginationInput.entriesPerPage=50`;
-            const detailResp = await fetch(detailUrl);
-            if (detailResp.ok) {
-                const detailData = await detailResp.json();
-                const items = detailData.findItemsByKeywordsResponse?.[0]?.searchResult?.[0]?.item || [];
-                const uniqueSellers = new Set();
-                items.forEach(item => {
-                    const seller = item?.sellerInfo?.[0]?.sellerUserName?.[0];
-                    if (seller) uniqueSellers.add(seller);
-                });
-                const totalSellers = uniqueSellers.size;
-                return { totalItems, totalSellers };
-            } else {
-                // fallback
-                return { totalItems, totalSellers: Math.floor(totalItems / 5) };
-            }
-        } catch (err) {
-            console.error(`Ошибка анализа для "${keyword}":`, err);
-            return { totalItems: 0, totalSellers: 0 };
-        }
-    }
-
-    // Классификация сложности
-    function classifyDifficulty(totalItems, totalSellers) {
-        if (totalItems === 0) return "extremely easy"; // нет товаров – суперлегко
-        if (totalSellers === 0) return "extremely easy";
-        const density = totalItems / totalSellers; // товаров на одного продавца
-        if (totalItems < 50 && density < 10) return "extremely easy";
-        if (totalItems < 200 && density < 15) return "easy";
-        if (totalItems < 800 && density < 30) return "medium";
-        return "too difficult";
-    }
-
-    // Функция для анализа всех ключевых слов с прогрессом
-    async function analyzeAllKeywords(keywords, appId, onProgress) {
-        const results = [];
-        let processed = 0;
-        for (let kw of keywords) {
-            const { totalItems, totalSellers } = await fetchCompetition(kw, appId);
-            const difficulty = classifyDifficulty(totalItems, totalSellers);
-            results.push({
-                keyword: kw,
-                totalItems,
-                totalSellers,
-                difficulty
-            });
-            processed++;
-            if (onProgress) onProgress(processed, keywords.length, kw);
-            // задержка между запросами, чтобы не забанили
-            await new Promise(r => setTimeout(r, 150));
-        }
-        return results;
-    }
-
-    // ------------------------------
-    // 3. Отображение таблицы и фильтрация
+    // 2. Отображение таблицы и фильтрация
     // ------------------------------
     function renderTable() {
         let filtered = collectedKeywords;
         if (currentDifficultyFilter !== 'all') {
             filtered = filtered.filter(k => k.difficulty === currentDifficultyFilter);
         }
-        // сортировка по сложности (сначала extremely easy, easy и т.д.)
         const order = { 'extremely easy': 0, 'easy': 1, 'medium': 2, 'too difficult': 3 };
         filtered.sort((a,b) => (order[a.difficulty] || 99) - (order[b.difficulty] || 99));
 
         tableBody.innerHTML = '';
         for (let row of filtered) {
             const tr = document.createElement('tr');
-            // ключевое слово
+            // Ключевое слово
             const tdKw = document.createElement('td');
             tdKw.textContent = row.keyword;
             tdKw.style.fontFamily = "'Space Mono', monospace";
             tdKw.style.fontSize = "12px";
             tr.appendChild(tdKw);
-            // broad match
-            const tdItems = document.createElement('td');
-            tdItems.textContent = row.totalItems.toLocaleString();
-            tdItems.classList.add('badge');
-            tr.appendChild(tdItems);
-            // competitors
-            const tdSellers = document.createElement('td');
-            tdSellers.textContent = row.totalSellers.toLocaleString();
-            tr.appendChild(tdSellers);
-            // difficulty
+            // Сложность
             const tdDiff = document.createElement('td');
-            let diffClass = '';
-            let diffText = '';
+            let diffClass = '', diffText = '';
             switch (row.difficulty) {
-                case 'extremely easy': diffClass = 'extreme'; diffText = 'EXTREMELY EASY !!!'; break;
+                case 'extremely easy': diffClass = 'extreme'; diffText = 'EXTREMELY EASY'; break;
                 case 'easy': diffClass = 'easy'; diffText = 'EASY'; break;
                 case 'medium': diffClass = 'medium'; diffText = 'MEDIUM'; break;
                 case 'too difficult': diffClass = 'hard'; diffText = 'TOO DIFFICULT'; break;
-                default: diffClass = 'medium'; diffText = 'UNKNOWN';
             }
             tdDiff.innerHTML = `<span class="difficulty ${diffClass}">${diffText}</span>`;
             tr.appendChild(tdDiff);
+            // Ссылка для проверки на eBay
+            const tdLink = document.createElement('td');
+            const ebaySearchUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(row.keyword)}&_sacat=0&_sop=15`;
+            tdLink.innerHTML = `<a href="${ebaySearchUrl}" target="_blank" class="check-link" rel="noopener">🔍 Проверить →</a>`;
+            tr.appendChild(tdLink);
             tableBody.appendChild(tr);
         }
-        statusDiv.innerText = `✅ Готово. Найдено ключевых слов: ${collectedKeywords.length}. Отфильтровано: ${filtered.length}.`;
+        statusDiv.innerText = `✅ Готово. Найдено ключевых слов: ${collectedKeywords.length}. Отфильтровано: ${filtered.length}. Нажмите «Проверить» для оценки реальной конкуренции.`;
     }
 
     function setupFilters() {
@@ -539,9 +228,9 @@
     // Экспорт в CSV
     function exportToCSV() {
         if (!collectedKeywords.length) return;
-        let csvRows = [["Keyword", "Broad Match (totalItems)", "Competitors (unique sellers)", "Difficulty"]];
+        let csvRows = [["Keyword", "Estimated Difficulty"]];
         for (let kw of collectedKeywords) {
-            csvRows.push([kw.keyword, kw.totalItems, kw.totalSellers, kw.difficulty]);
+            csvRows.push([kw.keyword, kw.difficulty]);
         }
         const csvContent = csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
         const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
@@ -555,16 +244,11 @@
     }
 
     // ------------------------------
-    // 4. Основной процесс
+    // 3. Основной процесс
     // ------------------------------
     async function startSniper() {
         if (isRunning) {
             statusDiv.innerText = "⚠️ Процесс уже запущен, дождитесь окончания.";
-            return;
-        }
-        const appId = appIdInput.value.trim();
-        if (!appId) {
-            statusDiv.innerText = "❌ Введите eBay App ID. Получить можно на developer.ebay.com";
             return;
         }
         const seed = seedInput.value.trim();
@@ -581,25 +265,17 @@
         collectedKeywords = [];
 
         try {
-            // Шаг 1: сбор ключевых слов через автодополнение
             const keywords = await collectAllKeywords(seed);
-            statusDiv.innerText = `🔍 Анализ конкуренции для ${keywords.length} ключевых слов... (это может занять минуту)`;
-
-            // Шаг 2: анализ конкуренции
-            const results = await analyzeAllKeywords(keywords, appId, (processed, total, currentKw) => {
-                statusDiv.innerText = `📊 Анализ: ${processed}/${total} – "${currentKw}"`;
-            });
+            const results = keywords.map(kw => ({
+                keyword: kw,
+                difficulty: estimateDifficulty(kw)
+            }));
             collectedKeywords = results;
-            // Фильтруем только те, у которых totalItems > 0? Нет, даже нулевые могут быть полезны (extremely easy)
-            // Оставляем все.
-
-            // Шаг 3: отображение
             renderTable();
             filtersBar.style.display = "flex";
             tableWrapper.style.display = "block";
             exportBtn.style.display = "inline-flex";
             setupFilters();
-            statusDiv.innerText = `✅ Готово! Найдено ${collectedKeywords.length} ключевых слов. Используйте фильтры.`;
         } catch (err) {
             console.error(err);
             statusDiv.innerText = `❌ Ошибка: ${err.message}`;
@@ -610,14 +286,8 @@
         }
     }
 
-    // Обработчики кнопок
     startBtn.addEventListener('click', startSniper);
     exportBtn.addEventListener('click', exportToCSV);
-
-    // Дополнительно: если App ID уже сохранён, показать подсказку
-    if (savedAppId) {
-        statusDiv.innerText = "✅ App ID загружен. Введите seed keyword и нажмите «Собрать ключевые слова».";
-    }
 </script>
 </body>
 </html>
