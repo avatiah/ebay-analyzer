@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>eBay Market Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04070d;--bg2:#070b14;--panel:#0b1020;--panel2:#0f1628;
+  --border:#162035;--border2:#1e2d4a;
+  --blue:#2563eb;--blue-b:#3b82f6;--blue-dim:rgba(37,99,235,.1);
+  --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,.1);
+  --green:#10b981;--green-dim:rgba(16,185,129,.1);
+  --red:#ef4444;--red-dim:rgba(239,68,68,.1);
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,.1);
+  --purple:#8b5cf6;--purple-dim:rgba(139,92,246,.1);
+  --text:#6b7fa3;--text2:#a8bbd4;--bright:#e8f0fa;
+  --mono:'Space Mono',monospace;--sans:'Barlow',sans-serif;--cond:'Barlow Condensed',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text2);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(37,99,235,.06) 0%,transparent 60%),
+             radial-gradient(ellipse 40% 30% at 80% 80%,rgba(6,182,212,.04) 0%,transparent 60%)}
+.topbar{position:sticky;top:0;z-index:200;height:52px;background:rgba(4,7,13,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px}
+.logo{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.logo-hex{width:28px;height:28px;background:var(--blue);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:grid;place-items:center;font-size:11px}
+.logo-text{font-family:var(--cond);font-weight:900;font-size:16px;letter-spacing:2.5px;text-transform:uppercase;color:var(--bright)}
+.logo-text span{color:var(--blue-b)}
+.topbar-kw{flex:1;max-width:320px}
+.topbar-kw input{width:100%;background:var(--panel2);border:1px solid var(--border2);border-radius:7px;color:var(--bright);font-family:var(--mono);font-size:11px;padding:8px 12px;outline:none;transition:border-color .2s}
+.topbar-kw input:focus{border-color:var(--blue-b)}
+.topbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.badge-upd{font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:.5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--blue);color:#fff;padding:8px 18px;font-size:12px}
+.btn-primary:not(:disabled):hover{background:var(--blue-b)}
+.btn-ghost{background:var(--panel2);color:var(--text2);border:1px solid var(--border2);padding:8px 14px;font-size:11px}
+.btn-ghost:not(:disabled):hover{border-color:var(--blue-b);color:var(--blue-b)}
+.btn-icon{background:var(--panel2);color:var(--text2);border:1px solid var(--border2);padding:7px 10px;font-size:13px;border-radius:6px}
+.btn-icon:hover{border-color:var(--blue-b);color:var(--blue-b)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:11px;height:11px;border:2px solid rgba(255,255,255,.2);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.btn.loading .spinner{display:inline-block}
+.btn.loading .lbl{opacity:.6}
+.layout{position:relative;z-index:1;display:grid;grid-template-columns:255px 1fr;min-height:calc(100vh - 52px)}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:14px 12px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.sb-card{background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:13px}
+.sb-hdr{font-family:var(--cond);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text);margin-bottom:10px}
+.field{margin-bottom:8px}
+.field label{display:block;font-family:var(--mono);font-size:9px;color:var(--text);margin-bottom:4px}
+.inp-w{position:relative}
+.inp-w input{width:100%;padding-right:34px}
+.eye-btn{position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text);font-size:12px;padding:0}
+input[type=text],input[type=password]{width:100%;background:var(--panel2);border:1px solid var(--border2);border-radius:6px;color:var(--bright);font-family:var(--mono);font-size:10px;padding:8px 11px;outline:none;transition:border-color .2s}
+input:focus{border-color:var(--blue-b)}
+.sb-btn{width:100%;margin-bottom:6px}
+.status{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;padding:4px 8px;border-radius:5px;margin-top:6px}
+.status::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+.ok{background:var(--green-dim);color:var(--green)}.err{background:var(--red-dim);color:var(--red)}
+.info{background:var(--blue-dim);color:var(--blue-b)}.warn{background:var(--amber-dim);color:var(--amber)}
+.poll-row{display:none;align-items:center;gap:7px;padding:7px 9px;margin-top:7px;background:var(--blue-dim);border:1px solid rgba(37,99,235,.2);border-radius:6px;font-family:var(--mono);font-size:9px;color:var(--blue-b)}
+.ps{width:10px;height:10px;border:2px solid rgba(37,99,235,.2);border-top-color:var(--blue-b);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.steps-wrap{display:none;margin-top:10px}
+.steps-title{font-family:var(--cond);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text);margin-bottom:7px}
+.step{display:flex;align-items:center;gap:7px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;margin-bottom:4px;transition:border-color .3s}
+.step.active{border-color:var(--blue-b)}.step.done{border-color:var(--green)}.step.failed{border-color:var(--red)}
+.sico{font-size:11px;width:16px;text-align:center;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.step.active .sico{animation:pulse 1.2s ease infinite}
+.sname{font-family:var(--mono);font-size:9px;color:var(--bright);flex:1}
+.stime{font-family:var(--mono);font-size:8px;color:var(--text);flex-shrink:0}
+.log-box{height:120px;overflow-y:auto;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:8px;font-family:var(--mono);font-size:9px;line-height:1.7}
+.ll{display:flex;gap:7px}
+.lt{color:var(--text);flex-shrink:0}
+.lm.ok{color:var(--green)}.lm.err{color:var(--red)}.lm.warn{color:var(--amber)}.lm.info{color:var(--blue-b)}.lm.plain{color:var(--text2)}
+.log-empty{color:var(--text);font-style:italic}
+.content{padding:16px 18px;overflow:auto}
+.tabs{display:flex;gap:0;margin-bottom:16px;background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.tab{flex:1;padding:9px 6px;text-align:center;font-family:var(--cond);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text);cursor:pointer;border:none;background:none;transition:all .2s;border-right:1px solid var(--border)}
+.tab:last-child{border-right:none}
+.tab:hover{color:var(--blue-b);background:var(--blue-dim)}
+.tab.active{color:var(--bright);background:var(--blue)}
+.section{display:none}
+.section.active{display:block}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:8px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:11px 13px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--blue-b))}
+.kpi-val{font-family:var(--cond);font-size:20px;font-weight:900;color:var(--bright);line-height:1;margin-bottom:3px}
+.kpi-lbl{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.8px;color:var(--text)}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;margin-bottom:12px;overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-bottom:1px solid var(--border);background:var(--panel2)}
+.pt{font-family:var(--cond);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text2)}
+.pb{padding:12px 13px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:1200px){.three{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.two,.three{grid-template-columns:1fr}}
+.bar-chart{display:flex;flex-direction:column;gap:6px}
+.br{display:flex;align-items:center;gap:7px}
+.bl{font-family:var(--mono);font-size:9px;color:var(--text);width:100px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.bf{height:100%;border-radius:2px;transition:width .7s ease}
+.bv{font-family:var(--mono);font-size:9px;color:var(--text2);width:44px;text-align:right;flex-shrink:0}
+.histo{display:flex;align-items:flex-end;gap:2px}
+.hb{flex:1;border-radius:2px 2px 0 0;min-height:2px;transition:height .6s ease}
+.histo-labels{display:flex;justify-content:space-between;margin-top:4px;font-family:var(--mono);font-size:8px;color:var(--text)}
+.opp-score{display:flex;align-items:center;gap:14px;padding:12px 13px}
+.score-ring{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;position:relative;flex-shrink:0}
+.score-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.score-val{font-family:var(--cond);font-size:18px;font-weight:900;color:var(--bright);position:relative;z-index:1}
+.score-lbl{font-family:var(--mono);font-size:7px;color:var(--text);text-align:center;position:relative;z-index:1}
+.opp-details{flex:1}
+.opp-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+.opp-row:last-child{border-bottom:none}
+.opp-key{color:var(--text);font-family:var(--mono);font-size:9px}
+.opp-val{font-family:var(--cond);font-size:13px;font-weight:700;color:var(--bright)}
+.badge{display:inline-block;padding:2px 6px;border-radius:3px;font-family:var(--mono);font-size:8px;font-weight:700;text-transform:uppercase}
+.b-new{background:var(--green-dim);color:var(--green)}.b-used{background:var(--amber-dim);color:var(--amber)}
+.b-other{background:rgba(100,116,139,.1);color:var(--text)}.b-top{background:var(--purple-dim);color:var(--purple)}
+.kw-cloud{display:flex;flex-wrap:wrap;gap:6px}
+.kw-tag{background:var(--panel2);border:1px solid var(--border2);border-radius:5px;padding:4px 9px;font-family:var(--mono);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px}
+.kw-tag:hover{border-color:var(--blue-b);color:var(--blue-b)}
+.kw-winner{border-color:var(--green);color:var(--green)}
+.kw-cnt{font-size:7px;color:var(--text);background:var(--border);padding:1px 4px;border-radius:2px}
+.scard{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:9px 11px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:border-color .2s;margin-bottom:6px}
+.scard:hover,.scard.selected{border-color:var(--blue-b)}
+.sc-rank{font-family:var(--cond);font-size:16px;font-weight:900;color:var(--border2);width:20px;text-align:center;flex-shrink:0}
+.sc-info{flex:1;min-width:0}
+.sc-name{font-family:var(--mono);font-size:11px;color:var(--cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-sub{font-family:var(--mono);font-size:8px;color:var(--text);margin-top:2px}
+.sc-stats{display:flex;gap:10px;flex-shrink:0}
+.sc-s{text-align:right}
+.sc-sv{font-family:var(--cond);font-size:13px;font-weight:700;color:var(--bright)}
+.sc-sl{font-family:var(--mono);font-size:7px;color:var(--text)}
+.tier-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.tier{flex:1;min-width:90px;background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:9px 11px;text-align:center;cursor:pointer;transition:all .2s}
+.tier:hover,.tier.active{border-color:var(--blue-b);background:var(--blue-dim)}
+.tier-range{font-family:var(--cond);font-size:13px;font-weight:700;color:var(--bright)}
+.tier-count{font-family:var(--mono);font-size:8px;color:var(--text);margin-top:2px}
+.tier-pct{font-family:var(--cond);font-size:17px;font-weight:900;margin-top:3px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{font-family:var(--cond);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text);padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;background:var(--panel2);cursor:pointer;user-select:none}
+th:hover{color:var(--blue-b)}
+td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(37,99,235,.03)}
+.tit{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--bright)}
+.tlink a{color:var(--blue-b);text-decoration:none;font-family:var(--mono);font-size:9px}
+.tlink a:hover{text-decoration:underline}
+.tprice{color:var(--green);font-family:var(--mono);font-weight:700;font-size:11px}
+.tseller{color:var(--cyan);font-family:var(--mono);font-size:10px}
+.tmono{font-family:var(--mono);font-size:9px}
+.flt{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px;align-items:center}
+.flt input,.flt select{background:var(--panel2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-family:var(--mono);font-size:10px;padding:6px 9px;outline:none}
+.flt input{flex:1;min-width:130px}
+.flt input:focus,.flt select:focus{border-color:var(--blue-b)}
+.empty{text-align:center;padding:40px;font-family:var(--mono);font-size:11px;color:var(--text)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fade{animation:fadeUp .3s ease both}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo"><div class="logo-hex">⬡</div><div class="logo-text">eBay <span>Analyzer</span></div></div>
+  <div class="topbar-kw"><input type="text" id="topKw" placeholder="Ключевое слово..." onkeydown="if(event.key==='Enter')quickRun()"></div>
+  <div class="topbar-actions">
+    <button class="btn btn-primary" id="quickRunBtn" onclick="quickRun()"><span class="spinner"></span><span class="lbl">▶ Запустить</span></button>
+    <button class="btn btn-ghost" onclick="loadData()">⟳ Обновить</button>
+    <button class="btn btn-icon" onclick="toggleSidebar()">☰</button>
+    <span class="badge-upd" id="lastUpd">—</span>
+  </div>
+</div>
+<div class="layout">
+<div class="sidebar" id="sidebar">
+  <div class="sb-card">
+    <div class="sb-hdr">🔑 Токен</div>
+    <div class="field"><div class="inp-w"><input type="password" id="tokInp" placeholder="ghp_..."><button class="eye-btn" onclick="toggleEye()">👁</button></div></div>
+    <button class="btn btn-ghost sb-btn" onclick="saveToken()">Сохранить токен</button>
+    <div id="tokSt"></div>
+  </div>
+  <div class="sb-card">
+    <div class="sb-hdr">🚀 Управление</div>
+    <div class="field"><label>Ключевое слово</label><input type="text" id="kwInp" placeholder="vintage camera"></div>
+    <div id="kwSt"></div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+      <button class="btn btn-primary sb-btn" id="runBtn" onclick="runScraper()"><span class="spinner"></span><span class="lbl">▶ Запустить сбор</span></button>
+      <button class="btn btn-ghost sb-btn" onclick="saveKeyword()">💾 Сохранить слово</button>
+      <button class="btn btn-ghost sb-btn" onclick="loadData()">⟳ Обновить данные</button>
+    </div>
+    <div id="runSt"></div>
+    <div class="poll-row" id="pollRow"><div class="ps"></div><span id="pollMsg">Ожидание...</span></div>
+    <div class="steps-wrap" id="stepsWrap">
+      <div style="height:1px;background:var(--border);margin:10px 0"></div>
+      <div class="steps-title">Прогресс</div>
+      <div id="stepsEl"></div>
+    </div>
+  </div>
+  <div class="sb-card" style="flex:1">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="sb-hdr" style="margin:0">📋 Лог</div>
+      <button class="btn btn-ghost" style="padding:3px 7px;font-size:8px" onclick="clearLog()">очистить</button>
+    </div>
+    <div class="log-box" id="log"><span class="log-empty">Событий пока нет...</span></div>
+  </div>
+</div>
+<div class="content">
+  <div class="tabs">
+    <button class="tab active" onclick="sw('niche')">🎯 Ниши</button>
+    <button class="tab" onclick="sw('overview')">📊 Обзор</button>
+    <button class="tab" onclick="sw('products')">📦 Товары</button>
+    <button class="tab" onclick="sw('sellers')">👤 Продавцы</button>
+    <button class="tab" onclick="sw('keywords')">🔍 Слова</button>
+    <button class="tab" onclick="sw('prices')">💰 Цены</button>
+  </div>
+  <!-- NICHE TAB -->
+  <div class="section active fade" id="tab-niche">
+    <div class="two">
+      <div class="panel">
+        <div class="ph"><div class="pt">🎯 Opportunity Score</div><span id="opp-grade-badge"></span></div>
+        <div class="opp-score">
+          <div style="text-align:center">
+            <div class="score-ring">
+              <svg viewBox="0 0 68 68"><circle cx="34" cy="34" r="28" fill="none" stroke="var(--border)" stroke-width="6"/><circle id="scoreArc" cx="34" cy="34" r="28" fill="none" stroke="var(--green)" stroke-width="6" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="175.9"/></svg>
+              <div><div class="score-val" id="scoreVal">—</div><div class="score-lbl">/ 100</div></div>
+            </div>
+          </div>
+          <div class="opp-details">
+            <div class="opp-row"><span class="opp-key">Конкуренция</span><span class="opp-val" id="opp-comp">—</span></div>
+            <div class="opp-row"><span class="opp-key">Ср. цена</span><span class="opp-val" id="opp-price">—</span></div>
+            <div class="opp-row"><span class="opp-key">Бесплатная доставка</span><span class="opp-val" id="opp-ship">—</span></div>
+            <div class="opp-row"><span class="opp-key">Top Rated Sellers</span><span class="opp-val" id="opp-trs">—</span></div>
+            <div class="opp-row"><span class="opp-key">Sweet Spot</span><span class="opp-val" id="opp-sweet">—</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="pt">💡 Insights</div></div>
+        <div class="pb" id="insightsEl"><div class="empty">Загрузите данные</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="pt">💰 Price Sweet Spots</div></div>
+      <div class="pb">
+        <div class="tier-row" id="tierRow"></div>
+        <div id="tierDetail"></div>
+      </div>
+    </div>
+    <div class="two">
+      <div class="panel">
+        <div class="ph"><div class="pt">🏆 Winning Title Words</div><span style="font-family:var(--mono);font-size:8px;color:var(--green)">топ-продавцы</span></div>
+        <div class="pb"><div class="kw-cloud" id="winWords"></div></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="pt">📝 Title Builder</div></div>
+        <div class="pb">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text);margin-bottom:8px">Кликай на слова → строй заголовок:</div>
+          <div id="builtTitle" style="font-family:var(--mono);font-size:11px;color:var(--bright);min-height:28px;word-break:break-word;padding:8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px"></div>
+          <div style="display:flex;gap:7px;margin-top:8px">
+            <button class="btn btn-ghost" style="font-size:9px;padding:5px 10px" onclick="clearTitle()">Очистить</button>
+            <button class="btn btn-ghost" style="font-size:9px;padding:5px 10px" onclick="copyTitle()">📋 Скопировать</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="pt">🔬 Топ продавцов ниши</div><span style="font-family:var(--mono);font-size:8px;color:var(--text)">кликни для деталей</span></div>
+      <div class="pb" id="nicheSellerGrid"></div>
+    </div>
+    <div class="panel" id="sellerDetailPanel" style="display:none">
+      <div class="ph">
+        <div class="pt" id="sellerDetailTitle">Детали продавца</div>
+        <button class="btn btn-ghost" style="font-size:9px;padding:4px 9px" onclick="closeDetail()">✕</button>
+      </div>
+      <div class="pb">
+        <div class="two" style="margin-bottom:10px">
+          <div id="sellerDetailKpi"></div>
+          <div id="sellerDetailChart"></div>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Товар</th><th>Цена</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th></tr></thead><tbody id="sellerDetailBody"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERVIEW TAB -->
+  <div class="section fade" id="tab-overview">
+    <div class="kpi-grid">
+      <div class="kpi" style="--c:var(--blue-b)"><div class="kpi-val" id="k-total">—</div><div class="kpi-lbl">Товаров</div></div>
+      <div class="kpi" style="--c:var(--green)"><div class="kpi-val" id="k-avg">—</div><div class="kpi-lbl">Ср. цена</div></div>
+      <div class="kpi" style="--c:var(--cyan)"><div class="kpi-val" id="k-med">—</div><div class="kpi-lbl">Медиана</div></div>
+      <div class="kpi" style="--c:var(--amber)"><div class="kpi-val" id="k-min">—</div><div class="kpi-lbl">Мин цена</div></div>
+      <div class="kpi" style="--c:var(--red)"><div class="kpi-val" id="k-max">—</div><div class="kpi-lbl">Макс цена</div></div>
+      <div class="kpi" style="--c:var(--blue-b)"><div class="kpi-val" id="k-sellers">—</div><div class="kpi-lbl">Продавцов</div></div>
+      <div class="kpi" style="--c:var(--green)"><div class="kpi-val" id="k-new">—</div><div class="kpi-lbl">Новых</div></div>
+      <div class="kpi" style="--c:var(--cyan)"><div class="kpi-val" id="k-free">—</div><div class="kpi-lbl">Бесп.доставка</div></div>
+    </div>
+    <div class="two">
+      <div class="panel"><div class="ph"><div class="pt">Топ продавцов</div></div><div class="pb"><div class="bar-chart" id="bc-sellers"></div></div></div>
+      <div class="panel"><div class="ph"><div class="pt">Распределение цен</div></div><div class="pb"><div class="histo" id="h-main" style="height:70px"></div><div class="histo-labels" id="h-main-lbl"></div></div></div>
+    </div>
+    <div class="two">
+      <div class="panel"><div class="ph"><div class="pt">Состояние</div></div><div class="pb"><div class="bar-chart" id="bc-cond"></div></div></div>
+      <div class="panel"><div class="ph"><div class="pt">Категории</div></div><div class="pb"><div class="bar-chart" id="bc-cats"></div></div></div>
+    </div>
+  </div>
+
+  <!-- PRODUCTS TAB -->
+  <div class="section fade" id="tab-products">
+    <div class="flt">
+      <input type="text" id="srch" placeholder="🔍 Поиск..." oninput="renderProducts()">
+      <select id="psrt" onchange="renderProducts()">
+        <option value="price_a">Цена ↑</option><option value="price_d">Цена ↓</option>
+        <option value="fb_d">Feedback ↓</option><option value="title">Название</option>
+      </select>
+      <select id="pcond" onchange="renderProducts()">
+        <option value="">Все</option><option value="NEW">Новый</option><option value="USED">Б/у</option>
+      </select>
+      <select id="pship" onchange="renderProducts()">
+        <option value="">Любая доставка</option><option value="free">Бесплатная</option>
+      </select>
+      <select id="ptrs" onchange="renderProducts()">
+        <option value="">Все продавцы</option><option value="1">Top Rated</option>
+      </select>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="pt">Товары</div><span id="pCnt" class="tmono" style="color:var(--text)"></span></div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>Товар</th><th onclick="sp('price')">Цена ↕</th><th>Продавец</th>
+        <th>FB%</th><th>Score</th><th>Состояние</th><th>Доставка</th><th>Локация</th><th>Ссылка</th>
+      </tr></thead><tbody id="prodBody"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- SELLERS TAB -->
+  <div class="section fade" id="tab-sellers">
+    <div class="three">
+      <div class="panel"><div class="ph"><div class="pt">Топ по товарам</div></div><div class="pb" id="sg-top"></div></div>
+      <div class="panel"><div class="ph"><div class="pt">Feedback %</div></div><div class="pb"><div class="bar-chart" id="bc-fb"></div></div></div>
+      <div class="panel"><div class="ph"><div class="pt">Ср. цена</div></div><div class="pb"><div class="bar-chart" id="bc-sp"></div></div></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="pt">Сводная таблица</div></div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>Продавец</th><th>Товаров</th><th>Ср.цена</th><th>Мин</th><th>Макс</th>
+        <th>FB%</th><th>Score</th><th>Top Rated</th><th>Бесп.дост.</th>
+      </tr></thead><tbody id="sellersBody"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- KEYWORDS TAB -->
+  <div class="section fade" id="tab-keywords">
+    <div class="two">
+      <div class="panel"><div class="ph"><div class="pt">Облако слов</div></div><div class="pb"><div class="kw-cloud" id="kwCloud"></div></div></div>
+      <div class="panel"><div class="ph"><div class="pt">Слова → высокая цена</div></div><div class="pb"><div class="bar-chart" id="bc-kwp"></div></div></div>
+    </div>
+    <div class="two">
+      <div class="panel"><div class="ph"><div class="pt">Частота слов</div></div><div class="pb"><div class="bar-chart" id="bc-kw"></div></div></div>
+      <div class="panel"><div class="ph"><div class="pt">Слова топ-продавцов</div></div><div class="pb"><div class="bar-chart" id="bc-kwt"></div></div></div>
+    </div>
+  </div>
+
+  <!-- PRICES TAB -->
+  <div class="section fade" id="tab-prices">
+    <div class="kpi-grid">
+      <div class="kpi" style="--c:var(--green)"><div class="kpi-val" id="pp-avg">—</div><div class="kpi-lbl">Средняя</div></div>
+      <div class="kpi" style="--c:var(--cyan)"><div class="kpi-val" id="pp-med">—</div><div class="kpi-lbl">Медиана</div></div>
+      <div class="kpi" style="--c:var(--blue-b)"><div class="kpi-val" id="pp-min">—</div><div class="kpi-lbl">Минимум</div></div>
+      <div class="kpi" style="--c:var(--amber)"><div class="kpi-val" id="pp-max">—</div><div class="kpi-lbl">Максимум</div></div>
+      <div class="kpi" style="--c:var(--red)"><div class="kpi-val" id="pp-spr">—</div><div class="kpi-lbl">Разброс</div></div>
+      <div class="kpi" style="--c:var(--purple)"><div class="kpi-val" id="pp-free">—</div><div class="kpi-lbl">Бесп.доставка</div></div>
+    </div>
+    <div class="two">
+      <div class="panel"><div class="ph"><div class="pt">Гистограмма цен</div></div><div class="pb"><div class="histo" id="h-full" style="height:90px"></div><div class="histo-labels" id="h-full-lbl"></div></div></div>
+      <div class="panel"><div class="ph"><div class="pt">Новые vs Б/у</div></div><div class="pb"><div class="bar-chart" id="bc-condp"></div></div></div>
+    </div>
+    <div class="panel"><div class="ph"><div class="pt">Все товары по цене</div></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Товар</th><th>Цена</th><th>Продавец</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th></tr></thead><tbody id="priceBody"></tbody></table></div>
+    </div>
+  </div>
+
+</div></div>
+<script>
+const GH_USER="avatiah",GH_REPO="ebay-analyzer";
+let DATA=[],COLS={},pollTimer=null,runId=null,builtWords=[];
+const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}};
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const f$=(v,d=2)=>v>0?"$"+Number(v).toFixed(d):"—";
+const S=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+const countBy=(arr,fn)=>{const o={};arr.forEach(x=>{const k=fn(x);o[k]=(o[k]||0)+1});return o};
+const topN=(obj,n)=>Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);
+function col(row,name){const i=COLS[name];return i!==undefined?(row[i]||""):""}
+function pr(row){return parseFloat(col(row,"price"))||0}
+
+function log(msg,type="plain"){
+  const el=document.getElementById("log");el.querySelector(".log-empty")?.remove();
+  const lines=el.querySelectorAll(".ll");if(lines.length>=200)lines[0].remove();
+  const d=document.createElement("div");d.className="ll";
+  d.innerHTML=`<span class="lt">${new Date().toLocaleTimeString("ru-RU")}</span><span class="lm ${type}">${esc(msg)}</span>`;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+function clearLog(){document.getElementById("log").innerHTML='<span class="log-empty">Лог очищен.</span>'}
+function setS(id,msg,t="info"){document.getElementById(id).innerHTML=msg?`<span class="status ${t}">${esc(msg)}</span>`:""}
+function setBL(btn,v){btn.disabled=v;btn.classList.toggle("loading",v)}
+function sw(id){
+  const ids=["niche","overview","products","sellers","keywords","prices"];
+  document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("active",ids[i]===id));
+  document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id==="tab-"+id));
+}
+function toggleSidebar(){const sb=document.getElementById("sidebar");sb.style.display=sb.style.display==="none"?"":"none"}
+function toggleEye(){const i=document.getElementById("tokInp");i.type=i.type==="password"?"text":"password"}
+function saveToken(){
+  const v=document.getElementById("tokInp").value.trim();
+  if(!v){setS("tokSt","Введите токен","err");return}
+  store.set("GH_TOKEN",v);setS("tokSt","✓ Сохранён","ok");log("Токен сохранён","ok");
+}
+window.addEventListener("DOMContentLoaded",()=>{
+  const t=store.get("GH_TOKEN");if(t){document.getElementById("tokInp").value=t;setS("tokSt","✓ Загружен","ok")}
+  loadData();
+});
+async function ghFetch(path,opts={}){
+  const token=store.get("GH_TOKEN");
+  const res=await fetch(`https://api.github.com${path}`,{...opts,headers:{"Accept":"application/vnd.github+json","Content-Type":"application/json",...(token?{"Authorization":`Bearer ${token}`}:{})}});
+  return{status:res.status,ok:res.ok,body:await res.json().catch(()=>({}))}
+}
+async function sendDispatch(evType,payload={}){
+  const token=store.get("GH_TOKEN");if(!token){log("Токен не найден","err");return false}
+  const res=await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/dispatches`,{method:"POST",
+    headers:{"Authorization":`Bearer ${token}`,"Accept":"application/vnd.github+json","Content-Type":"application/json"},
+    body:JSON.stringify({event_type:evType,client_payload:payload})});
+  if(res.status===204){log(`Dispatch «${evType}» принят`,"ok");return true}
+  let d="";try{const b=await res.json();d=b.message?` — ${b.message}`:""}catch{}
+  log(`Error: HTTP ${res.status}${d}`,"err");return false;
+}
+async function saveKeyword(){
+  const kw=document.getElementById("kwInp").value.trim();if(!kw){setS("kwSt","Введите слово","err");return}
+  const ok=await sendDispatch("update-keywords",{keyword:kw});setS("kwSt",ok?`«${kw}» отправлено`:"Ошибка",ok?"ok":"err");
+}
+function quickRun(){const kw=document.getElementById("topKw").value.trim();if(kw)document.getElementById("kwInp").value=kw;runScraper()}
+async function runScraper(){
+  const btn=document.getElementById("runBtn");
+  const kw=document.getElementById("kwInp").value.trim()||document.getElementById("topKw").value.trim();
+  if(!store.get("GH_TOKEN")){setS("runSt","Нужен токен","err");return}
+  if(!kw){setS("runSt","Введите слово","err");return}
+  setS("runSt","");setBL(btn,true);log(`Запуск для «${kw}»...`,"info");
+  try{
+    const ok=await sendDispatch("run-scraper",{keyword:kw});
+    if(ok){setS("runSt",`Запущен «${kw}»`,"ok");startPolling()}
+    else{setS("runSt","Ошибка","err");setBL(btn,false)}
+  }catch(e){setS("runSt","Ошибка: "+e.message,"err");setBL(btn,false)}
+}
+function startPolling(){
+  document.getElementById("pollRow").style.display="flex";
+  document.getElementById("stepsWrap").style.display="none";
+  runId=null;let att=0;clearInterval(pollTimer);
+  pollTimer=setInterval(async()=>{att++;document.getElementById("pollMsg").textContent=`Ожидание... ${att*4}с`;
+    if(att>45){stopPolling("Таймаут");return}await pollRun()},4000);
+}
+function stopPolling(msg){clearInterval(pollTimer);document.getElementById("pollRow").style.display="none";setBL(document.getElementById("runBtn"),false);if(msg)log(msg,"warn")}
+const SICO={queued:"⏳",in_progress:"🔄",completed_success:"✅",completed_failure:"❌",completed_skipped:"⏭"};
+async function pollRun(){
+  try{
+    if(!runId){
+      const{ok,body}=await ghFetch(`/repos/${GH_USER}/${GH_REPO}/actions/runs?event=repository_dispatch&per_page=5`);
+      if(!ok)return;
+      const runs=(body.workflow_runs||[]).filter(r=>r.name==="Run Scraper");if(!runs.length)return;
+      const latest=runs[0];if((Date.now()-new Date(latest.created_at))>180000)return;
+      runId=latest.id;log(`Run #${latest.run_number}`,"info");document.getElementById("stepsWrap").style.display="block";
+    }
+    const{ok,body}=await ghFetch(`/repos/${GH_USER}/${GH_REPO}/actions/runs/${runId}/jobs`);if(!ok)return;
+    const job=(body.jobs||[])[0];if(!job)return;
+    document.getElementById("stepsEl").innerHTML=(job.steps||[]).map(s=>{
+      const state=s.status==="completed"?`completed_${s.conclusion}`:s.status;
+      const css=s.status==="in_progress"?"active":s.conclusion==="success"?"done":s.conclusion==="failure"?"failed":"";
+      const dur=s.started_at&&s.completed_at?Math.round((new Date(s.completed_at)-new Date(s.started_at))/1000)+"s":s.status==="in_progress"?"...":"";
+      return`<div class="step ${css}"><div class="sico">${SICO[state]||"○"}</div><div class="sname">${esc(s.name)}</div><div class="stime">${dur}</div></div>`;
+    }).join("");
+    document.getElementById("pollMsg").textContent=`${job.status} — ${job.name}`;
+    if(job.status==="completed"){stopPolling();
+      if(job.conclusion==="success"){log("✅ Готово!","ok");setS("runSt","Готово!","ok");setTimeout(loadData,3000)}
+      else{log(`❌ ${job.conclusion}`,"err");setS("runSt","Ошибка workflow","err")}}
+  }catch(e){log("Poll error: "+e.message,"warn")}
+}
+async function loadData(){
+  S("lastUpd","загрузка...");log("Загрузка...","info");
+  try{
+    const{ok,body}=await ghFetch(`/repos/${GH_USER}/${GH_REPO}/contents/data/raw_data.csv`);
+    if(!ok){log("CSV не найден","warn");S("lastUpd","нет данных");return}
+    parseCSV(atob(body.content.replace(/\n/g,"")));
+    renderAll();log(`Загружено ${DATA.length} строк`,"ok");
+    const{body:cb}=await ghFetch(`/repos/${GH_USER}/${GH_REPO}/commits?path=data/raw_data.csv&per_page=1`);
+    const d=cb[0]?.commit?.author?.date?new Date(cb[0].commit.author.date).toLocaleString("ru-RU"):"—";
+    S("lastUpd",`обновлено ${d}`);
+  }catch(e){log("Ошибка: "+e.message,"err");S("lastUpd","ошибка")}
+}
+function parseCSV(text){
+  COLS={};const lines=text.replace(/\r/g,"").trim().split("\n").filter(l=>l.trim());
+  if(lines.length<2){DATA=[];return}
+  lines[0].split(",").forEach((h,i)=>{COLS[h.trim()]=i});
+  DATA=lines.slice(1).map(line=>{
+    const row=[];let cur="",inQ=false;
+    for(const ch of line){if(ch==='"'){inQ=!inQ}else if(ch===","&&!inQ){row.push(cur);cur=""}else cur+=ch}
+    row.push(cur);return row;
+  }).filter(r=>r.length>3&&!col(r,"error"));
+}
+function renderAll(){if(!DATA.length)return;renderNiche();renderOverview();renderProducts();renderSellers();renderKeywords();renderPrices()}
+
+// ── NICHE ────────────────────────────────────────────────────────────
+function renderNiche(){
+  const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);
+  const sellers=[...new Set(DATA.map(r=>col(r,"seller")).filter(Boolean))];
+  const avg=prices.reduce((a,b)=>a+b,0)/(prices.length||1);
+  const freeC=DATA.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
+  const freePct=Math.round(freeC/DATA.length*100);
+  const trsC=DATA.filter(r=>col(r,"top_rated_seller")==="1").length;
+  const trsPct=Math.round(trsC/DATA.length*100);
+  const itemsPerSeller=DATA.length/(sellers.length||1);
+  const compScore=Math.max(0,Math.min(35,Math.round(35-itemsPerSeller*1.5)));
+  const priceScore=avg>=50?30:avg>=20?20:avg>=10?10:5;
+  const shipScore=Math.round(freePct*0.2);
+  const trsScore=Math.round(trsPct*0.1);
+  const score=Math.min(100,compScore+priceScore+shipScore+trsScore);
+  S("scoreVal",score);
+  const arc=document.getElementById("scoreArc");
+  if(arc){arc.style.strokeDashoffset=175.9*(1-score/100);arc.style.stroke=score>=70?"var(--green)":score>=40?"var(--amber)":"var(--red)"}
+  const grade=score>=70?"A":score>=50?"B":score>=30?"C":"D";
+  const gb=document.getElementById("opp-grade-badge");
+  if(gb)gb.innerHTML=`<span class="badge" style="background:${grade==="A"?"var(--green-dim)":grade==="B"?"var(--cyan-dim)":grade==="C"?"var(--amber-dim)":"var(--red-dim)"};color:${grade==="A"?"var(--green)":grade==="B"?"var(--cyan)":grade==="C"?"var(--amber)":"var(--red)"};font-size:11px;padding:3px 9px">Grade ${grade}</span>`;
+  S("opp-comp",`${sellers.length} продавцов`);S("opp-price",f$(avg));S("opp-ship",freePct+"%");S("opp-trs",trsPct+"%");
+  const mn=prices[0]||0,mx=prices[prices.length-1]||100,bSz=(mx-mn)/5||1;
+  const bkts=new Array(5).fill(0);prices.forEach(p=>{const i=Math.min(Math.floor((p-mn)/bSz),4);bkts[i]++});
+  const mb=bkts.indexOf(Math.max(...bkts));
+  S("opp-sweet",`$${(mn+mb*bSz).toFixed(0)}–$${(mn+(mb+1)*bSz).toFixed(0)}`);
+
+  // Insights
+  const insights=[];
+  if(avg<15)insights.push({i:"⚠️",t:"Низкая цена",tx:`Ср. $${avg.toFixed(0)} — сложная маржа. Ищи позиции выше $${Math.round(avg*2)}.`,v:f$(avg),c:"var(--amber)"});
+  else if(avg>100)insights.push({i:"💎",t:"Премиум ниша",tx:`Ср. $${avg.toFixed(0)} — высокий чек, меньше покупателей но больше маржа.`,v:f$(avg),c:"var(--cyan)"});
+  else insights.push({i:"✅",t:"Хорошая цена",tx:`Ср. $${avg.toFixed(0)} — оптимальный диапазон для продаж.`,v:f$(avg),c:"var(--green)"});
+  if(sellers.length<10)insights.push({i:"🎯",t:"Низкая конкуренция",tx:`${sellers.length} продавцов — отличная возможность для входа.`,v:sellers.length+" прод.",c:"var(--green)"});
+  else if(sellers.length>50)insights.push({i:"🔥",t:"Высокая конкуренция",tx:`${sellers.length} продавцов — нужен лучший заголовок и цена.`,v:sellers.length+" прод.",c:"var(--red)"});
+  else insights.push({i:"📊",t:"Умеренная конкуренция",tx:`${sellers.length} продавцов — можно войти с хорошим листингом.`,v:sellers.length+" прод.",c:"var(--amber)"});
+  if(freePct>60)insights.push({i:"🚚",t:"Free shipping — норма",tx:`${freePct}% листингов с бесплатной доставкой. Без неё сложно конкурировать.`,v:freePct+"%",c:"var(--blue-b)"});
+  const newP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("NEW")).map(pr).filter(p=>p>0);
+  const usedP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("USED")).map(pr).filter(p=>p>0);
+  if(newP.length&&usedP.length){
+    const nA=newP.reduce((a,b)=>a+b,0)/newP.length,uA=usedP.reduce((a,b)=>a+b,0)/usedP.length;
+    const diff=Math.round((nA/uA-1)*100);
+    if(diff>20)insights.push({i:"🆚",t:`Новый vs Б/у +${diff}%`,tx:`Новые дороже на ${diff}%. Продавай новые если возможно.`,v:`+${diff}%`,c:"var(--purple)"});
+  }
+  if(trsPct>30)insights.push({i:"⭐",t:"Top Rated доминируют",tx:`${trsPct}% листингов от Top Rated продавцов — высокая планка для качества.`,v:trsPct+"%",c:"var(--cyan)"});
+  document.getElementById("insightsEl").innerHTML=insights.map(x=>`
+    <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:17px;flex-shrink:0">${x.i}</div>
+      <div style="flex:1"><div style="font-family:var(--cond);font-size:12px;font-weight:700;color:var(--bright);margin-bottom:2px">${x.t}</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5">${x.tx}</div></div>
+      <div style="font-family:var(--cond);font-size:13px;font-weight:700;color:${x.c};flex-shrink:0;text-align:right">${x.v}</div>
+    </div>`).join("");
+
+  // Price tiers
+  const tierDefs=[{l:"$0–15",mn:0,mx:15},{l:"$15–30",mn:15,mx:30},{l:"$30–60",mn:30,mx:60},{l:"$60–100",mn:60,mx:100},{l:"$100+",mn:100,mx:Infinity}];
+  const tc=["var(--cyan)","var(--green)","var(--blue-b)","var(--amber)","var(--red)"];
+  document.getElementById("tierRow").innerHTML=tierDefs.map((t,i)=>{
+    const items=DATA.filter(r=>{const p=pr(r);return p>=t.mn&&p<t.mx});
+    const pct=Math.round(items.length/DATA.length*100);
+    return`<div class="tier" onclick="showTier(${t.mn},${t.mx},'${t.l}',this)">
+      <div class="tier-range">${t.l}</div>
+      <div class="tier-pct" style="color:${tc[i]}">${pct}%</div>
+      <div class="tier-count">${items.length} тов.</div></div>`;
+  }).join("");
+
+  // Winning words (top seller words)
+  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item","this","that","all","not","are","was","be","have","it","do","&","each","per","two","one","i","s"]);
+  const fbScores=DATA.map(r=>parseFloat(col(r,"seller_feedback_score"))||0).filter(s=>s>0).sort((a,b)=>b-a);
+  const thr=fbScores[Math.floor(fbScores.length*0.25)]||0;
+  const topRows=DATA.filter(r=>(parseFloat(col(r,"seller_feedback_score"))||0)>=thr&&thr>0);
+  const allWF={},topWF={};
+  DATA.forEach(r=>col(r,"title").toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))allWF[w]=(allWF[w]||0)+1}));
+  topRows.forEach(r=>col(r,"title").toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))topWF[w]=(topWF[w]||0)+1}));
+  const winners=Object.entries(topWF).map(([w,cnt])=>({w,cnt,ratio:cnt/(allWF[w]||1)})).sort((a,b)=>b.ratio*b.cnt-a.ratio*a.cnt).slice(0,36);
+  const maxWC=winners[0]?.cnt||1;
+  document.getElementById("winWords").innerHTML=winners.map(({w,cnt,ratio})=>{
+    const sz=9+Math.round((cnt/maxWC)*8);const isW=ratio>1.3;
+    return`<div class="kw-tag ${isW?"kw-winner":""}" style="font-size:${sz}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}')">
+      ${esc(w)}<span class="kw-cnt">${cnt}</span></div>`;
+  }).join("");
+
+  // Niche sellers
+  const sm={};
+  DATA.forEach(r=>{const s=col(r,"seller");if(!s)return;
+    if(!sm[s])sm[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1",freeC:0};
+    sm[s].items.push(r);if(col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0")sm[s].freeC++;
+  });
+  const sortedS=Object.values(sm).sort((a,b)=>b.fbScore-a.fbScore||b.items.length-a.items.length).slice(0,10);
+  document.getElementById("nicheSellerGrid").innerHTML=sortedS.map((s,i)=>{
+    const pp=s.items.map(pr).filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+    return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}')">
+      <div class="sc-rank">${i+1}</div>
+      <div class="sc-info"><div class="sc-name">${esc(s.name)}${s.trs?' <span class="badge b-top" style="font-size:7px">TOP</span>':''}</div>
+      <div class="sc-sub">Score:${s.fbScore.toLocaleString()} · FB:${s.fbPct?s.fbPct+"%":"—"} · Free:${Math.round(s.freeC/s.items.length*100)}%</div></div>
+      <div class="sc-stats">
+        <div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div>
+        <div class="sc-s"><div class="sc-sv">${f$(avg,0)}</div><div class="sc-sl">ср.ц.</div></div>
+        <div class="sc-s"><div class="sc-sv">${f$(Math.min(...pp)||0,0)}</div><div class="sc-sl">от</div></div>
+      </div></div>`;
+  }).join("");
+}
+
+function showTier(mn,mx,label,el){
+  document.querySelectorAll(".tier").forEach(t=>t.classList.remove("active"));el.classList.add("active");
+  const items=DATA.filter(r=>{const p=pr(r);return p>=mn&&p<mx});
+  if(!items.length){document.getElementById("tierDetail").innerHTML='<div style="color:var(--text);font-family:var(--mono);font-size:10px;padding:8px">Нет товаров в этом диапазоне</div>';return}
+  const pp=items.map(pr).filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+  const sellers=[...new Set(items.map(r=>col(r,"seller")).filter(Boolean))];
+  const freeC=items.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
+  document.getElementById("tierDetail").innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;margin-top:10px">
+      ${[["Товаров",items.length,"var(--blue-b)"],["Продавцов",sellers.length,"var(--cyan)"],["Ср. цена",f$(avg),"var(--green)"],["Бесп.дост.",Math.round(freeC/items.length*100)+"%","var(--amber)"]].map(([l,v,c])=>
+        `<div style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:9px 11px"><div style="font-family:var(--cond);font-size:17px;font-weight:700;color:${c}">${v}</div><div style="font-family:var(--mono);font-size:8px;color:var(--text)">${l}</div></div>`).join("")}
+    </div>
+    <div style="margin-top:10px;overflow-x:auto"><table><thead><tr><th>Товар</th><th>Цена</th><th>Продавец</th><th>FB%</th><th>Доставка</th><th>Ссылка</th></tr></thead><tbody>
+    ${items.slice(0,15).map(r=>{const ship=col(r,"shipping_cost");const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
+      return`<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller">${esc(col(r,"seller"))}</td><td class="tmono">${col(r,"seller_feedback_pct")?col(r,"seller_feedback_pct")+"%":"—"}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;}).join("")}
+    </tbody></table></div>`;
+}
+
+function showSellerDetail(name){
+  const items=DATA.filter(r=>col(r,"seller")===name);
+  const pp=items.map(pr).filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+  const freeC=items.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
+  const panel=document.getElementById("sellerDetailPanel");
+  S("sellerDetailTitle",`Продавец: ${name}`);
+  const stats=[["Товаров",items.length,"var(--blue-b)"],["Ср. цена",f$(avg),"var(--green)"],["Feedback %",col(items[0],"seller_feedback_pct")?col(items[0],"seller_feedback_pct")+"%":"—","var(--cyan)"],
+    ["Score",Number(col(items[0],"seller_feedback_score")).toLocaleString()||"—","var(--amber)"],
+    ["Бесп.дост.",Math.round(freeC/items.length*100)+"%","var(--purple)"],
+    ["Диапазон",`${f$(Math.min(...pp)||0,0)}–${f$(Math.max(...pp)||0,0)}`,"var(--text2)"]];
+  document.getElementById("sellerDetailKpi").innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">${stats.map(([l,v,c])=>`<div style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:8px 10px"><div style="font-family:var(--cond);font-size:14px;font-weight:700;color:${c}">${v}</div><div style="font-family:var(--mono);font-size:8px;color:var(--text)">${l}</div></div>`).join("")}</div>`;
+  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item"]);
+  const wf={};items.forEach(r=>col(r,"title").toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))wf[w]=(wf[w]||0)+1}));
+  const topW=Object.entries(wf).sort((a,b)=>b[1]-a[1]).slice(0,10);const maxW=topW[0]?.[1]||1;
+  document.getElementById("sellerDetailChart").innerHTML=`<div style="font-family:var(--cond);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text);margin-bottom:7px">Слова в заголовках</div><div class="bar-chart">${topW.map(([w,cnt])=>`<div class="br"><div class="bl">${esc(w)}</div><div class="bt"><div class="bf" style="width:${cnt/maxW*100}%;background:var(--cyan)"></div></div><div class="bv">${cnt}</div></div>`).join("")}</div>`;
+  document.getElementById("sellerDetailBody").innerHTML=items.sort((a,b)=>pr(b)-pr(a)).map(r=>{
+    const ship=col(r,"shipping_cost");const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
+    const cd=col(r,"condition").toUpperCase();const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
+    return`<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td>${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→ открыть</a></td></tr>`;
+  }).join("");
+  panel.style.display="block";panel.scrollIntoView({behavior:"smooth",block:"start"});
+  document.querySelectorAll(".scard").forEach(c=>c.classList.toggle("selected",c.querySelector(".sc-name")?.textContent.includes(name)));
+}
+function closeDetail(){document.getElementById("sellerDetailPanel").style.display="none"}
+function addTitleWord(w){if(!builtWords.includes(w))builtWords.push(w);document.getElementById("builtTitle").textContent=builtWords.join(" ")}
+function clearTitle(){builtWords=[];document.getElementById("builtTitle").textContent=""}
+function copyTitle(){navigator.clipboard?.writeText(builtWords.join(" "));log("Заголовок скопирован","ok")}
+
+// ── OVERVIEW ────────────────────────────────────────────────────────
+function renderOverview(){
+  const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);
+  const avg=prices.reduce((a,b)=>a+b,0)/(prices.length||1);
+  const med=prices[Math.floor(prices.length/2)]||0;
+  const sellers=[...new Set(DATA.map(r=>col(r,"seller")).filter(Boolean))];
+  const newC=DATA.filter(r=>col(r,"condition").toUpperCase().includes("NEW")).length;
+  const freeC=DATA.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
+  S("k-total",DATA.length);S("k-avg",f$(avg));S("k-med",f$(med));
+  S("k-min",f$(prices[0]||0));S("k-max",f$(prices[prices.length-1]||0));
+  S("k-sellers",sellers.length);S("k-new",newC);S("k-free",freeC);
+  barChart("bc-sellers",topN(countBy(DATA,r=>col(r,"seller")),8),"var(--blue-b)");
+  histogram("h-main","h-main-lbl",prices,10,"var(--green)");
+  const cond=countBy(DATA,r=>{const c=col(r,"condition").toUpperCase();return c.includes("NEW")?"New":c.includes("USED")?"Used":col(r,"condition")||"Other"});
+  barChart("bc-cond",Object.entries(cond).sort((a,b)=>b[1]-a[1]),"var(--amber)");
+  barChart("bc-cats",topN(countBy(DATA,r=>col(r,"category")||"—"),7),"var(--cyan)");
+}
+
+// ── PRODUCTS ────────────────────────────────────────────────────────
+function sp(c){document.getElementById("psrt").value=c==="price"?"price_a":"title";renderProducts()}
+function renderProducts(){
+  let rows=[...DATA];
+  const srch=document.getElementById("srch")?.value.toLowerCase()||"";
+  const srt=document.getElementById("psrt")?.value||"price_a";
+  const cond=document.getElementById("pcond")?.value||"";
+  const ship=document.getElementById("pship")?.value||"";
+  const trs=document.getElementById("ptrs")?.value||"";
+  if(srch)rows=rows.filter(r=>col(r,"title").toLowerCase().includes(srch));
+  if(cond)rows=rows.filter(r=>col(r,"condition").toUpperCase().includes(cond));
+  if(ship==="free")rows=rows.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0");
+  if(trs==="1")rows=rows.filter(r=>col(r,"top_rated_seller")==="1");
+  rows.sort((a,b)=>srt==="price_a"?pr(a)-pr(b):srt==="price_d"?pr(b)-pr(a):srt==="fb_d"?(parseFloat(col(b,"seller_feedback_pct"))||0)-(parseFloat(col(a,"seller_feedback_pct"))||0):col(a,"title").localeCompare(col(b,"title")));
+  S("pCnt",rows.length+" товаров");
+  document.getElementById("prodBody").innerHTML=rows.map(r=>{
+    const ship=col(r,"shipping_cost");const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
+    const cd=col(r,"condition").toUpperCase();const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
+    const trs2=col(r,"top_rated_seller")==="1"?'<span class="badge b-top">TOP</span>':"";
+    return`<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller">${esc(col(r,"seller"))}</td><td class="tmono">${col(r,"seller_feedback_pct")?col(r,"seller_feedback_pct")+"%":"—"}</td><td class="tmono">${col(r,"seller_feedback_score")||"—"} ${trs2}</td><td>${cb}</td><td class="tmono">${sl}</td><td class="tmono">${col(r,"item_location")||"—"}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
+  }).join("")||'<tr><td colspan="9" style="text-align:center;color:var(--text);padding:24px">Нет товаров</td></tr>';
+}
+
+// ── SELLERS ─────────────────────────────────────────────────────────
+function renderSellers(){
+  const map={};
+  DATA.forEach(r=>{const s=col(r,"seller");if(!s)return;
+    if(!map[s])map[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1",freeC:0};
+    map[s].items.push(pr(r));if(col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0")map[s].freeC++;
+  });
+  const sellers=Object.values(map).sort((a,b)=>b.items.length-a.items.length);
+  document.getElementById("sg-top").innerHTML=sellers.slice(0,6).map((s,i)=>{
+    const pp=s.items.filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+    return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}');sw('niche')">
+      <div class="sc-rank">${i+1}</div><div class="sc-info"><div class="sc-name">${esc(s.name)}</div><div class="sc-sub">FB:${s.fbPct?s.fbPct+"%":"—"} Score:${s.fbScore.toLocaleString()}</div></div>
+      <div class="sc-stats"><div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div><div class="sc-s"><div class="sc-sv">${f$(avg,0)}</div><div class="sc-sl">ср.ц.</div></div></div>
+    </div>`;
+  }).join("");
+  const fbData=sellers.filter(s=>s.fbPct).slice(0,8).map(s=>[s.name,s.fbPct]).sort((a,b)=>b[1]-a[1]);
+  barChart("bc-fb",fbData,"var(--green)",100);
+  const spData=sellers.filter(s=>s.items.filter(p=>p>0).length).slice(0,8).map(s=>{const pp=s.items.filter(p=>p>0);return[s.name,Math.round(pp.reduce((a,b)=>a+b,0)/pp.length)]}).sort((a,b)=>b[1]-a[1]);
+  barChart("bc-sp",spData,"var(--amber)");
+  document.getElementById("sellersBody").innerHTML=sellers.map(s=>{
+    const pp=s.items.filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+    return`<tr><td class="tseller">${esc(s.name)}</td><td class="tmono">${s.items.length}</td><td class="tprice">${f$(avg)}</td><td class="tmono">${f$(Math.min(...pp)||0)}</td><td class="tmono">${f$(Math.max(...pp)||0)}</td><td class="tmono" style="color:var(--green)">${s.fbPct?s.fbPct+"%":"—"}</td><td class="tmono">${s.fbScore.toLocaleString()||"—"}</td><td>${s.trs?'<span class="badge b-top">TOP</span>':"—"}</td><td class="tmono">${Math.round(s.freeC/s.items.length*100)}%</td></tr>`;
+  }).join("");
+}
+
+// ── KEYWORDS ────────────────────────────────────────────────────────
+function renderKeywords(){
+  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item","this","that","all","not","are","was","be","have","it","do","&","each","per","two","one","i","s"]);
+  const wp={};DATA.forEach(r=>{const p2=pr(r);col(r,"title").toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w)){if(!wp[w])wp[w]=[];wp[w].push(p2)}})});
+  const wc=Object.entries(wp).map(([w,ps])=>[w,ps.length]).sort((a,b)=>b[1]-a[1]);
+  const top40=wc.slice(0,40);const maxC=top40[0]?.[1]||1;
+  document.getElementById("kwCloud").innerHTML=top40.map(([w,cnt])=>{const sz=9+Math.round((cnt/maxC)*9);return`<div class="kw-tag" style="font-size:${sz}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}');sw('niche')">${esc(w)}<span class="kw-cnt">${cnt}</span></div>`}).join("");
+  barChart("bc-kw",top40.slice(0,14),"var(--blue-b)");
+  const gAvg=DATA.map(pr).filter(p=>p>0).reduce((a,b)=>a+b,0)/(DATA.filter(r=>pr(r)>0).length||1);
+  const kwp=Object.entries(wp).filter(([,ps])=>ps.filter(p=>p>0).length>=2).map(([w,ps])=>{const pp=ps.filter(p=>p>0);return[w,Math.round(pp.reduce((a,b)=>a+b,0)/pp.length)]}).filter(([,avg])=>avg>gAvg).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  barChart("bc-kwp",kwp,"var(--cyan)");
+  const fbScores=DATA.map(r=>parseFloat(col(r,"seller_feedback_score"))||0).filter(s=>s>0).sort((a,b)=>b-a);
+  const thr=fbScores[Math.floor(fbScores.length*0.2)]||0;
+  const twf={};DATA.filter(r=>(parseFloat(col(r,"seller_feedback_score"))||0)>=thr&&thr>0).forEach(r=>col(r,"title").toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))twf[w]=(twf[w]||0)+1}));
+  barChart("bc-kwt",Object.entries(twf).sort((a,b)=>b[1]-a[1]).slice(0,12),"var(--green)");
+}
+
+// ── PRICES ──────────────────────────────────────────────────────────
+function renderPrices(){
+  const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);if(!prices.length)return;
+  const avg=prices.reduce((a,b)=>a+b,0)/prices.length;const med=prices[Math.floor(prices.length/2)];
+  const mn=prices[0],mx=prices[prices.length-1],sp=mx-mn;
+  const freeC=DATA.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
+  S("pp-avg",f$(avg));S("pp-med",f$(med));S("pp-min",f$(mn));S("pp-max",f$(mx));S("pp-spr",f$(sp));S("pp-free",Math.round(freeC/DATA.length*100)+"%");
+  histogram("h-full","h-full-lbl",prices,16,"var(--blue-b)");
+  const newP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("NEW")).map(pr).filter(p=>p>0);
+  const usedP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("USED")).map(pr).filter(p=>p>0);
+  const condPData=[];
+  if(newP.length)condPData.push(["New ср.",Math.round(newP.reduce((a,b)=>a+b,0)/newP.length)]);
+  if(usedP.length)condPData.push(["Used ср.",Math.round(usedP.reduce((a,b)=>a+b,0)/usedP.length)]);
+  barChart("bc-condp",condPData,"var(--green)");
+  document.getElementById("priceBody").innerHTML=[...DATA].sort((a,b)=>pr(a)-pr(b)).map(r=>{
+    const ship=col(r,"shipping_cost");const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
+    const cd=col(r,"condition").toUpperCase();const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
+    return`<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller">${esc(col(r,"seller"))}</td><td>${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
+  }).join("");
+}
+
+// ── CHART UTILS ──────────────────────────────────────────────────────
+function barChart(id,data,color,maxVal){
+  const el=document.getElementById(id);if(!el)return;
+  if(!data.length){el.innerHTML='<div style="color:var(--text);font-family:var(--mono);font-size:9px">Нет данных</div>';return}
+  const mx=maxVal||Math.max(...data.map(d=>d[1]));
+  el.innerHTML=data.map(([lbl,val])=>`<div class="br"><div class="bl" title="${esc(String(lbl))}">${esc(String(lbl))}</div><div class="bt"><div class="bf" style="width:${(val/mx*100).toFixed(1)}%;background:${color}"></div></div><div class="bv">${typeof val==="number"&&val>999?val.toLocaleString():val}</div></div>`).join("");
+}
+function histogram(id,lblId,prices,buckets,color){
+  const el=document.getElementById(id);if(!el||!prices.length)return;
+  const mn=prices[0],mx=prices[prices.length-1],bSz=(mx-mn)/buckets||1;
+  const cnt=new Array(buckets).fill(0);prices.forEach(p=>{const i=Math.min(Math.floor((p-mn)/bSz),buckets-1);cnt[i]++});
+  const mxC=Math.max(...cnt);
+  el.innerHTML=cnt.map((c,i)=>`<div class="hb" style="height:${mxC?Math.round(c/mxC*100):0}%;background:${color};opacity:${0.3+0.7*(c/mxC||0)}" title="${c} тов. $${(mn+i*bSz).toFixed(0)}–$${(mn+(i+1)*bSz).toFixed(0)}"></div>`).join("");
+  const lblEl=document.getElementById(lblId);
+  if(lblEl){const step=Math.ceil(buckets/5);const lbls=[];for(let i=0;i<=buckets;i+=step)lbls.push(`$${(mn+i*bSz).toFixed(0)}`);lblEl.innerHTML=lbls.map(l=>`<span>${l}</span>`).join("")}
+}
+</script>
+</body>
+</html>
