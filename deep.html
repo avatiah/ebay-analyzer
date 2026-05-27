@@ -333,10 +333,10 @@ tr:hover td{background:rgba(37,99,235,.03)}
     </div>
     <div class="panel">
       <div class="ph"><div class="pt">Товары</div><span id="pCnt" class="tmono" style="color:var(--text)"></span></div>
-      <div class="tbl-wrap"><tr><thead><tr>
+      <div class="tbl-wrap"><table><thead><tr>
         <th>Фото</th><th>Товар</th><th onclick="sp('price')">Цена ↕</th><th>Продавец</th>
         <th>FB%</th><th>Score</th><th>Состояние</th><th>Доставка</th><th>Локация</th><th>Ссылка</th>
-       </tr></thead><tbody id="prodBody"></tbody></table></div>
+        </thead><tbody id="prodBody"></tbody></table></div>
     </div>
   </div>
 
@@ -352,7 +352,7 @@ tr:hover td{background:rgba(37,99,235,.03)}
       <div class="tbl-wrap"><table><thead><tr>
         <th>Продавец</th><th>Товаров</th><th>Ср.цена</th><th>Мин</th><th>Макс</th>
         <th>FB%</th><th>Score</th><th>Top Rated</th><th>Бесп.дост.</th>
-       </tr></thead><tbody id="sellersBody"></tbody></table></div>
+        </thead><tbody id="sellersBody"></tbody></table></div>
     </div>
   </div>
 
@@ -383,7 +383,7 @@ tr:hover td{background:rgba(37,99,235,.03)}
       <div class="panel"><div class="ph"><div class="pt">Новые vs Б/у</div></div><div class="pb"><div class="bar-chart" id="bc-condp"></div></div></div>
     </div>
     <div class="panel"><div class="ph"><div class="pt">Все товары по цене</div></div>
-      <div class="tbl-wrap"><table><thead><tr><th>Фото</th><th>Товар</th><th>Цена</th><th>Продавец</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th> </tr></thead><tbody id="priceBody"></tbody></table></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Фото</th><th>Товар</th><th>Цена</th><th>Продавец</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th>  </thead><tbody id="priceBody"></tbody></table></div>
     </div>
   </div>
 
@@ -501,31 +501,79 @@ async function loadData(){
   try{
     const{ok,body}=await ghFetch(`/repos/${GH_USER}/${GH_REPO}/contents/data/raw_data.csv`);
     if(!ok){log("CSV не найден","warn");S("lastUpd","нет данных");return}
-    parseCSV(atob(body.content.replace(/\n/g,"")));
-    renderAll();log(`Загружено ${DATA.length} строк`,"ok");
+    const csvText=atob(body.content.replace(/\n/g,""));
+    parseCSV(csvText);
+    renderAll();
+    log(`✅ Загружено ${DATA.length} строк, колонки: ${Object.keys(COLS).join(", ")}`,"ok");
     const{body:cb}=await ghFetch(`/repos/${GH_USER}/${GH_REPO}/commits?path=data/raw_data.csv&per_page=1`);
     const d=cb[0]?.commit?.author?.date?new Date(cb[0].commit.author.date).toLocaleString("ru-RU"):"—";
     S("lastUpd",`обновлено ${d}`);
   }catch(e){log("Ошибка: "+e.message,"err");S("lastUpd","ошибка")}
 }
 function parseCSV(text){
-  COLS={};const lines=text.replace(/\r/g,"").trim().split("\n").filter(l=>l.trim());
+  COLS={};
+  const lines=text.replace(/\r/g,"").trim().split("\n").filter(l=>l.trim());
   if(lines.length<2){DATA=[];return}
-  lines[0].split(",").forEach((h,i)=>{COLS[h.trim()]=i});
+  
+  // Парсим заголовки (удаляем кавычки и пробелы)
+  const headers=lines[0].split(",").map(h=>h.replace(/^"|"$/g,'').trim());
+  headers.forEach((h,i)=>{COLS[h]=i});
+  log(`Найдены колонки: ${headers.join(", ")}`,"info");
+  
+  // Проверяем обязательные колонки
+  const required=["title","price","seller"];
+  const missing=required.filter(r=>COLS[r]===undefined);
+  if(missing.length){
+    log(`⚠️ Внимание: не найдены колонки: ${missing.join(", ")}. Поиск аналогов...`,"warn");
+    // Ищем альтернативные названия
+    for(const h of headers){
+      const hl=h.toLowerCase();
+      if(hl.includes("title")||hl.includes("name")) COLS["title"]=COLS[h];
+      if(hl.includes("price")) COLS["price"]=COLS[h];
+      if(hl.includes("seller")||hl.includes("vendor")) COLS["seller"]=COLS[h];
+      if(hl.includes("url")||hl.includes("link")) COLS["url"]=COLS[h];
+      if(hl.includes("condition")) COLS["condition"]=COLS[h];
+      if(hl.includes("shipping")) COLS["shipping_cost"]=COLS[h];
+      if(hl.includes("free")) COLS["free_shipping"]=COLS[h];
+      if(hl.includes("feedback")&&hl.includes("pct")) COLS["seller_feedback_pct"]=COLS[h];
+      if(hl.includes("feedback")&&hl.includes("score")) COLS["seller_feedback_score"]=COLS[h];
+      if(hl.includes("top")&&hl.includes("rated")) COLS["top_rated_seller"]=COLS[h];
+      if(hl.includes("location")) COLS["item_location"]=COLS[h];
+      if(hl.includes("category")) COLS["category"]=COLS[h];
+    }
+  }
+  
   DATA=lines.slice(1).map(line=>{
     let cur="",inQ=false,row=[];
-    for(const ch of line){if(ch==='"'){inQ=!inQ}else if(ch===","&&!inQ){row.push(cur);cur=""}else cur+=ch}
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){
+        inQ=!inQ;
+      }else if(ch===","&&!inQ){
+        row.push(cur);
+        cur="";
+      }else{
+        cur+=ch;
+      }
+    }
     row.push(cur);
-    return row;
-  }).filter(r=>r.length>3&&!col(r,"error"));
+    return row.map(cell=>cell.replace(/^"|"$/g,'').trim());
+  }).filter(r=>r.length>2);
+  
+  log(`Обработано ${DATA.length} строк данных`,"info");
+  if(DATA.length>0){
+    log(`Пример цены: ${pr(DATA[0])}, продавец: ${col(DATA[0],"seller")}`,"info");
+  }
 }
-function renderAll(){if(!DATA.length)return;renderNiche();renderOverview();renderProducts();renderSellers();renderKeywords();renderPrices()}
+function renderAll(){if(!DATA.length){log("Нет данных для отображения","warn");return}renderNiche();renderOverview();renderProducts();renderSellers();renderKeywords();renderPrices()}
 
 // ── NICHE ────────────────────────────────────────────────────────────
 function renderNiche(){
+  if(!DATA.length)return;
   const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);
+  if(!prices.length)return;
   const sellers=[...new Set(DATA.map(r=>col(r,"seller")).filter(Boolean))];
-  const avg=prices.reduce((a,b)=>a+b,0)/(prices.length||1);
+  const avg=prices.reduce((a,b)=>a+b,0)/prices.length;
   const freeC=DATA.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
   const freePct=Math.round(freeC/DATA.length*100);
   const trsC=DATA.filter(r=>col(r,"top_rated_seller")==="1").length;
@@ -556,14 +604,7 @@ function renderNiche(){
   else if(sellers.length>50)insights.push({i:"🔥",t:"Высокая конкуренция",tx:`${sellers.length} продавцов — нужен лучший заголовок и цена.`,v:sellers.length+" прод.",c:"var(--red)"});
   else insights.push({i:"📊",t:"Умеренная конкуренция",tx:`${sellers.length} продавцов — можно войти с хорошим листингом.`,v:sellers.length+" прод.",c:"var(--amber)"});
   if(freePct>60)insights.push({i:"🚚",t:"Free shipping — норма",tx:`${freePct}% листингов с бесплатной доставкой. Без неё сложно конкурировать.`,v:freePct+"%",c:"var(--blue-b)"});
-  const newP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("NEW")).map(pr).filter(p=>p>0);
-  const usedP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("USED")).map(pr).filter(p=>p>0);
-  if(newP.length&&usedP.length){
-    const nA=newP.reduce((a,b)=>a+b,0)/newP.length,uA=usedP.reduce((a,b)=>a+b,0)/usedP.length;
-    const diff=Math.round((nA/uA-1)*100);
-    if(diff>20)insights.push({i:"🆚",t:`Новый vs Б/у +${diff}%`,tx:`Новые дороже на ${diff}%. Продавай новые если возможно.`,v:`+${diff}%`,c:"var(--purple)"});
-  }
-  if(trsPct>30)insights.push({i:"⭐",t:"Top Rated доминируют",tx:`${trsPct}% листингов от Top Rated продавцов — высокая планка для качества.`,v:trsPct+"%",c:"var(--cyan)"});
+  
   const insightsEl=document.getElementById("insightsEl");
   if(insightsEl)insightsEl.innerHTML=insights.length?insights.map(x=>`
     <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
@@ -584,42 +625,6 @@ function renderNiche(){
       <div class="tier-pct" style="color:${tc[i]}">${pct}%</div>
       <div class="tier-count">${items.length} тов.</div></div>`;
   }).join("");
-
-  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item","this","that","all","not","are","was","be","have","it","do","&","each","per","two","one","i","s"]);
-  const fbScores=DATA.map(r=>parseFloat(col(r,"seller_feedback_score"))||0).filter(s=>s>0).sort((a,b)=>b-a);
-  const thr=fbScores[Math.floor(fbScores.length*0.25)]||0;
-  const topRows=DATA.filter(r=>(parseFloat(col(r,"seller_feedback_score"))||0)>=thr&&thr>0);
-  const allWF={},topWF={};
-  DATA.forEach(r=>col(r,"title").toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))allWF[w]=(allWF[w]||0)+1}));
-  topRows.forEach(r=>col(r,"title").toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))topWF[w]=(topWF[w]||0)+1}));
-  const winners=Object.entries(topWF).map(([w,cnt])=>({w,cnt,ratio:cnt/(allWF[w]||1)})).sort((a,b)=>b.ratio*b.cnt-a.ratio*a.cnt).slice(0,36);
-  const maxWC=winners[0]?.cnt||1;
-  const winWords=document.getElementById("winWords");
-  if(winWords)winWords.innerHTML=winners.length?winners.map(({w,cnt,ratio})=>{
-    const sz=9+Math.round((cnt/maxWC)*8);const isW=ratio>1.3;
-    return`<div class="kw-tag ${isW?"kw-winner":""}" style="font-size:${sz}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}')">
-      ${esc(w)}<span class="kw-cnt">${cnt}</span></div>`;
-  }).join(""):'<div class="empty">Нет данных</div>';
-
-  const sm={};
-  DATA.forEach(r=>{const s=col(r,"seller");if(!s)return;
-    if(!sm[s])sm[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1",freeC:0};
-    sm[s].items.push(r);if(col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0")sm[s].freeC++;
-  });
-  const sortedS=Object.values(sm).sort((a,b)=>b.fbScore-a.fbScore||b.items.length-a.items.length).slice(0,10);
-  const nicheSellerGrid=document.getElementById("nicheSellerGrid");
-  if(nicheSellerGrid)nicheSellerGrid.innerHTML=sortedS.length?sortedS.map((s,i)=>{
-    const pp=s.items.map(pr).filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
-    return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}')">
-      <div class="sc-rank">${i+1}</div>
-      <div class="sc-info"><div class="sc-name"><a href="https://www.ebay.com/usr/${encodeURIComponent(s.name)}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(s.name)} ↗</a>${s.trs?' <span class="badge b-top" style="font-size:7px">TOP</span>':''}</div>
-      <div class="sc-sub">Score:${s.fbScore.toLocaleString()} · FB:${s.fbPct?s.fbPct+"%":"—"} · Free:${Math.round(s.freeC/s.items.length*100)}%</div></div>
-      <div class="sc-stats">
-        <div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div>
-        <div class="sc-s"><div class="sc-sv">${f$(avg,0)}</div><div class="sc-sl">ср.ц.</div></div>
-        <div class="sc-s"><div class="sc-sv">${f$(Math.min(...pp)||0,0)}</div><div class="sc-sl">от</div></div>
-      </div></div>`;
-  }).join(""):'<div class="empty">Нет продавцов</div>';
 }
 
 function showTier(mn,mx,label,el){
@@ -636,53 +641,31 @@ function showTier(mn,mx,label,el){
       ${[["Товаров",items.length,"var(--blue-b)"],["Продавцов",sellers.length,"var(--cyan)"],["Ср. цена",f$(avg),"var(--green)"],["Бесп.дост.",Math.round(freeC/items.length*100)+"%","var(--amber)"]].map(([l,v,c])=>
         `<div style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:9px 11px"><div style="font-family:var(--cond);font-size:17px;font-weight:700;color:${c}">${v}</div><div style="font-family:var(--mono);font-size:8px;color:var(--text)">${l}</div></div>`).join("")}
     </div>
-    <div style="margin-top:10px;overflow-x:auto"> <table><thead><tr><th>Фото</th><th>Товар</th><th>Цена</th><th>Продавец</th><th>FB%</th><th>Доставка</th><th>Ссылка</th> </tr></thead><tbody>
+    <div style="margin-top:10px;overflow-x:auto"> <table><thead><tr><th>Фото</th><th>Товар</th><th>Цена</th><th>Продавец</th><th>FB%</th><th>Доставка</th><th>Ссылка</th>  </thead><tbody>
     ${items.slice(0,15).map(r=>{const ship=col(r,"shipping_cost");const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
-      return`<tr>
-      <td><img src="${getImageUrl(col(r,"url"))}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;" onerror="this.style.display='none'"></td>
-      <td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td>
-      <td class="tprice">${f$(pr(r))}</td>
-      <td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(col(r,"seller"))}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(col(r,"seller"))} ↗</a></td>
-      <td class="tmono">${col(r,"seller_feedback_pct")?col(r,"seller_feedback_pct")+"%":"—"}</td>
-      <td class="tmono">${sl}</td>
-      <td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td>
-    </tr>`;}).join("")}
+      return`<tr><td><img src="${getImageUrl(col(r,"url"))}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;" onerror="this.style.display='none'"></td>
+      <td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(col(r,"seller"))}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(col(r,"seller"))} ↗</a></td><td class="tmono">${col(r,"seller_feedback_pct")?col(r,"seller_feedback_pct")+"%":"—"}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;}).join("")}
     </tbody></table></div>`;
 }
 
 function showSellerDetail(name){
   const items=DATA.filter(r=>col(r,"seller")===name);
+  if(!items.length)return;
   const pp=items.map(pr).filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
   const freeC=items.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0").length;
   const panel=document.getElementById("sellerDetailPanel");
   if(!panel)return;
   document.getElementById("sellerDetailTitle").textContent=`Продавец: ${name}`;
-  const stats=[["Товаров",items.length,"var(--blue-b)"],["Ср. цена",f$(avg),"var(--green)"],["Feedback %",col(items[0],"seller_feedback_pct")?col(items[0],"seller_feedback_pct")+"%":"—","var(--cyan)"],
-    ["Score",Number(col(items[0],"seller_feedback_score")).toLocaleString()||"—","var(--amber)"],
-    ["Бесп.дост.",Math.round(freeC/items.length*100)+"%","var(--purple)"],
-    ["Диапазон",`${f$(Math.min(...pp)||0,0)}–${f$(Math.max(...pp)||0,0)}`,"var(--text2)"]];
+  const stats=[["Товаров",items.length,"var(--blue-b)"],["Ср. цена",f$(avg),"var(--green)"],["Feedback %",col(items[0],"seller_feedback_pct")?col(items[0],"seller_feedback_pct")+"%":"—","var(--cyan)"],["Score",Number(col(items[0],"seller_feedback_score")).toLocaleString()||"—","var(--amber)"],["Бесп.дост.",Math.round(freeC/items.length*100)+"%","var(--purple)"],["Диапазон",`${f$(Math.min(...pp)||0,0)}–${f$(Math.max(...pp)||0,0)}`,"var(--text2)"]];
   const sellerDetailKpi=document.getElementById("sellerDetailKpi");
   if(sellerDetailKpi)sellerDetailKpi.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">${stats.map(([l,v,c])=>`<div style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:8px 10px"><div style="font-family:var(--cond);font-size:14px;font-weight:700;color:${c}">${v}</div><div style="font-family:var(--mono);font-size:8px;color:var(--text)">${l}</div></div>`).join("")}</div>`;
-  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item"]);
-  const wf={};items.forEach(r=>col(r,"title").toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w))wf[w]=(wf[w]||0)+1}));
-  const topW=Object.entries(wf).sort((a,b)=>b[1]-a[1]).slice(0,10);const maxW=topW[0]?.[1]||1;
-  const sellerDetailChart=document.getElementById("sellerDetailChart");
-  if(sellerDetailChart)sellerDetailChart.innerHTML=`<div style="font-family:var(--cond);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text);margin-bottom:7px">Слова в заголовках</div><div class="bar-chart">${topW.length?topW.map(([w,cnt])=>`<div class="br"><div class="bl">${esc(w)}</div><div class="bt"><div class="bf" style="width:${cnt/maxW*100}%;background:var(--cyan)"></div></div><div class="bv">${cnt}</div></div>`).join(""):'<div class="empty">Нет данных</div>'}</div>`;
   const sellerDetailBody=document.getElementById("sellerDetailBody");
-  if(sellerDetailBody)sellerDetailBody.innerHTML=items.length?items.sort((a,b)=>pr(b)-pr(a)).map(r=>{
+  if(sellerDetailBody)sellerDetailBody.innerHTML=items.sort((a,b)=>pr(b)-pr(a)).map(r=>{
     const ship=col(r,"shipping_cost");const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
     const cd=col(r,"condition").toUpperCase();const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
-    return`<tr>
-      <td><img src="${getImageUrl(col(r,"url"))}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;" onerror="this.style.display='none'"></td>
-      <td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td>
-      <td class="tprice">${f$(pr(r))}</td>
-      <td class="tmono">${cb}</td>
-      <td class="tmono">${sl}</td>
-      <td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→ открыть</a></td>
-    </tr>`;
-  }).join(""):'<tr><td colspan="6" class="empty">Нет товаров</td></tr>';
+    return`<tr><td><img src="${getImageUrl(col(r,"url"))}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;" onerror="this.style.display='none'"></td><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→ открыть</a></td></tr>`;
+  }).join("");
   panel.style.display="block";panel.scrollIntoView({behavior:"smooth",block:"start"});
-  document.querySelectorAll(".scard").forEach(c=>c.classList.toggle("selected",c.querySelector(".sc-name")?.textContent.includes(name)));
 }
 function closeDetail(){const panel=document.getElementById("sellerDetailPanel");if(panel)panel.style.display="none"}
 function addTitleWord(w){if(!builtWords.includes(w))builtWords.push(w);const bt=document.getElementById("builtTitle");if(bt)bt.textContent=builtWords.join(" ")}
@@ -691,6 +674,7 @@ function copyTitle(){navigator.clipboard?.writeText(builtWords.join(" "));log("�
 
 // ── OVERVIEW ────────────────────────────────────────────────────────
 function renderOverview(){
+  if(!DATA.length)return;
   const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);
   if(!prices.length)return;
   const avg=prices.reduce((a,b)=>a+b,0)/prices.length;
@@ -711,6 +695,7 @@ function renderOverview(){
 // ── PRODUCTS ────────────────────────────────────────────────────────
 function sp(c){const sel=document.getElementById("psrt");if(sel)sel.value=c==="price"?"price_a":"title";renderProducts()}
 function renderProducts(){
+  if(!DATA.length){const pb=document.getElementById("prodBody");if(pb)pb.innerHTML='<tr><td colspan="10" class="empty">Нет данных</td></tr>';return;}
   let rows=[...DATA];
   const srch=document.getElementById("srch")?.value.toLowerCase()||"";
   const srt=document.getElementById("psrt")?.value||"price_a";
@@ -722,15 +707,17 @@ function renderProducts(){
   if(ship==="free")rows=rows.filter(r=>col(r,"free_shipping")==="1"||col(r,"shipping_cost")==="0");
   if(trs==="1")rows=rows.filter(r=>col(r,"top_rated_seller")==="1");
   rows.sort((a,b)=>srt==="price_a"?pr(a)-pr(b):srt==="price_d"?pr(b)-pr(a):srt==="fb_d"?(parseFloat(col(b,"seller_feedback_pct"))||0)-(parseFloat(col(a,"seller_feedback_pct"))||0):col(a,"title").localeCompare(col(b,"title")));
-  document.getElementById("pCnt").textContent=rows.length+" товаров";
+  const pCnt=document.getElementById("pCnt");if(pCnt)pCnt.textContent=rows.length+" товаров";
   const prodBody=document.getElementById("prodBody");
   if(!prodBody)return;
-  prodBody.innerHTML=rows.length?rows.map(r=>{
+  if(rows.length===0){prodBody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text);padding:24px">Нет товаров по заданным фильтрам</td></tr>';return;}
+  prodBody.innerHTML=rows.map(r=>{
     const shipCost=col(r,"shipping_cost");const sl=shipCost==="0"||shipCost==="0.0"?'<span style="color:var(--green)">Бесп.</span>':shipCost?`$${shipCost}`:"—";
     const cd=col(r,"condition").toUpperCase();const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
     const trs2=col(r,"top_rated_seller")==="1"?'<span class="badge b-top">TOP</span>':"";
+    const imgUrl=getImageUrl(col(r,"url"));
     return`<tr>
-      <td><img src="${getImageUrl(col(r,"url"))}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none'"></td>
+      <td>${imgUrl?`<img src="${imgUrl}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none'">`:'—'}</td>
       <td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td>
       <td class="tprice">${f$(pr(r))}</td>
       <td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(col(r,"seller"))}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(col(r,"seller"))} ↗</a></td>
@@ -741,11 +728,12 @@ function renderProducts(){
       <td class="tmono">${col(r,"item_location")||"—"}</td>
       <td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td>
     </tr>`;
-  }).join(""):'<tr><td colspan="10" style="text-align:center;color:var(--text);padding:24px">Нет товаров</td></tr>';
+  }).join("");
 }
 
 // ── SELLERS ─────────────────────────────────────────────────────────
 function renderSellers(){
+  if(!DATA.length)return;
   const map={};
   DATA.forEach(r=>{const s=col(r,"seller");if(!s)return;
     if(!map[s])map[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1",freeC:0};
@@ -753,36 +741,27 @@ function renderSellers(){
   });
   const sellers=Object.values(map).sort((a,b)=>b.items.length-a.items.length);
   const sgTop=document.getElementById("sg-top");
-  if(sgTop)sgTop.innerHTML=sellers.length?sellers.slice(0,6).map((s,i)=>{
+  if(sgTop)sgTop.innerHTML=sellers.slice(0,6).map((s,i)=>{
     const pp=s.items.filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
     return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}');sw('niche')">
       <div class="sc-rank">${i+1}</div><div class="sc-info"><div class="sc-name"><a href="https://www.ebay.com/usr/${encodeURIComponent(s.name)}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(s.name)} ↗</a></div><div class="sc-sub">FB:${s.fbPct?s.fbPct+"%":"—"} Score:${s.fbScore.toLocaleString()}</div></div>
       <div class="sc-stats"><div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div><div class="sc-s"><div class="sc-sv">${f$(avg,0)}</div><div class="sc-sl">ср.ц.</div></div></div>
     </div>`;
-  }).join(""):'<div class="empty">Нет продавцов</div>';
+  }).join("");
   const fbData=sellers.filter(s=>s.fbPct).slice(0,8).map(s=>[s.name,s.fbPct]).sort((a,b)=>b[1]-a[1]);
   barChart("bc-fb",fbData,"var(--green)",100);
   const spData=sellers.filter(s=>s.items.filter(p=>p>0).length).slice(0,8).map(s=>{const pp=s.items.filter(p=>p>0);return[s.name,Math.round(pp.reduce((a,b)=>a+b,0)/pp.length)]}).sort((a,b)=>b[1]-a[1]);
   barChart("bc-sp",spData,"var(--amber)");
   const sellersBody=document.getElementById("sellersBody");
-  if(sellersBody)sellersBody.innerHTML=sellers.length?sellers.map(s=>{
+  if(sellersBody)sellersBody.innerHTML=sellers.map(s=>{
     const pp=s.items.filter(p=>p>0);const avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
-    return`<tr>
-      <td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(s.name)}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(s.name)} ↗</a></td>
-      <td class="tmono">${s.items.length}</td>
-      <td class="tprice">${f$(avg)}</td>
-      <td class="tmono">${f$(Math.min(...pp)||0)}</td>
-      <td class="tmono">${f$(Math.max(...pp)||0)}</td>
-      <td class="tmono" style="color:var(--green)">${s.fbPct?s.fbPct+"%":"—"}</td>
-      <td class="tmono">${s.fbScore.toLocaleString()||"—"}</td>
-      <td class="tmono">${s.trs?'<span class="badge b-top">TOP</span>':"—"}</td>
-      <td class="tmono">${Math.round(s.freeC/s.items.length*100)}%</td>
-    </tr>`;
-  }).join(""):'<tr><td colspan="9" class="empty">Нет продавцов</td></tr>';
+    return`<tr><td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(s.name)}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(s.name)} ↗</a></td><td class="tmono">${s.items.length}</td><td class="tprice">${f$(avg)}</td><td class="tmono">${f$(Math.min(...pp)||0)}</td><td class="tmono">${f$(Math.max(...pp)||0)}</td><td class="tmono" style="color:var(--green)">${s.fbPct?s.fbPct+"%":"—"}</td><td class="tmono">${s.fbScore.toLocaleString()||"—"}</td><td class="tmono">${s.trs?'<span class="badge b-top">TOP</span>':"—"}</td><td class="tmono">${Math.round(s.freeC/s.items.length*100)}%</td></tr>`;
+  }).join("");
 }
 
 // ── KEYWORDS ────────────────────────────────────────────────────────
 function renderKeywords(){
+  if(!DATA.length)return;
   const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item","this","that","all","not","are","was","be","have","it","do","&","each","per","two","one","i","s"]);
   const wp={};DATA.forEach(r=>{const p2=pr(r);col(r,"title").toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w)){if(!wp[w])wp[w]=[];wp[w].push(p2)}})});
   const wc=Object.entries(wp).map(([w,ps])=>[w,ps.length]).sort((a,b)=>b[1]-a[1]);
@@ -801,6 +780,7 @@ function renderKeywords(){
 
 // ── PRICES ──────────────────────────────────────────────────────────
 function renderPrices(){
+  if(!DATA.length)return;
   const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);if(!prices.length)return;
   const avg=prices.reduce((a,b)=>a+b,0)/prices.length;const med=prices[Math.floor(prices.length/2)];
   const mn=prices[0],mx=prices[prices.length-1],sp=mx-mn;
@@ -814,19 +794,12 @@ function renderPrices(){
   if(usedP.length)condPData.push(["Used ср.",Math.round(usedP.reduce((a,b)=>a+b,0)/usedP.length)]);
   barChart("bc-condp",condPData,"var(--green)");
   const priceBody=document.getElementById("priceBody");
-  if(priceBody)priceBody.innerHTML=DATA.length?[...DATA].sort((a,b)=>pr(a)-pr(b)).map(r=>{
+  if(priceBody)priceBody.innerHTML=[...DATA].sort((a,b)=>pr(a)-pr(b)).map(r=>{
     const ship=col(r,"shipping_cost");const sl=ship==="0"||ship==="0.0"?'<span style="color:var(--green)">Бесп.</span>':ship?`$${ship}`:"—";
     const cd=col(r,"condition").toUpperCase();const cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`;
-    return`<tr>
-      <td><img src="${getImageUrl(col(r,"url"))}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;" onerror="this.style.display='none'"></td>
-      <td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td>
-      <td class="tprice">${f$(pr(r))}</td>
-      <td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(col(r,"seller"))}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(col(r,"seller"))} ↗</a></td>
-      <td class="tmono">${cb}</td>
-      <td class="tmono">${sl}</td>
-      <td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td>
-    </tr>`;
-  }).join(""):'<tr><td colspan="7" class="empty">Нет товаров</td></tr>';
+    const imgUrl=getImageUrl(col(r,"url"));
+    return`<tr><td>${imgUrl?`<img src="${imgUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;" onerror="this.style.display='none'">`:'—'}</td><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(col(r,"seller"))}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(col(r,"seller"))} ↗</a></td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
+  }).join("");
 }
 
 // ── CHART UTILS ──────────────────────────────────────────────────────
@@ -849,9 +822,7 @@ function histogram(id,lblId,prices,buckets,color){
 // ── EXPORT EXCEL ────────────────────────────────────────────────────
 function exportToExcel() {
   if(!DATA.length) { log("Нет данных для экспорта", "warn"); return; }
-  
   const headers = ["title", "price", "seller", "seller_feedback_pct", "seller_feedback_score", "top_rated_seller", "condition", "free_shipping", "shipping_cost", "item_location", "category", "url", "image_link", "seller_link"];
-  
   const rows = DATA.map(row => {
     const url = col(row, "url");
     return {
@@ -871,7 +842,6 @@ function exportToExcel() {
       seller_link: `https://www.ebay.com/usr/${encodeURIComponent(col(row, "seller"))}`
     };
   });
-  
   const csvRows = [headers.join(",")];
   for (const row of rows) {
     const values = headers.map(header => {
@@ -881,7 +851,6 @@ function exportToExcel() {
     });
     csvRows.push(values.join(","));
   }
-  
   const blob = new Blob(["\uFEFF" + csvRows.join("\n")], {type: "text/csv;charset=utf-8;"});
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
@@ -891,7 +860,7 @@ function exportToExcel() {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-  log(`✅ Экспортировано ${DATA.length} товаров в CSV (открывается в Excel)`, "ok");
+  log(`✅ Экспортировано ${DATA.length} товаров в CSV`, "ok");
 }
 </script>
 </body>
