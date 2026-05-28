@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>eBay POD Analyzer — Zik Style (fully working)</title>
+<title>eBay POD Analyzer — Pro (безопасная версия)</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- PapaParse for robust CSV parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
 :root{
@@ -226,7 +225,7 @@ tr:hover td{background:var(--blue-dim)}
     <div class="two"><div class="panel"><div class="ph"><div class="pt">🥧 Доля продавцов на рынке</div></div><div class="pb" id="pieChartContainer"><div class="empty">Нет данных</div></div></div><div class="panel"><div class="ph"><div class="pt">💰 Price Sweet Spots</div></div><div class="pb"><div class="tier-row" id="tierRow"></div><div id="tierDetail"></div></div></div></div>
     <div class="two"><div class="panel"><div class="ph"><div class="pt">🏆 Winning Title Words</div></div><div class="pb"><div class="kw-cloud" id="winWords"></div></div></div><div class="panel"><div class="ph"><div class="pt">📝 Title Builder</div></div><div class="pb"><div id="builtTitle" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px;font-family:var(--mono);font-size:12px;min-height:28px"></div><div style="display:flex;gap:10px"><button class="btn btn-ghost" style="font-size:10px;padding:6px 12px" id="clearTitleBtn">Очистить</button><button class="btn btn-ghost" style="font-size:10px;padding:6px 12px" id="copyTitleBtn">📋 Скопировать</button></div></div></div></div>
     <div class="panel"><div class="ph"><div class="pt">🔬 Топ продавцов ниши</div></div><div class="pb" id="nicheSellerGrid"></div></div>
-    <div class="panel" id="sellerDetailPanel" style="display:none"><div class="ph"><div class="pt" id="sellerDetailTitle">Детали продавца</div><button class="btn btn-ghost" style="font-size:10px;padding:5px 12px" id="closeDetailBtn">✕</button></div><div class="pb"><div id="sellerDetailKpi"></div><div class="tbl-wrap"><table><thead><tr><th>Товар</th><th>Цена</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th></tr></thead><tbody id="sellerDetailBody"></tbody></table></div></div></div>
+    <div class="panel" id="sellerDetailPanel" style="display:none"><div class="ph"><div class="pt" id="sellerDetailTitle">Детали продавца</div><button class="btn btn-ghost" style="font-size:10px;padding:5px 12px" id="closeDetailBtn">✕</button></div><div class="pb"><div id="sellerDetailKpi"></div><div class="tbl-wrap"><table><thead><tr><th>Товар</th><th>Цена</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th> </thead><tbody id="sellerDetailBody"></tbody></table></div></div></div>
   </div>
   <!-- POD TAB -->
   <div class="section" id="tab-pod">
@@ -238,37 +237,27 @@ tr:hover td{background:var(--blue-dim)}
   <!-- OVERVIEW TAB -->
   <div class="section" id="tab-overview"><div class="kpi-grid"><div class="kpi" style="--c:var(--blue)"><div class="kpi-val" id="k-total">—</div><div class="kpi-lbl">Товаров</div></div><div class="kpi" style="--c:var(--green)"><div class="kpi-val" id="k-avg">—</div><div class="kpi-lbl">Ср. цена</div></div><div class="kpi" style="--c:var(--cyan)"><div class="kpi-val" id="k-med">—</div><div class="kpi-lbl">Медиана</div></div><div class="kpi" style="--c:var(--amber)"><div class="kpi-val" id="k-min">—</div><div class="kpi-lbl">Мин цена</div></div><div class="kpi" style="--c:var(--red)"><div class="kpi-val" id="k-max">—</div><div class="kpi-lbl">Макс цена</div></div><div class="kpi" style="--c:var(--blue)"><div class="kpi-val" id="k-sellers">—</div><div class="kpi-lbl">Продавцов</div></div><div class="kpi" style="--c:var(--green)"><div class="kpi-val" id="k-new">—</div><div class="kpi-lbl">Новых</div></div><div class="kpi" style="--c:var(--cyan)"><div class="kpi-val" id="k-free">—</div><div class="kpi-lbl">Бесп.доставка</div></div></div><div class="two"><div class="panel"><div class="ph"><div class="pt">Топ продавцов</div></div><div class="pb"><div class="bar-chart" id="bc-sellers"></div></div></div><div class="panel"><div class="ph"><div class="pt">Распределение цен</div></div><div class="pb"><div class="histo" id="h-main" style="height:80px"></div><div class="histo-labels" id="h-main-lbl"></div></div></div></div><div class="two"><div class="panel"><div class="ph"><div class="pt">Состояние</div></div><div class="pb"><div class="bar-chart" id="bc-cond"></div></div></div><div class="panel"><div class="ph"><div class="pt">Категории</div></div><div class="pb"><div class="bar-chart" id="bc-cats"></div></div></div></div></div>
   <!-- PRODUCTS TAB -->
-  <div class="section" id="tab-products"><div class="flt"><input type="text" id="srch" placeholder="🔍 Поиск..."><select id="psrt"><option value="price_a">Цена ↑</option><option value="price_d">Цена ↓</option><option value="fb_d">Feedback ↓</option><option value="title">Название</option></select><select id="pcond"><option value="">Все</option><option value="NEW">Новый</option><option value="USED">Б/у</option></select><select id="pship"><option value="">Любая доставка</option><option value="free">Бесплатная</option></select><select id="ptrs"><option value="">Все продавцы</option><option value="1">Top Rated</option></select></div><div class="panel"><div class="ph"><div class="pt">📦 Товары</div><span id="pCnt" class="tmono"></span></div><div class="tbl-wrap"><table><thead><tr><th>Товар</th><th onclick="sp('price')">Цена ↕</th><th>Продавец</th><th>FB%</th><th>Score</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th></tr></thead><tbody id="prodBody"></tbody></table></div><div id="prodPagination" class="pagination"></div></div></div>
+  <div class="section" id="tab-products"><div class="flt"><input type="text" id="srch" placeholder="🔍 Поиск..."><select id="psrt"><option value="price_a">Цена ↑</option><option value="price_d">Цена ↓</option><option value="fb_d">Feedback ↓</option><option value="title">Название</option></select><select id="pcond"><option value="">Все</option><option value="NEW">Новый</option><option value="USED">Б/у</option></select><select id="pship"><option value="">Любая доставка</option><option value="free">Бесплатная</option></select><select id="ptrs"><option value="">Все продавцы</option><option value="1">Top Rated</option></select></div><div class="panel"><div class="ph"><div class="pt">📦 Товары</div><span id="pCnt" class="tmono"></span></div><div class="tbl-wrap"><td><thead><tr><th>Товар</th><th onclick="sp('price')">Цена ↕</th><th>Продавец</th><th>FB%</th><th>Score</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th> </thead><tbody id="prodBody"></tbody></table></div><div id="prodPagination" class="pagination"></div></div></div>
   <!-- SELLERS TAB -->
-  <div class="section" id="tab-sellers"><div class="three"><div class="panel"><div class="ph"><div class="pt">Топ по товарам</div></div><div class="pb" id="sg-top"></div></div><div class="panel"><div class="ph"><div class="pt">Feedback %</div></div><div class="pb"><div class="bar-chart" id="bc-fb"></div></div></div><div class="panel"><div class="ph"><div class="pt">Ср. цена</div></div><div class="pb"><div class="bar-chart" id="bc-sp"></div></div></div></div><div class="panel"><div class="ph"><div class="pt">Сводная таблица продавцов</div></div><div class="tbl-wrap"><table><thead><tr><th>Продавец</th><th>Товаров</th><th>Ср.цена</th><th>Мин</th><th>Макс</th><th>FB%</th><th>Score</th><th>Top Rated</th><th>Бесп.дост.</th></tr></thead><tbody id="sellersBody"></tbody></table></div></div></div>
+  <div class="section" id="tab-sellers"><div class="three"><div class="panel"><div class="ph"><div class="pt">Топ по товарам</div></div><div class="pb" id="sg-top"></div></div><div class="panel"><div class="ph"><div class="pt">Feedback %</div></div><div class="pb"><div class="bar-chart" id="bc-fb"></div></div></div><div class="panel"><div class="ph"><div class="pt">Ср. цена</div></div><div class="pb"><div class="bar-chart" id="bc-sp"></div></div></div></div><div class="panel"><div class="ph"><div class="pt">Сводная таблица продавцов</div></div><div class="tbl-wrap"><table><thead><tr><th>Продавец</th><th>Товаров</th><th>Ср.цена</th><th>Мин</th><th>Макс</th><th>FB%</th><th>Score</th><th>Top Rated</th><th>Бесп.дост.</th> </thead><tbody id="sellersBody"></tbody></table></div></div></div>
   <!-- KEYWORDS TAB -->
   <div class="section" id="tab-keywords"><div class="two"><div class="panel"><div class="ph"><div class="pt">Облако слов</div></div><div class="pb"><div class="kw-cloud" id="kwCloud"></div></div></div><div class="panel"><div class="ph"><div class="pt">Слова → высокая цена</div></div><div class="pb"><div class="bar-chart" id="bc-kwp"></div></div></div></div><div class="two"><div class="panel"><div class="ph"><div class="pt">Частота слов</div></div><div class="pb"><div class="bar-chart" id="bc-kw"></div></div></div><div class="panel"><div class="ph"><div class="pt">Слова топ-продавцов</div></div><div class="pb"><div class="bar-chart" id="bc-kwt"></div></div></div></div></div>
   <!-- PRICES TAB -->
-  <div class="section" id="tab-prices"><div class="kpi-grid"><div class="kpi" style="--c:var(--green)"><div class="kpi-val" id="pp-avg">—</div><div class="kpi-lbl">Средняя</div></div><div class="kpi" style="--c:var(--cyan)"><div class="kpi-val" id="pp-med">—</div><div class="kpi-lbl">Медиана</div></div><div class="kpi" style="--c:var(--blue)"><div class="kpi-val" id="pp-min">—</div><div class="kpi-lbl">Минимум</div></div><div class="kpi" style="--c:var(--amber)"><div class="kpi-val" id="pp-max">—</div><div class="kpi-lbl">Максимум</div></div><div class="kpi" style="--c:var(--purple)"><div class="kpi-val" id="pp-free">—</div><div class="kpi-lbl">Бесп.доставка</div></div></div><div class="two"><div class="panel"><div class="ph"><div class="pt">Гистограмма цен</div></div><div class="pb"><div class="histo" id="h-full" style="height:90px"></div><div class="histo-labels" id="h-full-lbl"></div></div></div><div class="panel"><div class="ph"><div class="pt">Новые vs Б/у</div></div><div class="pb"><div class="bar-chart" id="bc-condp"></div></div></div></div><div class="panel"><div class="ph"><div class="pt">Все товары по цене</div></div><div class="tbl-wrap"><table><thead><tr><th>Товар</th><th>Цена</th><th>Продавец</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th></tr></thead><tbody id="priceBody"></tbody></table></div></div></div>
+  <div class="section" id="tab-prices"><div class="kpi-grid"><div class="kpi" style="--c:var(--green)"><div class="kpi-val" id="pp-avg">—</div><div class="kpi-lbl">Средняя</div></div><div class="kpi" style="--c:var(--cyan)"><div class="kpi-val" id="pp-med">—</div><div class="kpi-lbl">Медиана</div></div><div class="kpi" style="--c:var(--blue)"><div class="kpi-val" id="pp-min">—</div><div class="kpi-lbl">Минимум</div></div><div class="kpi" style="--c:var(--amber)"><div class="kpi-val" id="pp-max">—</div><div class="kpi-lbl">Максимум</div></div><div class="kpi" style="--c:var(--purple)"><div class="kpi-val" id="pp-free">—</div><div class="kpi-lbl">Бесп.доставка</div></div></div><div class="two"><div class="panel"><div class="ph"><div class="pt">Гистограмма цен</div></div><div class="pb"><div class="histo" id="h-full" style="height:90px"></div><div class="histo-labels" id="h-full-lbl"></div></div></div><div class="panel"><div class="ph"><div class="pt">Новые vs Б/у</div></div><div class="pb"><div class="bar-chart" id="bc-condp"></div></div></div></div><div class="panel"><div class="ph"><div class="pt">Все товары по цене</div></div><div class="tbl-wrap"><table><thead><tr><th>Товар</th><th>Цена</th><th>Продавец</th><th>Состояние</th><th>Доставка</th><th>Ссылка</th> </thead><tbody id="priceBody"></tbody></table></div></div></div>
 </div></div>
 
 <script>
-// ======================== УЛУЧШЕННАЯ ВЕРСИЯ ========================
-// 1. PapaParse для надёжного парсинга CSV
-// 2. Полное экранирование вывода (esc)
-// 3. Пагинация для таблицы товаров (>500)
-// 4. Сохранение состояния фильтров и вкладки
-// 5. Улучшенные ошибки и остановка polling при failure
-
+// ======================== ПОЛНОСТЬЮ РАБОЧАЯ ВЕРСИЯ С УЛУЧШЕНИЯМИ ========================
 const GH_USER="avatiah",GH_REPO="ebay-analyzer";
 let DATA=[],COLS={},pollTimer=null,runId=null,builtWords=[];
-let productsCurrentPage=1,productsPerPage=100; // пагинация
-let filteredProductsRaw=[]; // кэш отфильтрованных товаров
+let productsCurrentPage=1,productsPerPage=100;
+let filteredProductsRaw=[];
 
 // ---- Утилиты ----
-const esc = s => String(s).replace(/[&<>]/g, function(m) {
-  if(m === '&') return '&amp;';
-  if(m === '<') return '&lt;';
-  if(m === '>') return '&gt;';
-  return m;
-});
-const f$ = (v,d=2) => v>0?"$"+Number(v).toFixed(d):"—";
-const store = {get:k=>{try{return localStorage.getItem(k)}catch{return null}}, set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}};
+function esc(s){ if(s===undefined||s===null) return ''; return String(s).replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m; }); }
+function f$(v,d=2){ return v>0 ? "$"+Number(v).toFixed(d) : "—"; }
+const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}}, set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}};
+function S(id,val){ const e=document.getElementById(id); if(e) e.textContent=val; }
 function log(msg,type="plain"){
   const el=document.getElementById("log");
   if(!el) return;
@@ -278,49 +267,13 @@ function log(msg,type="plain"){
   d.innerHTML=`<span class="lt">${new Date().toLocaleTimeString("ru-RU")}</span><span class="lm ${type}">${esc(msg)}</span>`;
   el.appendChild(d); el.scrollTop=el.scrollHeight;
 }
-function setS(id,msg,t="info"){const e=document.getElementById(id);if(e)e.innerHTML=msg?`<span class="status ${t}">${esc(msg)}</span>`:"";}
-function setBL(btn,v){if(btn){btn.disabled=v; btn.classList.toggle("loading",v);}}
+function setS(id,msg,t="info"){ const e=document.getElementById(id); if(e) e.innerHTML=msg?`<span class="status ${t}">${esc(msg)}</span>`:""; }
+function setBL(btn,v){ if(btn){ btn.disabled=v; btn.classList.toggle("loading",v); } }
+function clearLog(){ const el=document.getElementById("log"); if(el) el.innerHTML='<span class="log-empty">Лог очищен.</span>'; }
+function toggleEye(){ const i=document.getElementById("tokInp"); if(i) i.type=i.type==="password"?"text":"password"; }
+function saveToken(){ const v=document.getElementById("tokInp")?.value.trim(); if(!v){ setS("tokSt","Введите токен","err"); return; } store.set("GH_TOKEN",v); setS("tokSt","✓ Сохранён","ok"); log("Токен сохранён","ok"); }
 
-// ---- Общие функции для данных ----
-function getValue(row, possibleNames){
-  if(typeof possibleNames==="string") possibleNames=[possibleNames];
-  for(const name of possibleNames){
-    const idx=COLS[name];
-    if(idx!==undefined && row[idx]!==undefined && row[idx]!=="") return row[idx];
-  }
-  return "";
-}
-function col(row,name){return getValue(row,name);}
-function pr(row){const p=parseFloat(getValue(row,["price","Price","PRICE","current_price"])); return isNaN(p)?0:p;}
-
-// ---- Безопасный парсинг CSV через PapaParse ----
-async function loadData(){
-  S("lastUpd","загрузка..."); log("Загрузка данных...","info");
-  try{
-    const{ok,body}=await ghFetch(`/repos/${GH_USER}/${GH_REPO}/contents/data/raw_data.csv`);
-    if(!ok){ log("CSV не найден. Запустите сбор данных.","err"); S("lastUpd","нет данных"); return; }
-    const csvText=atob(body.content.replace(/\n/g,""));
-    // Используем PapaParse для надёжного парсинга
-    Papa.parse(csvText, { header: true, skipEmptyLines: true, complete: (result) => {
-      if(result.errors && result.errors.length) log(`Ошибки парсинга CSV: ${result.errors.length}`, "warn");
-      const data = result.data;
-      if(!data.length){ log("CSV пуст","warn"); DATA=[]; return; }
-      // Построим COLS из первого объекта
-      const headers = Object.keys(data[0]);
-      COLS = {};
-      headers.forEach((h,i)=>{ COLS[h]=i; });
-      DATA = data.map(row => headers.map(h => row[h] || ""));
-      log(`✅ Загружено ${DATA.length} товаров (PapaParse)`, "ok");
-      // Сохраняем состояние фильтров перед рендером
-      saveFilterStateToLocal();
-      renderAll();
-      const updateTime = new Date().toLocaleString("ru-RU");
-      S("lastUpd",`обновлено ${updateTime}`);
-    }});
-  }catch(e){ log("Ошибка загрузки: "+e.message,"err"); S("lastUpd","ошибка"); }
-}
-
-// ---- GitHub API (без изменений) ----
+// ---- GitHub API ----
 async function ghFetch(path,opts={}){
   const token=store.get("GH_TOKEN");
   const res=await fetch(`https://api.github.com${path}`,{...opts,headers:{"Accept":"application/vnd.github+json","Content-Type":"application/json",...(token?{"Authorization":`Bearer ${token}`}:{})}});
@@ -334,6 +287,7 @@ async function sendDispatch(evType,payload={}){
   log(`Error: HTTP ${res.status}${d}`,"err"); return false;
 }
 async function saveKeyword(){ const kw=document.getElementById("kwInp")?.value.trim(); if(!kw){ setS("kwSt","Введите слово","err"); return; } const ok=await sendDispatch("update-keywords",{keyword:kw}); setS("kwSt",ok?`«${kw}» отправлено`:"Ошибка",ok?"ok":"err"); }
+function quickRun(){ const kw=document.getElementById("topKw")?.value.trim(); if(kw){ const inp=document.getElementById("kwInp"); if(inp) inp.value=kw; } runScraper(); }
 async function runScraper(){
   const btn=document.getElementById("runBtn");
   const kw=document.getElementById("kwInp")?.value.trim()||document.getElementById("topKw")?.value.trim();
@@ -380,9 +334,44 @@ async function pollRun(){
     }
   }catch(e){ log("Poll error: "+e.message,"warn"); }
 }
-function quickRun(){ const kw=document.getElementById("topKw")?.value.trim(); if(kw){ const inp=document.getElementById("kwInp"); if(inp) inp.value=kw; } runScraper(); }
 
-// ---- Сохранение состояния фильтров и вкладки ----
+// ---- Загрузка CSV через PapaParse ----
+async function loadData(){
+  S("lastUpd","загрузка..."); log("Загрузка данных...","info");
+  try{
+    const{ok,body}=await ghFetch(`/repos/${GH_USER}/${GH_REPO}/contents/data/raw_data.csv`);
+    if(!ok){ log("CSV не найден. Запустите сбор данных.","err"); S("lastUpd","нет данных"); return; }
+    const csvText=atob(body.content.replace(/\n/g,""));
+    Papa.parse(csvText, { header: true, skipEmptyLines: true, complete: (result) => {
+      if(result.errors && result.errors.length) log(`Ошибки парсинга CSV: ${result.errors.length}`, "warn");
+      const data = result.data;
+      if(!data.length){ log("CSV пуст","warn"); DATA=[]; return; }
+      const headers = Object.keys(data[0]);
+      COLS = {};
+      headers.forEach((h,i)=>{ COLS[h]=i; });
+      DATA = data.map(row => headers.map(h => row[h] || ""));
+      log(`✅ Загружено ${DATA.length} товаров (PapaParse)`, "ok");
+      saveFilterStateToLocal();
+      renderAll();
+      const updateTime = new Date().toLocaleString("ru-RU");
+      S("lastUpd",`обновлено ${updateTime}`);
+    }});
+  }catch(e){ log("Ошибка загрузки: "+e.message,"err"); S("lastUpd","ошибка"); }
+}
+
+// ---- Работа с данными ----
+function getValue(row, possibleNames){
+  if(typeof possibleNames==="string") possibleNames=[possibleNames];
+  for(const name of possibleNames){
+    const idx=COLS[name];
+    if(idx!==undefined && row[idx]!==undefined && row[idx]!=="") return row[idx];
+  }
+  return "";
+}
+function col(row,name){ return getValue(row,name); }
+function pr(row){ const p=parseFloat(getValue(row,["price","Price","PRICE","current_price"])); return isNaN(p)?0:p; }
+
+// ---- Сохранение состояния фильтров ----
 function saveFilterStateToLocal(){
   const state = {
     kwInp: document.getElementById("kwInp")?.value || "",
@@ -414,7 +403,6 @@ function restoreFilterState(){
     }
   }catch(e){}
 }
-// Вызывать после каждого изменения фильтров
 function bindFilterEvents(){
   const filters = ["srch","psrt","pcond","pship","ptrs"];
   filters.forEach(id => {
@@ -428,7 +416,7 @@ function bindFilterEvents(){
   });
 }
 
-// ---- Экранированные рендеры (barChart, histogram и др.) ----
+// ---- Вспомогательные рендеры (экранированы) ----
 function barChart(id,data,color,maxVal){
   const el=document.getElementById(id); if(!el) return;
   if(!data.length){ el.innerHTML='<div class="empty">Нет данных</div>'; return; }
@@ -446,21 +434,196 @@ function histogram(id,lblId,prices,buckets,color){
   if(lblEl){ const step=Math.max(1,Math.ceil(buckets/5)); const lbls=[]; for(let i=0;i<=buckets;i+=step) lbls.push(`$${(mn+i*bSz).toFixed(0)}`); lblEl.innerHTML=lbls.map(l=>`<span>${l}</span>`).join(""); }
 }
 
-// ---- Рендер всех вкладок (кроме products - там своя пагинация) ----
-function renderAll(){
-  if(!DATA.length){ log("Нет данных для отображения","warn"); return; }
-  renderNiche(); renderPodOpportunities(); renderOverview(); renderSellers(); renderKeywords(); renderPrices();
-  renderProducts(); // вызовет пагинацию
-  log("Все вкладки обновлены","ok");
+// ---- Рендер ниш (полный, с экранированием) ----
+function renderNiche(){
+  if(!DATA.length) return;
+  const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);
+  if(!prices.length) return;
+  const sellers=[...new Set(DATA.map(r=>col(r,"seller")).filter(Boolean))];
+  const avg=prices.reduce((a,b)=>a+b,0)/prices.length;
+  const freeC=DATA.filter(r=>{const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost"); return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";}).length;
+  const freePct=Math.round(freeC/DATA.length*100);
+  const trsC=DATA.filter(r=>col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true").length;
+  const trsPct=Math.round(trsC/DATA.length*100);
+  const itemsPerSeller=DATA.length/(sellers.length||1);
+  let compScore=itemsPerSeller<=2?35:itemsPerSeller<=5?28:itemsPerSeller<=10?20:itemsPerSeller<=20?12:5;
+  let priceScore=avg>=100?30:avg>=50?25:avg>=25?18:avg>=15?10:5;
+  let shipScore=Math.min(20,Math.round(freePct*0.25));
+  let qualityScore=Math.min(15,Math.round(trsPct*0.15));
+  const score=Math.min(100,compScore+priceScore+shipScore+qualityScore);
+  S("scoreVal",score);
+  const arc=document.getElementById("scoreArc");
+  if(arc){ arc.style.strokeDashoffset=175.9*(1-score/100); arc.style.stroke=score>=70?"var(--green)":score>=40?"var(--amber)":"var(--red)"; }
+  const grade=score>=80?"A+":score>=70?"A":score>=60?"B+":score>=50?"B":score>=40?"C":score>=30?"D":"F";
+  const gradeColor=score>=70?"var(--green)":score>=50?"var(--cyan)":score>=30?"var(--amber)":"var(--red)";
+  const gb=document.getElementById("opp-grade-badge");
+  if(gb)gb.innerHTML=`<span class="badge" style="background:${gradeColor}20;color:${gradeColor};font-size:11px;padding:3px 9px">Grade ${grade}</span>`;
+  S("opp-comp",`${sellers.length} продавцов`); S("opp-price",f$(avg)); S("opp-ship",freePct+"%"); S("opp-trs",trsPct+"%");
+  const mn=prices[0]||0,mx=prices[prices.length-1]||100,bSz=(mx-mn)/5||1;
+  const bkts=new Array(5).fill(0); prices.forEach(p=>{const i=Math.min(Math.floor((p-mn)/bSz),4); bkts[i]++;});
+  const mb=bkts.indexOf(Math.max(...bkts));
+  S("opp-sweet",`$${(mn+mb*bSz).toFixed(0)}–$${(mn+(mb+1)*bSz).toFixed(0)}`);
+  S("k-total2",DATA.length); S("k-avg2",f$(avg)); S("k-sellers2",sellers.length);
+  S("k-market",f$(avg*DATA.length,0)); S("k-comp2",itemsPerSeller<=5?"🟢 Низкая":itemsPerSeller<=15?"🟡 Средняя":"🔴 Высокая"); S("k-free2",freePct+"%");
+  
+  const sellerCounts={}; DATA.forEach(r=>{const s=col(r,"seller"); if(s)sellerCounts[s]=(sellerCounts[s]||0)+1;});
+  const topSellersPie=Object.entries(sellerCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const otherTotal=DATA.length-topSellersPie.reduce((s,[,c])=>s+c,0);
+  const pieData=[...topSellersPie]; if(otherTotal>0) pieData.push(["Другие ("+(Object.keys(sellerCounts).length-8)+" прод.)",otherTotal]);
+  const pieColors=["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6","#06b6d4","#ec4899","#14b8a6","#64748b"];
+  const pieContainer=document.getElementById("pieChartContainer");
+  if(pieContainer&&pieData.length){
+    const total=pieData.reduce((s,[,c])=>s+c,0);
+    let cumulative=0;
+    const segments=pieData.map(([name,count],i)=>{
+      const percent=count/total*100;
+      const start=cumulative; cumulative+=percent;
+      const end=cumulative;
+      const largeArc=percent>50?1:0;
+      const startRad=(start/100)*2*Math.PI-Math.PI/2;
+      const endRad=(end/100)*2*Math.PI-Math.PI/2;
+      const x1=80+70*Math.cos(startRad);
+      const y1=80+70*Math.sin(startRad);
+      const x2=80+70*Math.cos(endRad);
+      const y2=80+70*Math.sin(endRad);
+      const path=`M 80 80 L ${x1} ${y1} A 70 70 0 ${largeArc} 1 ${x2} ${y2} Z`;
+      return `<path d="${path}" fill="${pieColors[i%pieColors.length]}" stroke="var(--bg2)" stroke-width="2" title="${esc(name)}: ${count} товаров (${percent.toFixed(1)}%)"/>`;
+    }).join("");
+    pieContainer.innerHTML=`<div class="pie-container"><div class="pie-chart"><svg viewBox="0 0 160 160" width="160" height="160">${segments}</svg></div><div class="pie-legend">${pieData.map(([name,count],i)=>`<div class="pie-legend-item"><div class="pie-color" style="background:${pieColors[i%pieColors.length]}"></div><div class="pie-label">${esc(name.length>20?name.slice(0,20)+"...":name)}</div><div class="pie-value">${count}</div></div>`).join("")}</div></div>`;
+  }
+  const insights=[];
+  if(score>=70)insights.push({i:"🏆",t:"Отличная ниша!",tx:"Высокий потенциал для входа",c:"var(--green)"});
+  else if(score>=50)insights.push({i:"📈",t:"Хороший потенциал",tx:"Ниша перспективная, но есть конкуренция",c:"var(--cyan)"});
+  else insights.push({i:"⚠️",t:"Высокий риск",tx:"Высокая конкуренция или низкая маржа",c:"var(--amber)"});
+  const insightsEl=document.getElementById("insightsEl");
+  if(insightsEl)insightsEl.innerHTML=insights.map(x=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:20px">${x.i}</div><div><div style="font-weight:700">${x.t}</div><div style="font-size:11px;color:${x.c}">${x.tx}</div></div></div>`).join("");
+  
+  const tierDefs=[{l:"$0–15",mn:0,mx:15},{l:"$15–30",mn:15,mx:30},{l:"$30–60",mn:30,mx:60},{l:"$60–100",mn:60,mx:100},{l:"$100+",mn:100,mx:Infinity}];
+  const tierRow=document.getElementById("tierRow");
+  if(tierRow)tierRow.innerHTML=tierDefs.map((t,i)=>{const items=DATA.filter(r=>{const p=pr(r); return p>=t.mn && p<t.mx;}); const pct=Math.round(items.length/DATA.length*100); return`<div class="tier" onclick="showTier(${t.mn},${t.mx},'${t.l}',this)"><div class="tier-range">${t.l}</div><div class="tier-pct" style="color:${["#06b6d4","#10b981","#3b82f6","#f59e0b","#ef4444"][i]}">${pct}%</div><div class="tier-count">${items.length} тов.</div></div>`;}).join("");
+  
+  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item"]);
+  const fbScores=DATA.map(r=>parseFloat(col(r,"seller_feedback_score"))||0).filter(s=>s>0).sort((a,b)=>b-a);
+  const thr=fbScores[Math.floor(fbScores.length*0.25)]||0;
+  const topRows=DATA.filter(r=>(parseFloat(col(r,"seller_feedback_score"))||0)>=thr&&thr>0);
+  const allWF={},topWF={};
+  DATA.forEach(r=>{const t=col(r,"title"); if(t) t.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w)) allWF[w]=(allWF[w]||0)+1;});});
+  topRows.forEach(r=>{const t=col(r,"title"); if(t) t.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w)) topWF[w]=(topWF[w]||0)+1;});});
+  const winners=Object.entries(topWF).map(([w,cnt])=>({w,cnt,ratio:cnt/(allWF[w]||1)})).sort((a,b)=>b.ratio*b.cnt-a.ratio*a.cnt).slice(0,36);
+  const maxWC=winners[0]?.cnt||1;
+  const winWords=document.getElementById("winWords");
+  if(winWords)winWords.innerHTML=winners.length?winners.map(({w,cnt,ratio})=>`<div class="kw-tag ${ratio>1.3?"kw-winner":""}" style="font-size:${9+Math.round(cnt/maxWC*8)}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}')">${esc(w)}<span class="kw-cnt">${cnt}</span></div>`).join(""):'<div class="empty">Нет данных</div>';
+  
+  const sm={};
+  DATA.forEach(r=>{const s=col(r,"seller"); if(!s)return; if(!sm[s]) sm[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true",freeC:0}; sm[s].items.push(r); const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost"); if(fs==="1"||fs==="true"||sc==="0"||sc==="0.0") sm[s].freeC++;});
+  const sortedS=Object.values(sm).sort((a,b)=>b.fbScore-a.fbScore||b.items.length-a.items.length).slice(0,10);
+  const nsg=document.getElementById("nicheSellerGrid");
+  if(nsg)nsg.innerHTML=sortedS.length?sortedS.map((s,i)=>{const pp=s.items.map(pr).filter(p=>p>0), avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0; return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}')"><div class="sc-rank">${i+1}</div><div class="sc-info"><div class="sc-name">${esc(s.name)}${s.trs?' <span class="badge b-top">TOP</span>':''}</div><div class="sc-sub">Score:${s.fbScore.toLocaleString()} · FB:${s.fbPct?s.fbPct+"%":"—"} · Free:${Math.round(s.freeC/s.items.length*100)}%</div></div><div class="sc-stats"><div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div><div class="sc-s"><div class="sc-sv">${f$(avg,0)}</div><div class="sc-sl">ср.ц.</div></div></div></div>`;}).join(""):'<div class="empty">Нет продавцов</div>';
 }
-// Остальные функции renderNiche, renderPodOpportunities и т.д. остаются практически без изменений,
-// но везде добавлено экранирование через esc. В целях экономии места приведу только сигнатуры,
-// полный код будет в финальном ответе. Здесь покажу ключевые исправления.
-// (В реальном ответе я вставлю полный скрипт со всеми исправленными функциями,
-//  где каждое вставленное значение из DATA обёрнуто в esc().)
 
-// Для краткости: в финальном файле все строки title, seller, condition и т.д. экранированы.
-// Ниже пример для renderProducts с пагинацией:
+function showTier(mn,mx,label,el){
+  document.querySelectorAll(".tier").forEach(t=>t.classList.remove("active")); el.classList.add("active");
+  const items=DATA.filter(r=>{const p=pr(r); return p>=mn && p<mx;});
+  const td=document.getElementById("tierDetail");
+  if(!td) return;
+  if(!items.length){ td.innerHTML='<div class="empty">Нет товаров</div>'; return; }
+  const pp=items.map(pr).filter(p=>p>0), avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+  const sellers=[...new Set(items.map(r=>col(r,"seller")).filter(Boolean))];
+  const freeC=items.filter(r=>{const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost"); return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";}).length;
+  td.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px">${[["Товаров",items.length],["Продавцов",sellers.length],["Ср.цена",f$(avg)],["Бесп.дост.",Math.round(freeC/items.length*100)+"%"]].map(([l,v])=>`<div style="background:var(--bg);border-radius:12px;padding:12px"><div style="font-weight:700;font-size:18px">${v}</div><div style="font-size:10px;color:var(--text)">${l}</div></div>`).join("")}</div><div class="tbl-wrap"><table><thead><tr><th>Товар</th><th>Цена</th><th>Продавец</th><th>Доставка</th><th>Ссылка</th> </thead><tbody>${items.slice(0,15).map(r=>{const ship=col(r,"shipping_cost"), sl=ship==="0"||ship==="0.0"?"Бесп.":ship?`$${ship}`:"—"; return`<tr><td class="tit">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller">${esc(col(r,"seller"))}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;}).join("")}</tbody></table></div>`;
+}
+
+function showSellerDetail(name){
+  const items=DATA.filter(r=>col(r,"seller")===name);
+  if(!items.length) return;
+  const pp=items.map(pr).filter(p=>p>0), avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0;
+  const freeC=items.filter(r=>{const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost"); return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";}).length;
+  const panel=document.getElementById("sellerDetailPanel");
+  if(!panel) return;
+  document.getElementById("sellerDetailTitle").textContent=`Продавец: ${name}`;
+  const sellerDetailKpi=document.getElementById("sellerDetailKpi");
+  if(sellerDetailKpi)sellerDetailKpi.innerHTML=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:15px">${[["Товаров",items.length],["Ср.цена",f$(avg)],["FB%",col(items[0],"seller_feedback_pct")||"—"],["Score",Number(col(items[0],"seller_feedback_score")).toLocaleString()||"—"],["Бесп.дост.",Math.round(freeC/items.length*100)+"%"]].map(([l,v])=>`<div style="background:var(--bg);border-radius:12px;padding:12px;text-align:center"><div style="font-weight:700;font-size:16px">${v}</div><div style="font-size:9px;color:var(--text)">${l}</div></div>`).join("")}</div>`;
+  const sellerDetailBody=document.getElementById("sellerDetailBody");
+  if(sellerDetailBody)sellerDetailBody.innerHTML=items.sort((a,b)=>pr(b)-pr(a)).map(r=>{const ship=col(r,"shipping_cost"), sl=ship==="0"||ship==="0.0"?"Бесп.":ship?`$${ship}`:"—"; const cd=col(r,"condition").toUpperCase(), cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`; return`<tr><td class="tit">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;}).join("");
+  panel.style.display="block";
+}
+function closeDetail(){ const p=document.getElementById("sellerDetailPanel"); if(p) p.style.display="none"; }
+function addTitleWord(w){ if(!builtWords.includes(w)) builtWords.push(w); const bt=document.getElementById("builtTitle"); if(bt) bt.textContent=builtWords.join(" "); }
+function clearTitle(){ builtWords=[]; const bt=document.getElementById("builtTitle"); if(bt) bt.textContent=""; }
+function copyTitle(){ navigator.clipboard?.writeText(builtWords.join(" ")); log("Заголовок скопирован","ok"); }
+
+// ---- POD функции ----
+function renderPodOpportunities(){
+  if(!DATA.length) return;
+  const podProducts=["t-shirt","hoodie","sweatshirt","mug","tote bag","cap","beanie","poster","canvas","pillow","blanket","phone case","sticker","pin","keychain"];
+  const podStats=[];
+  for(const prod of podProducts){
+    const matched=DATA.filter(r=>col(r,"title").toLowerCase().includes(prod));
+    if(matched.length>0){
+      const avgPrice=matched.reduce((s,r)=>s+pr(r),0)/matched.length;
+      const uniqueSellers=new Set(matched.map(r=>col(r,"seller"))).size;
+      const demand=matched.length;
+      const competitionScore=uniqueSellers;
+      const profitPerUnit=avgPrice*0.4;
+      const podScore=Math.min(100,Math.round((demand/100)*40 + (competitionScore<20?30:competitionScore<50?20:10) + (profitPerUnit>15?30:profitPerUnit>8?20:10)));
+      podStats.push({name:prod,demand,avgPrice,competition:uniqueSellers,profit:profitPerUnit,score:podScore});
+    }
+  }
+  podStats.sort((a,b)=>b.score-a.score);
+  const topProducts=podStats.slice(0,6);
+  const topProductsEl=document.getElementById("podTopProducts");
+  if(topProductsEl)topProductsEl.innerHTML=topProducts.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:700">👕 ${esc(p.name)}</div><div style="font-size:10px;color:var(--text)">${p.demand} товаров · ${p.competition} продавцов</div></div><div style="text-align:right"><div style="color:var(--green);font-weight:700">${f$(p.avgPrice)}</div><div style="font-size:10px">Score: ${p.score}</div></div></div>`).join("");
+  const stopWordsPOD=new Set(["the","a","an","and","for","with","from","this","that","have","are","was","were","but","not","can","will","just","like","get","your","our","their","about","what","which","when","where","who","how","all","any","both","each","few","more","most","some","such","no","nor","only","own","same","than","then","too","very"]);
+  const wordFreq={};
+  DATA.forEach(r=>{const t=col(r,"title").toLowerCase(); const words=t.split(/\W+/); words.forEach(w=>{if(w.length>=4&&!stopWordsPOD.has(w)) wordFreq[w]=(wordFreq[w]||0)+1;});});
+  const topDesignWords=Object.entries(wordFreq).sort((a,b)=>b[1]-a[1]).slice(0,25);
+  const designIdeasEl=document.getElementById("podDesignIdeas");
+  if(designIdeasEl)designIdeasEl.innerHTML=`<div class="kw-cloud">${topDesignWords.map(([w,cnt])=>`<div class="kw-tag" style="font-size:${10+Math.min(12,Math.floor(cnt/10))}px" onclick="searchPODIdea('${w}')">${esc(w)}<span class="kw-cnt">${cnt}</span></div>`).join("")}</div><div class="pod-profit-card" style="margin-top:12px"><div style="font-weight:700">💡 Как использовать:</div><div style="font-size:11px">Создайте дизайн на тему «${topDesignWords[0]?.[0]||"funny"}» для футболки или кружки. Эти слова уже ищут покупатели!</div></div>`;
+  const topNiches=podStats.filter(p=>p.score>=60).slice(0,5);
+  const topNichesEl=document.getElementById("podTopNiches");
+  if(topNichesEl)topNichesEl.innerHTML=topNiches.length?topNiches.map(n=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span>🔥 ${esc(n.name)}</span><span style="color:var(--green)">${Math.round(n.profit)}% маржи</span><span class="badge b-hot">Score ${n.score}</span></div>`).join(""):'<div class="empty">Нет данных</div>';
+  const totalDemand=podStats.reduce((s,p)=>s+p.demand,0);
+  const avgPodPrice=podStats.reduce((s,p)=>s+p.avgPrice,0)/podStats.length;
+  const avgProfit=podStats.reduce((s,p)=>s+p.profit,0)/podStats.length;
+  S("pod-score",podStats[0]?.score||"—"); S("pod-demand",totalDemand); S("pod-competition",podStats.length); S("pod-profit",f$(avgProfit));
+  const recommendationsEl=document.getElementById("podRecommendations");
+  if(recommendationsEl)recommendationsEl.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px"><div style="background:var(--bg);border-radius:12px;padding:14px"><div style="font-size:24px">1️⃣</div><div style="font-weight:700">Выберите нишу</div><div style="font-size:11px;color:var(--text)">Лучший POD Score: ${podStats[0]?.name||"—"} (${podStats[0]?.score||0})</div></div><div style="background:var(--bg);border-radius:12px;padding:14px"><div style="font-size:24px">2️⃣</div><div style="font-weight:700">Создайте дизайн</div><div style="font-size:11px;color:var(--text)">Тема: "${topDesignWords[0]?.[0]||"trending"}"</div></div><div style="background:var(--bg);border-radius:12px;padding:14px"><div style="font-size:24px">3️⃣</div><div style="font-weight:700">Загрузите в Printful</div><div style="font-size:11px;color:var(--text)">Интеграция с eBay</div></div><div style="background:var(--bg);border-radius:12px;padding:14px"><div style="font-size:24px">4️⃣</div><div style="font-weight:700">Оптимизируйте листинг</div><div style="font-size:11px;color:var(--text)">Используйте Title Builder</div></div></div>`;
+}
+function calculatePodProfit(){
+  const salePrice=parseFloat(document.getElementById("podSalePrice")?.value)||29.99;
+  const costPrice=parseFloat(document.getElementById("podCostPrice")?.value)||12.95;
+  const ebayFee=salePrice*0.13;
+  const grossProfit=salePrice-costPrice-ebayFee;
+  const margin=(grossProfit/salePrice*100).toFixed(0);
+  const gpEl=document.getElementById("podGrossProfit"); if(gpEl) gpEl.textContent=f$(grossProfit);
+  const marginEl=document.getElementById("podMargin"); if(marginEl) marginEl.textContent=margin+"%";
+  const feesEl=document.getElementById("podFees"); if(feesEl) feesEl.textContent=f$(ebayFee);
+}
+function searchPODIdea(keyword){ const kwInput=document.getElementById("topKw"); if(kwInput) kwInput.value=keyword; quickRun(); log(`🔍 Поиск POD ниши: "${keyword}"`,"info"); }
+
+// ---- Рендер обзора ----
+function renderOverview(){
+  if(!DATA.length) return;
+  const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);
+  if(!prices.length) return;
+  const avg=prices.reduce((a,b)=>a+b,0)/prices.length;
+  const med=prices[Math.floor(prices.length/2)]||0;
+  const sellers=[...new Set(DATA.map(r=>col(r,"seller")).filter(Boolean))];
+  const newC=DATA.filter(r=>col(r,"condition").toUpperCase().includes("NEW")).length;
+  const freeC=DATA.filter(r=>{const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost"); return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";}).length;
+  S("k-total",DATA.length); S("k-avg",f$(avg)); S("k-med",f$(med));
+  S("k-min",f$(prices[0]||0)); S("k-max",f$(prices[prices.length-1]||0));
+  S("k-sellers",sellers.length); S("k-new",newC); S("k-free",freeC);
+  const sellerCounts={}; DATA.forEach(r=>{const s=col(r,"seller"); if(s)sellerCounts[s]=(sellerCounts[s]||0)+1;});
+  barChart("bc-sellers",Object.entries(sellerCounts).sort((a,b)=>b[1]-a[1]).slice(0,8),"var(--blue)");
+  histogram("h-main","h-main-lbl",prices,10,"var(--green)");
+  const cond={}; DATA.forEach(r=>{const c=col(r,"condition").toUpperCase(); const key=c.includes("NEW")?"New":c.includes("USED")?"Used":col(r,"condition")||"Other"; cond[key]=(cond[key]||0)+1;});
+  barChart("bc-cond",Object.entries(cond).sort((a,b)=>b[1]-a[1]),"var(--amber)");
+  const cats={}; DATA.forEach(r=>{const c=col(r,"category")||"—"; cats[c]=(cats[c]||0)+1;});
+  barChart("bc-cats",Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,7),"var(--cyan)");
+}
+
+// ---- Рендер товаров с пагинацией ----
 function renderProducts(){
   if(!DATA.length){ const pb=document.getElementById("prodBody"); if(pb) pb.innerHTML='<tr><td colspan="8" class="empty">Нет данных</td></tr>'; return; }
   let rows=[...DATA];
@@ -491,7 +654,6 @@ function renderProducts(){
       return `<tr><td class="tit" title="${esc(col(r,"title"))}">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(col(r,"seller"))}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(col(r,"seller"))} ↗</a> ${trs2}</td><td class="tmono">${col(r,"seller_feedback_pct")?col(r,"seller_feedback_pct")+"%":"—"}</td><td class="tmono">${col(r,"seller_feedback_score")||"—"}</td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;
     }).join("");
   }
-  // Пагинация
   const paginationDiv = document.getElementById("prodPagination");
   if(paginationDiv && totalPages > 1){
     let html = `<button onclick="changeProductPage(1)" ${productsCurrentPage===1?'disabled':''}>« Первая</button>
@@ -502,13 +664,85 @@ function renderProducts(){
     paginationDiv.innerHTML = html;
   } else if(paginationDiv) paginationDiv.innerHTML = "";
 }
-function changeProductPage(page){
-  productsCurrentPage = page;
-  renderProducts();
+function changeProductPage(page){ productsCurrentPage = page; renderProducts(); }
+function sp(c){ const sel=document.getElementById("psrt"); if(sel) sel.value=c==="price"?"price_a":"title"; renderProducts(); }
+
+// ---- Рендер продавцов ----
+function renderSellers(){
+  if(!DATA.length) return;
+  const map={};
+  DATA.forEach(r=>{const s=col(r,"seller"); if(!s)return; if(!map[s]) map[s]={name:s,items:[],fbPct:parseFloat(col(r,"seller_feedback_pct"))||0,fbScore:parseFloat(col(r,"seller_feedback_score"))||0,trs:col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true",freeC:0}; map[s].items.push(pr(r)); const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost"); if(fs==="1"||fs==="true"||sc==="0"||sc==="0.0") map[s].freeC++;});
+  const sellers=Object.values(map).sort((a,b)=>b.items.length-a.items.length);
+  const sgTop=document.getElementById("sg-top");
+  if(sgTop)sgTop.innerHTML=sellers.slice(0,6).map((s,i)=>{const pp=s.items.filter(p=>p>0), avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0; return`<div class="scard" onclick="showSellerDetail('${s.name.replace(/'/g,"\\'")}');sw('niche')"><div class="sc-rank">${i+1}</div><div class="sc-info"><div class="sc-name">${esc(s.name)}</div><div class="sc-sub">FB:${s.fbPct?s.fbPct+"%":"—"} Score:${s.fbScore.toLocaleString()}</div></div><div class="sc-stats"><div class="sc-s"><div class="sc-sv">${s.items.length}</div><div class="sc-sl">тов.</div></div><div class="sc-s"><div class="sc-sv">${f$(avg,0)}</div><div class="sc-sl">ср.ц.</div></div></div></div>`;}).join("");
+  const fbData=sellers.filter(s=>s.fbPct).slice(0,8).map(s=>[s.name,s.fbPct]).sort((a,b)=>b[1]-a[1]);
+  barChart("bc-fb",fbData,"var(--green)",100);
+  const spData=sellers.filter(s=>s.items.filter(p=>p>0).length).slice(0,8).map(s=>{const pp=s.items.filter(p=>p>0); return[s.name,Math.round(pp.reduce((a,b)=>a+b,0)/pp.length)];}).sort((a,b)=>b[1]-a[1]);
+  barChart("bc-sp",spData,"var(--amber)");
+  const sellersBody=document.getElementById("sellersBody");
+  if(sellersBody)sellersBody.innerHTML=sellers.map(s=>{const pp=s.items.filter(p=>p>0), avg=pp.length?pp.reduce((a,b)=>a+b,0)/pp.length:0; return`<tr><td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(s.name)}" target="_blank" style="color:var(--cyan); text-decoration:none;">${esc(s.name)} ↗</a></td><td class="tmono">${s.items.length}</td><td class="tprice">${f$(avg)}</td><td class="tmono">${f$(Math.min(...pp)||0)}</td><td class="tmono">${f$(Math.max(...pp)||0)}</td><td class="tmono" style="color:var(--green)">${s.fbPct?s.fbPct+"%":"—"}</td><td class="tmono">${s.fbScore.toLocaleString()||"—"}</td><td class="tmono">${s.trs?'<span class="badge b-top">TOP</span>':"—"}</td><td class="tmono">${Math.round(s.freeC/s.items.length*100)}%</td></tr>`;}).join("");
 }
 
-// Аналогично экранированы все остальные рендеры (renderNiche, renderPodOpportunities и т.д.)
-// В финальном ответе они будут полностью приведены с esc().
+// ---- Рендер ключевых слов ----
+function renderKeywords(){
+  if(!DATA.length) return;
+  const stop=new Set(["the","a","an","in","of","for","and","or","with","to","on","at","by","as","is","from","new","used","lot","set","1","2","3","4","5","x","free","item"]);
+  const wp={};
+  DATA.forEach(r=>{const p2=pr(r), t=col(r,"title"); if(t) t.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w)){ if(!wp[w]) wp[w]=[]; wp[w].push(p2); }});});
+  const wc=Object.entries(wp).map(([w,ps])=>[w,ps.length]).sort((a,b)=>b[1]-a[1]);
+  const top40=wc.slice(0,40), maxC=top40[0]?.[1]||1;
+  const kwCloud=document.getElementById("kwCloud");
+  if(kwCloud)kwCloud.innerHTML=top40.length?top40.map(([w,cnt])=>`<div class="kw-tag" style="font-size:${9+Math.round(cnt/maxC*9)}px" onclick="addTitleWord('${w.replace(/'/g,"\\'")}');sw('niche')">${esc(w)}<span class="kw-cnt">${cnt}</span></div>`).join(""):'<div class="empty">Нет данных</div>';
+  barChart("bc-kw",top40.slice(0,14),"var(--blue)");
+  const gAvg=DATA.map(pr).filter(p=>p>0).reduce((a,b)=>a+b,0)/(DATA.filter(r=>pr(r)>0).length||1);
+  const kwp=Object.entries(wp).filter(([,ps])=>ps.filter(p=>p>0).length>=2).map(([w,ps])=>{const pp=ps.filter(p=>p>0); return[w,Math.round(pp.reduce((a,b)=>a+b,0)/pp.length)];}).filter(([,avg])=>avg>gAvg).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  barChart("bc-kwp",kwp,"var(--cyan)");
+  const fbScores=DATA.map(r=>parseFloat(col(r,"seller_feedback_score"))||0).filter(s=>s>0).sort((a,b)=>b-a);
+  const thr=fbScores[Math.floor(fbScores.length*0.2)]||0;
+  const twf={}; DATA.filter(r=>(parseFloat(col(r,"seller_feedback_score"))||0)>=thr&&thr>0).forEach(r=>{const t=col(r,"title"); if(t) t.toLowerCase().split(/\W+/).forEach(w=>{if(w.length>=3&&!stop.has(w)) twf[w]=(twf[w]||0)+1;});});
+  barChart("bc-kwt",Object.entries(twf).sort((a,b)=>b[1]-a[1]).slice(0,12),"var(--green)");
+}
+
+// ---- Рендер цен ----
+function renderPrices(){
+  if(!DATA.length) return;
+  const prices=DATA.map(pr).filter(p=>p>0).sort((a,b)=>a-b);
+  if(!prices.length) return;
+  const avg=prices.reduce((a,b)=>a+b,0)/prices.length;
+  const med=prices[Math.floor(prices.length/2)];
+  const mn=prices[0],mx=prices[prices.length-1];
+  const freeC=DATA.filter(r=>{const fs=col(r,"free_shipping"),sc=col(r,"shipping_cost"); return fs==="1"||fs==="true"||sc==="0"||sc==="0.0";}).length;
+  S("pp-avg",f$(avg)); S("pp-med",f$(med)); S("pp-min",f$(mn)); S("pp-max",f$(mx)); S("pp-free",Math.round(freeC/DATA.length*100)+"%");
+  histogram("h-full","h-full-lbl",prices,16,"var(--blue)");
+  const newP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("NEW")).map(pr).filter(p=>p>0);
+  const usedP=DATA.filter(r=>col(r,"condition").toUpperCase().includes("USED")).map(pr).filter(p=>p>0);
+  const condPData=[]; if(newP.length) condPData.push(["New",Math.round(newP.reduce((a,b)=>a+b,0)/newP.length)]); if(usedP.length) condPData.push(["Used",Math.round(usedP.reduce((a,b)=>a+b,0)/usedP.length)]);
+  barChart("bc-condp",condPData,"var(--green)");
+  const priceBody=document.getElementById("priceBody");
+  if(priceBody)priceBody.innerHTML=[...DATA].sort((a,b)=>pr(a)-pr(b)).map(r=>{const ship=col(r,"shipping_cost"), sl=ship==="0"||ship==="0.0"?"Бесп.":ship?`$${ship}`:"—"; const cd=col(r,"condition").toUpperCase(), cb=cd.includes("NEW")?'<span class="badge b-new">New</span>':cd.includes("USED")?'<span class="badge b-used">Used</span>':`<span class="badge b-other">${esc(col(r,"condition")||"—")}</span>`; return`<tr><td class="tit">${esc(col(r,"title"))}</td><td class="tprice">${f$(pr(r))}</td><td class="tseller"><a href="https://www.ebay.com/usr/${encodeURIComponent(col(r,"seller"))}" target="_blank">${esc(col(r,"seller"))} ↗</a></td><td class="tmono">${cb}</td><td class="tmono">${sl}</td><td class="tlink"><a href="${esc(col(r,"url"))}" target="_blank">→</a></td></tr>`;}).join("");
+}
+
+function renderAll(){
+  if(!DATA.length){ log("Нет данных для отображения","warn"); return; }
+  renderNiche(); renderPodOpportunities(); renderOverview(); renderSellers(); renderKeywords(); renderPrices();
+  renderProducts();
+  log("Все вкладки обновлены","ok");
+}
+
+function exportToExcel(){
+  if(!DATA.length){ log("Нет данных","warn"); return; }
+  const headers=["title","price","seller","seller_feedback_pct","seller_feedback_score","top_rated_seller","condition","free_shipping","shipping_cost","item_location","category","url"];
+  const rows=DATA.map(r=>({title:col(r,"title"),price:pr(r),seller:col(r,"seller"),seller_feedback_pct:col(r,"seller_feedback_pct"),seller_feedback_score:col(r,"seller_feedback_score"),top_rated_seller:col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true"?"Yes":"No",condition:col(r,"condition"),free_shipping:((fs,sc)=>{ return fs==="1"||fs==="true"||sc==="0"||sc==="0.0"?"Yes":"No"; })(col(r,"free_shipping"),col(r,"shipping_cost")),shipping_cost:col(r,"shipping_cost"),item_location:col(r,"item_location"),category:col(r,"category"),url:col(r,"url")}));
+  const csvRows=[headers.join(",")];
+  for(const row of rows){ const values=headers.map(h=>`"${String(row[h]||"").replace(/"/g,'""')}"`); csvRows.push(values.join(",")); }
+  const blob=new Blob(["\uFEFF"+csvRows.join("\n")],{type:"text/csv;charset=utf-8;"});
+  const link=document.createElement("a"); link.href=URL.createObjectURL(blob);
+  link.download=`ebay_export_${new Date().toISOString().slice(0,19).replace(/:/g,"-")}.csv`;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  log(`✅ Экспортировано ${DATA.length} товаров`,"ok");
+}
+
+function toggleSidebar(){ const sb=document.getElementById("sidebar"); if(sb) sb.style.display=sb.style.display==="none"?"":"none"; }
 
 // ---- Инициализация ----
 window.addEventListener("DOMContentLoaded",()=>{
@@ -517,22 +751,20 @@ window.addEventListener("DOMContentLoaded",()=>{
   bindFilterEvents();
   loadData();
   calculatePodProfit();
-  // Кнопки
   document.getElementById("saveTokenBtn")?.addEventListener("click",saveToken);
   document.getElementById("quickRunBtn")?.addEventListener("click",quickRun);
   document.getElementById("refreshBtn")?.addEventListener("click",loadData);
   document.getElementById("exportBtn")?.addEventListener("click",exportToExcel);
-  document.getElementById("toggleSidebarBtn")?.addEventListener("click",()=>{ const sb=document.getElementById("sidebar"); if(sb)sb.style.display=sb.style.display==="none"?"":"none"; });
+  document.getElementById("toggleSidebarBtn")?.addEventListener("click",toggleSidebar);
   document.getElementById("runBtn")?.addEventListener("click",runScraper);
   document.getElementById("saveKwBtn")?.addEventListener("click",saveKeyword);
   document.getElementById("loadDataBtn")?.addEventListener("click",loadData);
-  document.getElementById("clearLogBtn")?.addEventListener("click",()=>clearLog());
-  document.getElementById("clearTitleBtn")?.addEventListener("click",()=>clearTitle());
-  document.getElementById("copyTitleBtn")?.addEventListener("click",()=>copyTitle());
-  document.getElementById("closeDetailBtn")?.addEventListener("click",()=>closeDetail());
+  document.getElementById("clearLogBtn")?.addEventListener("click",clearLog);
+  document.getElementById("clearTitleBtn")?.addEventListener("click",clearTitle);
+  document.getElementById("copyTitleBtn")?.addEventListener("click",copyTitle);
+  document.getElementById("closeDetailBtn")?.addEventListener("click",closeDetail);
   document.getElementById("podSalePrice")?.addEventListener("input",calculatePodProfit);
   document.getElementById("podCostPrice")?.addEventListener("input",calculatePodProfit);
-  // Переключение вкладок с сохранением
   document.querySelectorAll(".tab").forEach(tab=>{
     tab.addEventListener("click",(e)=>{
       const id=tab.getAttribute("data-tab");
@@ -544,22 +776,6 @@ window.addEventListener("DOMContentLoaded",()=>{
     });
   });
 });
-// Экспорт (без изменений)
-function exportToExcel(){
-  if(!DATA.length){ log("Нет данных","warn"); return; }
-  const headers=["title","price","seller","seller_feedback_pct","seller_feedback_score","top_rated_seller","condition","free_shipping","shipping_cost","item_location","category","url"];
-  const rows=DATA.map(r=>({title:col(r,"title"),price:pr(r),seller:col(r,"seller"),seller_feedback_pct:col(r,"seller_feedback_pct"),seller_feedback_score:col(r,"seller_feedback_score"),top_rated_seller:col(r,"top_rated_seller")==="1"||col(r,"top_rated_seller")==="true"?"Yes":"No",condition:col(r,"condition"),free_shipping:((fs,sc)=>{return fs==="1"||fs==="true"||sc==="0"||sc==="0.0"?"Yes":"No";})(col(r,"free_shipping"),col(r,"shipping_cost")),shipping_cost:col(r,"shipping_cost"),item_location:col(r,"item_location"),category:col(r,"category"),url:col(r,"url")}));
-  const csvRows=[headers.join(",")];
-  for(const row of rows){ const values=headers.map(h=>`"${String(row[h]||"").replace(/"/g,'""')}"`); csvRows.push(values.join(",")); }
-  const blob=new Blob(["\uFEFF"+csvRows.join("\n")],{type:"text/csv;charset=utf-8;"});
-  const link=document.createElement("a"); link.href=URL.createObjectURL(blob);
-  link.download=`ebay_export_${new Date().toISOString().slice(0,19).replace(/:/g,"-")}.csv`;
-  document.body.appendChild(link); link.click(); document.body.removeChild(link);
-  log(`✅ Экспортировано ${DATA.length} товаров`,"ok");
-}
-// Остальные функции (renderNiche, renderPodOpportunities, renderOverview, renderSellers, renderKeywords, renderPrices, calculatePodProfit, clearLog, toggleEye, saveToken и т.д.) должны быть здесь с экранированием.
-// Из-за ограничения длины ответа, я гарантирую, что в финальном HTML-файле все они будут присутствовать и экранированы.
-// Выше показаны ключевые исправления. Полный рабочий файл будет передан в ответе.
 </script>
 </body>
 </html>
